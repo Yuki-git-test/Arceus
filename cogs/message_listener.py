@@ -1,0 +1,56 @@
+import discord
+from discord.ext import commands
+from Constants.variables import POKEMEOW_APPLICATION_ID, Server, PublicChannels
+from utils.logs.pretty_log import pretty_log
+from utils.listener_func.pokespawn_listener import as_spawn_ping
+
+# 🐾────────────────────────────────────────────
+#        🌸 Message Create Listener Cog
+# 🐾────────────────────────────────────────────
+class MessageCreateListener(commands.Cog):
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+
+    # 🦋────────────────────────────────────────────
+    #           👂 Message Listener Event
+    # 🦋────────────────────────────────────────────
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        try:
+            # 🚫 Ignore all bots except PokéMeow to prevent loops
+            if message.author.bot and message.author.id != POKEMEOW_APPLICATION_ID:
+                return
+
+            # ————————————————————————————————
+            # 🏰 Guild Check — Route by server
+            # ————————————————————————————————
+            guild = message.guild
+            if not guild:
+                return  # Skip DMs
+
+            # ————————————————————————————————
+            # 🩵 VNA message logic
+            # ————————————————————————————————
+            if guild.id == Server.VNA_ID:
+                if message.channel.id == PublicChannels.Poke_Spawn:
+                    await as_spawn_ping(self.bot, message)
+
+
+        except Exception as e:
+            # 🛑────────────────────────────────────────────
+            #        Unhandled on_message Error Handler
+            # 🛑────────────────────────────────────────────
+            pretty_log(
+                "critical",
+                f"Unhandled exception in on_message: {e}",
+                label="MESSAGE",
+                bot=self.bot,
+                include_trace=True,
+            )
+
+
+# 🌈────────────────────────────────────────────
+#        🛠️ Setup function to add cog to bot
+# 🌈────────────────────────────────────────────
+async def setup(bot: commands.Bot):
+    await bot.add_cog(MessageCreateListener(bot))

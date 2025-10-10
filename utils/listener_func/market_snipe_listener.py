@@ -82,10 +82,6 @@ async def market_snipe(message: discord.Message):
 
     # If Listed Price is 30% or more below Lowest Market, it's a snipe
     if lowest_market > 0 and listed_price <= lowest_market * 0.7:
-        pretty_log(
-            "info",
-            f"Snipe detected! {poke_name} #{poke_dex} listed for {listed_price} (Lowest Market: {lowest_market})",
-        )
         # Here you can add code to notify users, log the snipe, etc.
         rarity = get_rarity_by_color(embed_color)
 

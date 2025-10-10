@@ -2,8 +2,12 @@ import re
 
 import discord
 
-#If colors are different just check terminal and update the one in rarity_meta
-from Constants.paldea_galar_dict import get_rarity_by_color, rarity_meta, Legendary_icon_url
+# If colors are different just check terminal and update the one in rarity_meta
+from Constants.paldea_galar_dict import (
+    Legendary_icon_url,
+    get_rarity_by_color,
+    rarity_meta,
+)
 from utils.logs.pretty_log import pretty_log
 from vn_allstars_constants import (
     VN_ALLSTARS_EMOJIS,
@@ -35,9 +39,13 @@ SNIPE_MAP = {
 
 SNIPE_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.snipe_channel
 
-
+# 🟣────────────────────────────────────────────
+#           👂 Market Snipe Listener
+# 🟣────────────────────────────────────────────
 async def market_snipe(message: discord.Message):
-    """"""
+    """
+    Listens for market listings and detects potential snipes.
+    """
     if message.webhook_id not in MH_WEBHOOK_IDS:
         pretty_log("debug", f"Message from unallowed webhook: {message.webhook_id}")
         return
@@ -72,11 +80,6 @@ async def market_snipe(message: discord.Message):
     embed_color = embed.color.value
     display_pokemon_name = poke_name.title()
 
-    pretty_log(
-        "info",
-        f"Parsed Message - Name: {poke_name}, Dex: {poke_dex}, Listed: {listed_price}, Lowest: {lowest_market}, ID: {original_id}, Color: {embed_color}",
-    )
-
     # If Listed Price is 30% or more below Lowest Market, it's a snipe
     if lowest_market > 0 and listed_price <= lowest_market * 0.7:
         pretty_log(
@@ -85,7 +88,6 @@ async def market_snipe(message: discord.Message):
         )
         # Here you can add code to notify users, log the snipe, etc.
         rarity = get_rarity_by_color(embed_color)
-        pretty_log("debug", f"Color {embed_color} detected as rarity: {rarity}")
 
         if rarity == "unknown":
 
@@ -105,7 +107,6 @@ async def market_snipe(message: discord.Message):
                 rarity = "legendary"
 
         ping_role_id = SNIPE_MAP.get(rarity, {}).get("role")
-        pretty_log("debug", f"Final rarity: {rarity}, Role ID: {ping_role_id}")
 
         if ping_role_id:
             snipe_channel = message.guild.get_channel(SNIPE_CHANNEL_ID)
@@ -136,7 +137,9 @@ async def market_snipe(message: discord.Message):
                 )
 
                 new_embed.add_field(
-                    name="Listing Seen", value=fields.get("Listing Seen", "N/A"), inline=True
+                    name="Listing Seen",
+                    value=fields.get("Listing Seen", "N/A"),
+                    inline=True,
                 )
 
                 new_embed.set_footer(
@@ -146,6 +149,6 @@ async def market_snipe(message: discord.Message):
                 await snipe_channel.send(content=content, embed=new_embed)
 
                 pretty_log(
-                    "info",
+                    "sent",
                     f"Snipe notification sent in channel {snipe_channel.name} for {display_pokemon_name} at {listed_price:,}",
                 )

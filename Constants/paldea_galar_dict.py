@@ -1,5 +1,7 @@
 from Constants.variables import Emojis
-
+Legendary_icon_url = (
+    "https://cdn.discordapp.com/emojis/834534206007803984.webp?size=96&quality=lossless"
+)
 rarity_meta = {
     "common": {
         "color": 810198,
@@ -10,11 +12,11 @@ rarity_meta = {
         "emoji": Emojis.uncommon,
     },
     "rare": {
-        "color": 16550924,
+        "color": 16484616,
         "emoji": Emojis.rare,
     },
     "superrare": {
-        "color": 16571396,
+        "color": 16315399,
         "emoji": Emojis.superrare,
     },
     "legendary": {
@@ -26,13 +28,14 @@ rarity_meta = {
         "emoji": Emojis.shiny,
     },
     "golden": {
-        "color": 14940164,
+        "color": 16636971,
         "emoji": Emojis.golden,
     },
     "unknown": {
         "color": 0x95A5A6,
         "emoji": "❓",
     },
+    "event_exclusive": {"color": 15345163},
 }
 
 
@@ -1269,3 +1272,47 @@ dex = {
     998: "baxcalibur",
     999: "gimmighoul",
 }
+
+
+def get_rarity_by_color(color_value):
+    """
+    🎨 Reverse lookup: Get rarity name from color value
+
+    Args:
+        color_value (int): The color value to look up
+
+    Returns:
+        str: The rarity name, or "unknown" if not found
+
+    Example:
+        >>> get_rarity_by_color(810198)
+        'common'
+        >>> get_rarity_by_color(16550924)
+        'rare'
+    """
+    for rarity_name, rarity_data in rarity_meta.items():
+        if rarity_data["color"] == color_value:
+            return rarity_name
+    return "unknown"
+
+
+def get_color_by_rarity(rarity_name):
+    """
+    🌈 Get color value from rarity name
+
+    Args:
+        rarity_name (str): The rarity name to look up
+
+    Returns:
+        int: The color value, or 0x95A5A6 (unknown) if not found
+
+    Example:
+        >>> get_color_by_rarity("common")
+        810198
+        >>> get_color_by_rarity("legendary")
+        10487800
+    """
+    rarity_data = rarity_meta.get(rarity_name.lower())
+    if rarity_data and "color" in rarity_data:
+        return rarity_data["color"]
+    return rarity_meta["unknown"]["color"]

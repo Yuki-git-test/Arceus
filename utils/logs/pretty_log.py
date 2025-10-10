@@ -25,6 +25,7 @@ TAGS = {
     "critical": "💥 CRITICAL",
     "skip": "🤍 SKIP",
     "sent": "📨 SENT",
+    "debug": "🐛 DEBUG",
 }
 
 # -------------------- 🎨 Arceus ANSI Colors --------------------

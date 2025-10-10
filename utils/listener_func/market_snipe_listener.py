@@ -89,14 +89,14 @@ async def market_snipe(message: discord.Message):
 
         if rarity == "unknown":
 
-            if "mega " in poke_name.lower():
-                rarity = "mega"
-            elif (
+            if (
                 "shiny gigantamax-" in poke_name.lower()
                 or "shiny eternamax-" in poke_name.lower()
                 or "shiny mega " in poke_name.lower()
             ):
                 rarity = "shiny"
+            elif "mega " in poke_name.lower():
+                rarity = "mega"
             elif (
                 "gigantamax-" in poke_name.lower() or "eternamax-" in poke_name.lower()
             ):

@@ -39,6 +39,7 @@ SNIPE_MAP = {
 
 SNIPE_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.snipe_channel
 
+
 # 🟣────────────────────────────────────────────
 #           👂 Market Snipe Listener
 # 🟣────────────────────────────────────────────
@@ -116,6 +117,9 @@ async def market_snipe(message: discord.Message):
                 new_embed.set_author(
                     name=embed_author_name,
                     icon_url=embed.author.icon_url if embed.author else None,
+                )
+                new_embed.add_field(
+                    name="Buy Command", value=f";m b {original_id}", inline=False
                 )
                 new_embed.add_field(name="ID", value=original_id, inline=True)
                 new_embed.add_field(

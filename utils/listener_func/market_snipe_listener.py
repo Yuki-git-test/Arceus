@@ -1,3 +1,4 @@
+import asyncio
 import re
 
 import discord
@@ -55,100 +56,108 @@ async def market_snipe(message: discord.Message):
         pretty_log("debug", "Message has no embeds")
         return
 
-    embed = message.embeds[0]
-    embed_author_name = embed.author.name if embed.author else ""
+    for embed in message.embeds:
+        embed_author_name = embed.author.name if embed.author else ""
 
-    match = re.match(r"(.+?)\s+#(\d+)", embed_author_name)
-    if not match:
-        pretty_log("debug", f"Could not parse embed author name: {embed_author_name}")
-        return
+        match = re.match(r"(.+?)\s+#(\d+)", embed_author_name)
+        if not match:
+            pretty_log(
+                "debug", f"Could not parse embed author name: {embed_author_name}"
+            )
+            continue
 
-    poke_name = match.group(1)
-    poke_dex = int(match.group(2))
-    fields = {f.name: f.value for f in embed.fields}
+        poke_name = match.group(1)
+        poke_dex = int(match.group(2))
+        fields = {f.name: f.value for f in embed.fields}
 
-    # Extract Listed Price and Lowest Market, removing any emojis
-    listed_price_str = re.sub(r"<a?:\w+:\d+>", "", fields.get("Listed Price", "0"))
-    match_price = re.search(r"(\d[\d,]*)", listed_price_str)
-    listed_price = int(match_price.group(1).replace(",", "")) if match_price else 0
-    lowest_market_str = re.sub(r"<a?:\w+:\d+>", "", fields.get("Lowest Market", "0"))
-    lowest_market_match = re.search(r"(\d[\d,]*)", lowest_market_str)
-    lowest_market = (
-        int(lowest_market_match.group(1).replace(",", "")) if lowest_market_match else 0
-    )
+        # Extract Listed Price and Lowest Market, removing any emojis
+        listed_price_str = re.sub(r"<a?:\w+:\d+>", "", fields.get("Listed Price", "0"))
+        match_price = re.search(r"(\d[\d,]*)", listed_price_str)
+        listed_price = int(match_price.group(1).replace(",", "")) if match_price else 0
+        lowest_market_str = re.sub(
+            r"<a?:\w+:\d+>", "", fields.get("Lowest Market", "0")
+        )
+        lowest_market_match = re.search(r"(\d[\d,]*)", lowest_market_str)
+        lowest_market = (
+            int(lowest_market_match.group(1).replace(",", ""))
+            if lowest_market_match
+            else 0
+        )
 
-    original_id = fields.get("ID", "0")
-    embed_color = embed.color.value
-    display_pokemon_name = poke_name.title()
+        original_id = fields.get("ID", "0")
+        embed_color = embed.color.value
+        display_pokemon_name = poke_name.title()
 
-    # If Listed Price is 30% or more below Lowest Market, it's a snipe
-    if lowest_market > 0 and listed_price <= lowest_market * 0.7:
-        # Here you can add code to notify users, log the snipe, etc.
-        rarity = get_rarity_by_color(embed_color)
+        # If Listed Price is 30% or more below Lowest Market, it's a snipe
+        if lowest_market > 0 and listed_price <= lowest_market * 0.7:
+            # Here you can add code to notify users, log the snipe, etc.
+            rarity = get_rarity_by_color(embed_color)
 
-        if rarity == "unknown":
+            if rarity == "unknown":
 
-            if (
-                "shiny gigantamax-" in poke_name.lower()
-                or "shiny eternamax-" in poke_name.lower()
-                or "shiny mega " in poke_name.lower()
-            ):
-                rarity = "shiny"
-            elif "mega " in poke_name.lower():
-                rarity = "mega"
-            elif (
-                "gigantamax-" in poke_name.lower() or "eternamax-" in poke_name.lower()
-            ):
-                rarity = "gmax"
-            elif embed.author and embed.author.icon_url == Legendary_icon_url:
-                rarity = "legendary"
+                if (
+                    "shiny gigantamax-" in poke_name.lower()
+                    or "shiny eternamax-" in poke_name.lower()
+                    or "shiny mega " in poke_name.lower()
+                ):
+                    rarity = "shiny"
+                elif "mega " in poke_name.lower():
+                    rarity = "mega"
+                elif (
+                    "gigantamax-" in poke_name.lower()
+                    or "eternamax-" in poke_name.lower()
+                ):
+                    rarity = "gmax"
+                elif embed.author and embed.author.icon_url == Legendary_icon_url:
+                    rarity = "legendary"
 
-        ping_role_id = SNIPE_MAP.get(rarity, {}).get("role")
+            ping_role_id = SNIPE_MAP.get(rarity, {}).get("role")
 
-        if ping_role_id:
-            snipe_channel = message.guild.get_channel(SNIPE_CHANNEL_ID)
-            if snipe_channel:
-                content = f"<@&{ping_role_id}> {display_pokemon_name} listed for {VN_ALLSTARS_EMOJIS.vna_pokecoin} {listed_price:,}!"
+            if ping_role_id:
+                snipe_channel = message.guild.get_channel(SNIPE_CHANNEL_ID)
+                if snipe_channel:
+                    await asyncio.sleep(0.1)  # <-- Add this line here!
+                    content = f"<@&{ping_role_id}> {display_pokemon_name} listed for {VN_ALLSTARS_EMOJIS.vna_pokecoin} {listed_price:,}!"
 
-                # 🧾 Build embed
-                new_embed = discord.Embed(color=embed.color or 0x0855FB)
-                if embed.thumbnail:
-                    new_embed.set_thumbnail(url=embed.thumbnail.url)
-                new_embed.set_author(
-                    name=embed_author_name,
-                    icon_url=embed.author.icon_url if embed.author else None,
-                )
-                new_embed.add_field(
-                    name="Buy Command", value=f";m b {original_id}", inline=False
-                )
-                new_embed.add_field(name="ID", value=original_id, inline=True)
-                new_embed.add_field(
-                    name="Listed Price",
-                    value=f"{VN_ALLSTARS_EMOJIS.vna_pokecoin} {listed_price_str}",
-                    inline=True,
-                )
-                new_embed.add_field(
-                    name="Amount", value=fields.get("Amount", "1"), inline=True
-                )
-                new_embed.add_field(
-                    name="Lowest Market",
-                    value=f"{VN_ALLSTARS_EMOJIS.vna_pokecoin} {lowest_market_str}",
-                    inline=True,
-                )
+                    # 🧾 Build embed
+                    new_embed = discord.Embed(color=embed.color or 0x0855FB)
+                    if embed.thumbnail:
+                        new_embed.set_thumbnail(url=embed.thumbnail.url)
+                    new_embed.set_author(
+                        name=embed_author_name,
+                        icon_url=embed.author.icon_url if embed.author else None,
+                    )
+                    new_embed.add_field(
+                        name="Buy Command", value=f";m b {original_id}", inline=False
+                    )
+                    new_embed.add_field(name="ID", value=original_id, inline=True)
+                    new_embed.add_field(
+                        name="Listed Price",
+                        value=f"{VN_ALLSTARS_EMOJIS.vna_pokecoin} {listed_price_str}",
+                        inline=True,
+                    )
+                    new_embed.add_field(
+                        name="Amount", value=fields.get("Amount", "1"), inline=True
+                    )
+                    new_embed.add_field(
+                        name="Lowest Market",
+                        value=f"{VN_ALLSTARS_EMOJIS.vna_pokecoin} {lowest_market_str}",
+                        inline=True,
+                    )
 
-                new_embed.add_field(
-                    name="Listing Seen",
-                    value=fields.get("Listing Seen", "N/A"),
-                    inline=True,
-                )
+                    new_embed.add_field(
+                        name="Listing Seen",
+                        value=fields.get("Listing Seen", "N/A"),
+                        inline=True,
+                    )
 
-                new_embed.set_footer(
-                    text="Kindly check market listing before purchasing.",
-                    icon_url=message.guild.icon.url if message.guild else None,
-                )
-                await snipe_channel.send(content=content, embed=new_embed)
+                    new_embed.set_footer(
+                        text="Kindly check market listing before purchasing.",
+                        icon_url=message.guild.icon.url if message.guild else None,
+                    )
+                    await snipe_channel.send(content=content, embed=new_embed)
 
-                pretty_log(
-                    "sent",
-                    f"Snipe notification sent in channel {snipe_channel.name} for {display_pokemon_name} at {listed_price:,}",
-                )
+                    pretty_log(
+                        "sent",
+                        f"Snipe notification sent in channel {snipe_channel.name} for {display_pokemon_name} at {listed_price:,}",
+                    )

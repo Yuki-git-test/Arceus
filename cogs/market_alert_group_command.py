@@ -139,7 +139,3 @@ class Market_Alert_Group_Command(commands.Cog):
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Market_Alert_Group_Command(bot))
-    pretty_log(
-        message="✅ Market Alert Group Command cog loaded.",
-        tag="cog",
-    )

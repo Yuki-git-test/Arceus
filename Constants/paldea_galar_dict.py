@@ -21,7 +21,7 @@ rarity_meta = {
     },
     "legendary": {
         "color": 10487800,
-        "emoji": Emojis.rare,
+        "emoji": Emojis.legendary,
     },
     "shiny": {
         "color": 16751052,

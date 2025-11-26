@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 
 from Constants.variables import POKEMEOW_APPLICATION_ID, PublicChannels, Server
-from utils.listener_func.market_snipe_listener import market_snipe
+from utils.listener_func.market_feed_listener import market_feeds_listener
 from utils.listener_func.pokespawn_listener import as_spawn_ping
 from utils.logs.pretty_log import pretty_log
 from vn_allstars_constants import VN_ALLSTARS_TEXT_CHANNELS
@@ -57,7 +57,7 @@ class MessageCreateListener(commands.Cog):
                 # 🩵 VNA Market Snipe
                 # ————————————————————————————————
                 if message.channel.id in MARKET_FEED_CHANNEL_IDS:
-                    await market_snipe(message)
+                    await market_feeds_listener(message)
 
         except Exception as e:
             # 🛑────────────────────────────────────────────

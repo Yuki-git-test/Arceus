@@ -27,7 +27,8 @@ TAGS = {
     "sent": "📨 SENT",
     "debug": "🐛 DEBUG",
     "success": "✅ SUCCESS",
-                                
+    "cache": "🗄️ CACHE",
+
 }
 
 # -------------------- 🎨 Arceus ANSI Colors --------------------

@@ -108,7 +108,10 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
     shiny_text = "shiny " if rarity_key == "shiny" else ""
 
     is_paldean = dex_number and dex_number in paldea_galar_dict
-    is_legendary_or_rare = embed.color and embed.color.value in LEGENDARY_COLORS
+    is_legendary_or_rare = embed.color and (
+        embed.color.value in LEGENDARY_COLORS
+        or embed.color.value == 10364899  # legendary alt color
+    )
 
     # -------------------- Regular auto-spawn --------------------
     if not (is_paldean or is_legendary_or_rare):
@@ -131,13 +134,11 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
     mention_role = f"<@&{AUTO_SPAWN_RARE_ROLE_ID}>"
     content = f"{mention_role} A wild {shiny_text}{rarity_info.get('emoji', '❓')} {pokemon_name} has appeared!"
 
-
     await message.channel.send(content)
     pretty_log(
-            message=f"Rare spawn ping sent: {shiny_text}{log_pokemon_name} in #{message.channel.name}",
-            tag="sent",
-        )
-
+        message=f"Rare spawn ping sent: {shiny_text}{log_pokemon_name} in #{message.channel.name}",
+        tag="sent",
+    )
 
     # Send embed to rare spawn channel
     message_link = f"https://discord.com/channels/{message.guild.id}/{message.channel.id}/{message.id}"

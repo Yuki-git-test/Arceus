@@ -2,7 +2,7 @@
 VNA_SERVER_ID = 909880511701352488
 YUKI_USER_ID = 705447976658665552
 VNA_EMBED_COLOR = 0x135CC0
-
+ARCEUS_EMBED_COLOR = 0xD1D3D4
 # 💦☁────────────────────────────────────────────💦☁
 #       VN_ALLSTARS_TEXT_CHANNELS
 # 💦☁────────────────────────────────────────────💦☁
@@ -481,6 +481,7 @@ class VN_ALLSTARS_CATEGORIES:
 #       VN_ALLSTARS_ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class VN_ALLSTARS_ROLES:
+    ee_spawn_ping = 1443756412613431449
 
     the_hopeless_romantic = 1312302066063900703
     owner = 909880769860759613

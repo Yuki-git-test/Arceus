@@ -30,7 +30,7 @@ from utils.logs.pretty_log import pretty_log
 from utils.logs.server_log import send_log_to_server_log
 from utils.visuals.design_embed import design_embed
 from utils.visuals.pretty_defer import pretty_defer, pretty_error
-
+from Constants.variables import KHY_USER_ID
 from .add import resolve_pokemon_input_func
 
 
@@ -185,4 +185,5 @@ async def remove_market_alert_func(
             description=desc,
         )
         embed = design_embed(embed=embed, user=user, pokemon_name=target_name)
-        await send_log_to_server_log(guild, embed)
+        if interaction.user.id != KHY_USER_ID:
+            await send_log_to_server_log(guild, embed)

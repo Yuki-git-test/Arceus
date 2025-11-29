@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 
 from Constants.aesthetic import *
+from Constants.variables import KHY_USER_ID
 from Constants.vn_allstars_constants import (
     VN_ALLSTARS_EMOJIS,
     VN_ALLSTARS_ROLES,
@@ -22,10 +23,13 @@ from utils.essentials.parsers import (
     resolve_pokemon_input,
 )
 from utils.essentials.role_checks import has_special_role
+from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 from utils.logs.server_log import send_log_to_server_log
 from utils.visuals.design_embed import design_embed
 from utils.visuals.pretty_defer import pretty_defer
+
+enable_debug(f"{__name__}.resolve_pokemon_input_func")
 
 
 def determine_max_alerts(user: discord.Member) -> int:
@@ -68,21 +72,26 @@ def resolve_pokemon_input_func(pokemon: str):
     Returns: (display_name, dex_number)
     """
     pokemon_title = pokemon.title()
-
+    debug_log(f"Resolving Pokemon input: '{pokemon}'")
     if pokemon.isdigit():
         if len(pokemon) == 4 and not pokemon.startswith(("1", "7", "9")):
             raise ValueError("Invalid 4-digit Dex number.")
         target_name, dex_number = resolve_pokemon_input(pokemon)
 
     elif any(
-        pokemon_title.startswith(f"{prefix}Mega ")
+        (pokemon_title.startswith(f"{prefix}Mega ") or pokemon_title.startswith(f"{prefix}Mega-"))
         for prefix in ["", "Shiny ", "Golden "]
     ):
+        debug_log(f"Detected prefixed Mega form in input: '{pokemon}'")
         dex_number = parse_special_mega_input(pokemon)
+        debug_log(f"Parsed dex number for Mega form: {dex_number}")
         target_name = pokemon_title
     else:
+        debug_log(f"Assuming name input for Pokemon: '{pokemon}'")
         target_name, dex_number = resolve_pokemon_input(pokemon)
-
+    debug_log(
+        f"Resolved Pokemon input '{pokemon}' to Name: '{target_name}', Dex: {dex_number}"
+    )
     return target_name, dex_number
 
 
@@ -98,6 +107,13 @@ async def add_market_alert_func(
     """
     Adds a market alert for a user.
     """
+    # Log pokemon
+    pretty_log(
+        "info",
+        f"Attempting to add market alert for Pokemon input '{pokemon}' by user {interaction.user.name} (ID: {interaction.user.id})",
+        label="MARKET ALERT ADD",
+    )
+
     try:
         # Initialize loader
         loader = await pretty_defer(
@@ -125,7 +141,6 @@ async def add_market_alert_func(
                     "You do not have a custom market alert role set. Please ask staff to set one for you."
                 )
                 return
-
 
         # Fetch user info from market_alert_users table
         user_info = await fetch_market_alert_user(bot, user_id)
@@ -195,9 +210,14 @@ async def add_market_alert_func(
                     f"**Role:** {role.mention if role else 'None'}\n\n"
                 ),
             )
-            footer_text = "You will be notified when a matching market listing is found."
+            footer_text = (
+                "You will be notified when a matching market listing is found."
+            )
             embed = design_embed(
-                embed=embed, user=user, footer_text=footer_text, pokemon_name=target_name
+                embed=embed,
+                user=user,
+                footer_text=footer_text,
+                pokemon_name=target_name,
             )
             pretty_log(
                 "sucess",
@@ -218,8 +238,12 @@ async def add_market_alert_func(
                     f"**Role:** {role.mention if role else 'None'}\n"
                 ),
             )
-            log_embed = design_embed(embed=log_embed, user=user, pokemon_name=target_name)
-            await send_log_to_server_log(guild, log_embed)
+            log_embed = design_embed(
+                embed=log_embed, user=user, pokemon_name=target_name
+            )
+
+            if interaction.user.id != KHY_USER_ID:
+                await send_log_to_server_log(guild, log_embed)
 
         except Exception as e:
             pretty_log(

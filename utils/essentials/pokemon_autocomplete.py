@@ -55,6 +55,40 @@ for name, dex in POKEMON_LIST:
     POKEMON_NORMALIZED.append((name, norm, dex))
 
 
+def old_format_display_name(raw_name: str) -> str:
+    """
+    Clean up Pokemon display names for autocomplete:
+    - Remove dash only for Mega forms (Mega-Abomasnow → Mega Abomasnow)
+    - Capitalize properly
+    - Keep golden/shiny prefixes untouched
+    - Handle special cases like Jangmo-o
+    """
+    SPECIAL_CASES = {
+        "jangmo-o": "Jangmo-o",
+        "hakamo-o": "Hakamo-o",
+        "kommo-o": "Kommo-o",
+        "tapu-koko": "Tapu-Koko",
+        "tapu-lele": "Tapu-Lele",
+        "tapu-bulu": "Tapu-Bulu",
+        "tapu-fini": "Tapu-Fini",
+    }
+
+    clean_name = raw_name.lower()
+
+    # Handle Mega form
+    if "mega-" in clean_name:
+        clean_name = clean_name.replace("mega-", "mega ")
+
+    # Special case check
+    if clean_name in SPECIAL_CASES:
+        return SPECIAL_CASES[clean_name]
+
+    # Capitalize all words
+    display_name = " ".join(word.capitalize() for word in clean_name.split())
+
+    return display_name
+
+
 def format_display_name(raw_name: str) -> str:
     """
     Clean up Pokemon display names for autocomplete:
@@ -82,6 +116,14 @@ def format_display_name(raw_name: str) -> str:
     # Special case check
     if clean_name in SPECIAL_CASES:
         return SPECIAL_CASES[clean_name]
+    
+    # Handle shiny/golden prefixes
+    for prefix in ["shiny ", "golden "]:
+        if clean_name.startswith(prefix):
+            # Capitalize prefix and rest of name
+            rest = clean_name[len(prefix) :]
+            rest = " ".join(word.capitalize() for word in rest.split())
+            return f"{prefix.capitalize()}{rest}"
 
     # Capitalize all words
     display_name = " ".join(word.capitalize() for word in clean_name.split())

@@ -4,9 +4,10 @@
 import re
 from typing import Optional
 
+from Constants.vn_allstars_constants import VN_ALLSTARS_EMOJIS
 from Constants.weakness_chart import weakness_chart
 from utils.logs.pretty_log import pretty_log
-from Constants.vn_allstars_constants import VN_ALLSTARS_EMOJIS
+from utils.logs.debug_log import debug_log, enable_debug
 
 Shiny_Emoji = VN_ALLSTARS_EMOJIS.vna_shiny
 Golden_Emoji = VN_ALLSTARS_EMOJIS.vna_golden
@@ -17,7 +18,7 @@ PREFIX_EMOJI_MAP = {
 
 FORM_BASE_DEX_OFFSET = 7001
 
-
+enable_debug(f"{__name__}.parse_special_mega_input")
 # ─────────────────────────────────────────────
 # Helper: Resolve Pokemon Name and Dex
 # ─────────────────────────────────────────────
@@ -101,11 +102,73 @@ def normalize_mega_input(name: str) -> str:
     return name
 
 
-def parse_special_mega_input(name: str) -> int:
+def old_parse_special_mega_input(name: str) -> int:
     """Parses input for Pokemon, handling Shiny/Golden prefixes and Mega forms."""
+
     name = name.strip().lower()
     prefix = None
+    pretty_log("debug", f"Parsing special mega input for '{name}'", label="PARSE MEGA")
+    # Detect shiny/golden prefix
+    for p in ["shiny", "golden"]:
+        if name.startswith(p):
+            prefix = p
+            name = name[len(p) :].strip()
+            pretty_log(
+                "debug",
+                f"Detected prefix: {prefix}, remaining name: '{name}'",
+                label="PARSE MEGA",
+            )
+            break
 
+    # Normalize mega forms
+    if name.startswith("mega"):
+        name = name.replace(" ", "-")
+        pretty_log("debug", f"Normalized mega name: '{name}'", label="PARSE MEGA")
+
+    # Try prefixed mega name first
+    lookup_name = f"{prefix} {name}" if prefix else name
+    lookup_name = lookup_name.strip()
+    pretty_log("debug", f"Trying lookup_name: '{lookup_name}'", label="PARSE MEGA")
+    if lookup_name in weakness_chart:
+        dex_number = int(weakness_chart[lookup_name]["dex"])
+        pretty_log(
+            "debug", f"Found dex for '{lookup_name}': {dex_number}", label="PARSE MEGA"
+        )
+    elif name in weakness_chart:
+        dex_number = int(weakness_chart[name]["dex"])
+        pretty_log("debug", f"Found dex for '{name}': {dex_number}", label="PARSE MEGA")
+    else:
+        pretty_log(
+            "error",
+            f"No entry found for '{lookup_name}' or '{name}' in weakness_chart",
+            label="PARSE MEGA",
+        )
+        raise ValueError(
+            f"No entry found for {lookup_name} or {name} in weakness_chart"
+        )
+
+    # Apply shiny/golden offset only if not already a prefixed mega
+    if prefix == "shiny" and lookup_name == name:
+        final_dex = dex_number + 1
+        pretty_log("debug", f"Applied shiny offset: {final_dex}", label="PARSE MEGA")
+    elif prefix == "golden" and lookup_name == name:
+        final_dex = dex_number + 2
+        pretty_log("debug", f"Applied golden offset: {final_dex}", label="PARSE MEGA")
+    else:
+        final_dex = dex_number
+        pretty_log(
+            "debug", f"No offset applied, final dex: {final_dex}", label="PARSE MEGA"
+        )
+
+    return final_dex
+
+
+def parse_special_mega_input(name: str) -> int:
+    """Parses input for Pokemon, handling Shiny/Golden prefixes and Mega forms."""
+
+    name = name.strip().lower()
+    prefix = None
+    pretty_log("debug", f"Parsing special mega input for '{name}'", label="PARSE MEGA")
     # Detect shiny/golden prefix
     for p in ["shiny", "golden"]:
         if name.startswith(p):
@@ -116,15 +179,32 @@ def parse_special_mega_input(name: str) -> int:
     # Normalize mega forms
     if name.startswith("mega"):
         name = name.replace(" ", "-")
+    debug_log(f"Normalized mega name: '{name}'")
+    # Try prefixed mega name first
+    lookup_name = f"{prefix} {name}" if prefix else name
+    lookup_name = lookup_name.strip()
+    debug_log(f"Trying lookup_name: '{lookup_name}'")
 
-    # Lookup dex number
-    dex_number = int(weakness_chart[name]["dex"])
+    if lookup_name in weakness_chart:
+        debug_log(f"{lookup_name}' found in weakness_chart")
+        dex_number = int(weakness_chart[lookup_name]["dex"])
+        debug_log(f"Found dex for '{lookup_name}': {dex_number}")
+    elif name in weakness_chart:
+        debug_log(f"'{name}' found in weakness_chart")
+        dex_number = int(weakness_chart[name]["dex"])
+        debug_log(f"Found dex for '{name}': {dex_number}")
+    else:
+        raise ValueError(
+            f"No entry found for {lookup_name} or {name} in weakness_chart"
+        )
 
-    # Apply shiny/golden offset
-    if prefix == "shiny":
+    # Apply shiny/golden offset only if not already a prefixed mega
+    if prefix == "shiny" and lookup_name == name:
         final_dex = dex_number + 1
-    elif prefix == "golden":
+        debug_log(f"Applied shiny offset: {final_dex}")
+    elif prefix == "golden" and lookup_name == name:
         final_dex = dex_number + 2
+        debug_log(f"Applied golden offset: {final_dex}")
     else:
         final_dex = dex_number
 

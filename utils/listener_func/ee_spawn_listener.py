@@ -36,7 +36,7 @@ def extract_battle_begins_time_from_wb_command(description: str):
     Extracts the 'Battle begins in' time from the embed description.
     Returns the time string if found, else None.
     """
-    match = re.search(r"the battle begins <t:(\d+):R>", description)
+    match = re.search(r"The battle begins <t:(\d+):R>", description)
     if match:
         return match.group(1).strip()
     return None
@@ -439,7 +439,7 @@ async def auto_wb_ping(
     image_url = EE_SETTING_MAP[variant]["image_url"]
     start_timestamp_line = ""
     if battle_begins_time and battle_begins_time.isdigit():
-        start_timestamp_line = f"- **Battle Begins In:** <t:{battle_begins_time}:R>\n"
+        start_timestamp_line = f"- **Battle Begins** <t:{battle_begins_time}:R>\n"
 
     content = f"<@&{ee_ping_role_id}>"
     if variant == "shiny":

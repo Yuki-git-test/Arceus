@@ -112,7 +112,20 @@ def get_pokemon_gif(input_name: str):
     if not gif_url:
         shiny_prefix = "ani-shiny" if shiny else "xyani"
         suffix = "" if form == "regular" else f"-{form}"
-        gif_url = f"https://play.pokemonshowdown.com/sprites/{shiny_prefix}/{base_name}{suffix}.gif?quality=lossless"
+        # Special handling for Mega Mewtwo and Mega Charizard forms
+        if form == "mega":
+            if base_name in ["mewtwo-y", "mewtwo-megay"]:
+                gif_url = f"https://play.pokemonshowdown.com/sprites/{shiny_prefix}/mewtwo-megay.gif?quality=lossless"
+            elif base_name in ["mewtwo-x", "mewtwo-megax"]:
+                gif_url = f"https://play.pokemonshowdown.com/sprites/{shiny_prefix}/mewtwo-megax.gif?quality=lossless"
+            elif base_name in ["charizard-x", "charizard-megax"]:
+                gif_url = f"https://play.pokemonshowdown.com/sprites/{shiny_prefix}/charizard-megax.gif?quality=lossless"
+            elif base_name in ["charizard-y", "charizard-megay"]:
+                gif_url = f"https://play.pokemonshowdown.com/sprites/{shiny_prefix}/charizard-megay.gif?quality=lossless"
+            else:
+                gif_url = f"https://play.pokemonshowdown.com/sprites/{shiny_prefix}/{base_name}{suffix}.gif?quality=lossless"
+        else:
+            gif_url = f"https://play.pokemonshowdown.com/sprites/{shiny_prefix}/{base_name}{suffix}.gif?quality=lossless"
 
     gif_name = f"{'golden ' if golden else ''}{'shiny ' if shiny else ''}{form + ' ' if form != 'regular' else ''}{remaining_name}"
 

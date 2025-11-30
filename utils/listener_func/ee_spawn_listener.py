@@ -206,7 +206,8 @@ async def check_ee_near_spawn_alert(bot: commands.Bot, message: discord.Message)
             boss_key = "eternamax-eternatus"
 
             # Reset alert if votes decreased (new spawn)
-            if current_votes < last_seen_votes.get(boss_key, 0):
+            prev_votes = int(last_seen_votes.get(boss_key, 0))
+            if current_votes < prev_votes:
                 near_spawn_alert_cache.discard(boss_key)
                 pretty_log(
                     "info",

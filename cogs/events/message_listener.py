@@ -66,7 +66,7 @@ class MessageCreateListener(commands.Cog):
             if guild.id == CC_GUILD_ID:
                 if message.channel.id == CC_BUMP_CHANNEL_ID:
                     await check_cc_bump_reminder(self.bot, message)
-                    
+
             # ————————————————————————————————
             # 🩵 VNA message logic
             # ————————————————————————————————
@@ -81,7 +81,7 @@ class MessageCreateListener(commands.Cog):
                 # 🩵 VNA Market Snipe
                 # ————————————————————————————————
                 if message.channel.id in MARKET_FEED_CHANNEL_IDS:
-                    await market_feeds_listener(message)
+                    await market_feeds_listener(self.bot, message)
 
                 # 🔧───────────────────────────────────────────────🔧
                 # 🔧    🩵 World Boss Spawn Listener

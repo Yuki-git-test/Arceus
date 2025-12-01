@@ -1,1 +1,2 @@
 from utils.logs.pretty_log import pretty_log
+from utils.functions.webhook_func import send_webhook

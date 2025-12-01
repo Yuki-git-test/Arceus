@@ -29,6 +29,7 @@ from utils.logs.server_log import send_log_to_server_log
 from utils.visuals.design_embed import design_embed
 from utils.visuals.pretty_defer import pretty_defer
 
+
 enable_debug(f"{__name__}.resolve_pokemon_input_func")
 
 
@@ -243,7 +244,7 @@ async def add_market_alert_func(
             )
 
             if interaction.user.id != KHY_USER_ID:
-                await send_log_to_server_log(guild, log_embed)
+                await send_log_to_server_log(bot, guild, log_embed)
 
         except Exception as e:
             pretty_log(

@@ -7,10 +7,12 @@ from Constants.vn_allstars_constants import (
     VN_ALLSTARS_TEXT_CHANNELS,
     VNA_SERVER_ID,
 )
+from utils.functions.webhook_func import send_webhook
 from utils.logs.pretty_log import pretty_log
 
 
 async def send_log_to_server_log(
+    bot: discord.Client,
     guild: discord.Guild,
     embed: discord.Embed,
     content: str = None,
@@ -25,6 +27,11 @@ async def send_log_to_server_log(
             pretty_log(f"Server log channel with ID {log_channel_id} not found.")
             return
 
-        await log_channel.send(content=content, embed=embed)
+        await send_webhook(
+            bot,
+            log_channel,
+            content=content,
+            embed=embed,
+        )
     except Exception as e:
         pretty_log(f"Failed to send log to server log channel: {e}")

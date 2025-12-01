@@ -95,7 +95,7 @@ async def remove_market_alert_func(
             ),
         )
         embed = design_embed(embed=embed, user=user)
-        await send_log_to_server_log(guild, embed)
+        await send_log_to_server_log(bot, guild, embed)
         # Update alerts used in db
         await update_alerts_used(bot, user_id, 0)
         return
@@ -186,4 +186,4 @@ async def remove_market_alert_func(
         )
         embed = design_embed(embed=embed, user=user, pokemon_name=target_name)
         if interaction.user.id != KHY_USER_ID:
-            await send_log_to_server_log(guild, embed)
+            await send_log_to_server_log(bot, guild, embed)

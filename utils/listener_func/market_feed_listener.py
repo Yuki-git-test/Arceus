@@ -10,6 +10,7 @@ from Constants.paldea_galar_dict import (
     rarity_meta,
 )
 from utils.cache.cache_list import _market_alert_index, market_alert_cache
+from utils.functions.webhook_func import send_webhook
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 from vn_allstars_constants import (
@@ -18,9 +19,9 @@ from vn_allstars_constants import (
     VN_ALLSTARS_TEXT_CHANNELS,
 )
 
-#enable_debug(f"{__name__}.market_snipe_handler")
-#enable_debug(f"{__name__}.handle_market_alert")
-#enable_debug(f"{__name__}.market_feeds_listener")
+# enable_debug(f"{__name__}.market_snipe_handler")
+# enable_debug(f"{__name__}.handle_market_alert")
+# enable_debug(f"{__name__}.market_feeds_listener")
 # 🟣────────────────────────────────────────────
 #  ⚡ Market Snipe ⚡
 # 🟣────────────────────────────────────────────
@@ -53,6 +54,7 @@ processed_snipe_ids = set()
 #           👂 Market Snipe Handler
 # 🟣────────────────────────────────────────────
 async def market_snipe_handler(
+    bot: discord.Client,
     poke_name: str,
     listed_price: int,
     id: str,
@@ -118,7 +120,13 @@ async def market_snipe_handler(
                 text="Kindly check market listing before purchasing.",
                 icon_url=guild.icon.url if guild else None,
             )
-            await snipe_channel.send(content=content, embed=new_embed)
+            # await snipe_channel.send(content=content, embed=new_embed)
+            await send_webhook(
+                bot=bot,
+                channel=snipe_channel,
+                content=content,
+                embed=new_embed,
+            )
 
             pretty_log(
                 "sent",
@@ -130,6 +138,7 @@ async def market_snipe_handler(
 #        👂 Market Alert Handler
 # 🟣────────────────────────────────────────────
 async def handle_market_alert(
+    bot: discord.Client,
     user_name: str,
     guild: discord.Guild,
     original_id: str,
@@ -188,7 +197,14 @@ async def handle_market_alert(
         content = f"<@&{role_id}> {poke_name.title()} listed for {VN_ALLSTARS_EMOJIS.vna_pokecoin} {listed_price:,} each!"
     else:
         content = f"{poke_name.title()} listed for {VN_ALLSTARS_EMOJIS.vna_pokecoin} {listed_price:,} each!"
-    await alert_channel.send(content=content, embed=alert_embed)
+    # await alert_channel.send(content=content, embed=alert_embed)
+    await send_webhook(
+        bot=bot,
+        channel=alert_channel,
+        content=content,
+        embed=alert_embed,
+    )
+
     pretty_log(
         "sent",
         f"Market alert sent in channel {alert_channel.name} for {user_name} {poke_name.title()} at {listed_price:,}",
@@ -198,7 +214,7 @@ async def handle_market_alert(
 # 🟣────────────────────────────────────────────
 #           👂 Market Feeds Listener
 # 🟣────────────────────────────────────────────
-async def market_feeds_listener(message: discord.Message):
+async def market_feeds_listener(bot: discord.Client, message: discord.Message):
     """
     Listens for market listings and detects potential snipes.
     """
@@ -276,6 +292,7 @@ async def market_feeds_listener(message: discord.Message):
                 processed_snipe_ids.add(original_id)
 
                 await market_snipe_handler(
+                    bot=bot,
                     poke_name=poke_name,
                     listed_price=listed_price,
                     id=original_id,
@@ -315,6 +332,7 @@ async def market_feeds_listener(message: discord.Message):
                         f"Triggering market alert for {user_name} on {poke_name} at price {listed_price}"
                     )
                     await handle_market_alert(
+                        bot=bot,
                         user_name=user_name,
                         guild=message.guild,
                         original_id=original_id,

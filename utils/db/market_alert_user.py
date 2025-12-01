@@ -2,6 +2,51 @@ import discord
 
 from utils.logs.pretty_log import pretty_log
 
+#vna_members_cache: dict[int, dict] = {}
+# Structure
+# user_id: {
+# "user_name": str,
+# "pokemeow_name": str,
+# "channel_id": int,
+# "perks": str,
+# "faction": str,
+# }
+
+# Fetch one member entry for a user
+async def fetch_vna_member(bot, user: discord.Member):
+    """
+    Returns the VNA member entry for a user from the database.
+    """
+    user_id = user.id
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT user_name, pokemeow_name, channel_id, perks, faction
+                FROM vna_members
+                WHERE user_id = $1
+                """,
+                user_id,
+            )
+            if row:
+                pretty_log(
+                    message=f"✅ Fetched VNA member entry for user: {user.name} (ID: {user_id})",
+                    tag="db",
+                )
+                return dict(row)
+            else:
+                pretty_log(
+                    message=f"ℹ️ No VNA member entry found for user: {user.name} (ID: {user_id})",
+                    tag="db",
+                )
+                return None
+    except Exception as e:
+        pretty_log(
+            message=f"❌ Failed to fetch VNA member entry for user: {user.name} (ID: {user_id}): {e}",
+            tag="error",
+            include_trace=True,
+        )
+        return None
 
 # Fetch one custom role entry for a user
 async def fetch_user_role(bot, user: discord.Member):

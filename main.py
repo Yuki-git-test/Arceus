@@ -9,8 +9,8 @@ from dotenv import load_dotenv
 from utils.cache.central_cache_loader import load_all_cache
 from utils.db.get_pg_pool import get_pg_pool
 from utils.listener_func.market_feed_listener import (
+    processed_market_feed_ids,
     processed_market_feed_message_ids,
-    processed_snipe_ids,
 )
 from utils.logs.pretty_log import pretty_log, set_arceus_bot
 
@@ -32,13 +32,13 @@ set_arceus_bot(bot=bot)
 # 🟣────────────────────────────────────────────
 @tasks.loop(hours=1)
 async def refresh_all_caches():
-    
+
     # Removed first-run skip logic so cache loads immediately
     await load_all_cache(bot)
 
     # Clear processed message ID sets to prevent memory bloat
     processed_market_feed_message_ids.clear()
-    processed_snipe_ids.clear()
+    processed_market_feed_ids.clear()
     pretty_log(message="✅ Cleared processed message ID caches", tag="cache")
 
 

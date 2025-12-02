@@ -19,9 +19,9 @@ from vn_allstars_constants import (
     VN_ALLSTARS_TEXT_CHANNELS,
 )
 
-# enable_debug(f"{__name__}.market_snipe_handler")
-# enable_debug(f"{__name__}.handle_market_alert")
-# enable_debug(f"{__name__}.market_feeds_listener")
+enable_debug(f"{__name__}.market_snipe_handler")
+enable_debug(f"{__name__}.handle_market_alert")
+enable_debug(f"{__name__}.market_feeds_listener")
 # 🟣────────────────────────────────────────────
 #  ⚡ Market Snipe ⚡
 # 🟣────────────────────────────────────────────
@@ -47,7 +47,7 @@ SNIPE_MAP = {
 SNIPE_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.snipe_channel
 
 processed_market_feed_message_ids = set()
-processed_snipe_ids = set()
+processed_market_feed_ids = set()
 
 
 # 🟣────────────────────────────────────────────
@@ -64,37 +64,54 @@ async def market_snipe_handler(
     guild: discord.Guild,
     embed: discord.Embed,
 ):
+    debug_log(f"Handling market snipe for {poke_name} with ID {id}")
     embed_color = embed.color.value
+    debug_log(f"Embed color: {embed_color}")
     rarity = get_rarity_by_color(embed_color)
+    debug_log(f"Initial rarity: {rarity}")
     display_pokemon_name = poke_name.title()
 
     if rarity == "unknown":
+        debug_log(f"Rarity unknown, checking name and author for special cases.")
         if (
             "shiny gigantamax-" in poke_name.lower()
             or "shiny eternamax-" in poke_name.lower()
             or "shiny mega " in poke_name.lower()
         ):
             rarity = "shiny"
+            debug_log(f"Set rarity to shiny due to name.")
         elif "mega " in poke_name.lower():
             rarity = "mega"
+            debug_log(f"Set rarity to mega due to name.")
         elif "gigantamax-" in poke_name.lower() or "eternamax-" in poke_name.lower():
             rarity = "gmax"
+            debug_log(f"Set rarity to gmax due to name.")
         elif embed.author and embed.author.icon_url == Legendary_icon_url:
             rarity = "legendary"
+            debug_log(f"Set rarity to legendary due to author icon.")
 
+    debug_log(f"Final rarity: {rarity}")
     ping_role_id = SNIPE_MAP.get(rarity, {}).get("role")
+    debug_log(f"Ping role ID: {ping_role_id}")
     if ping_role_id:
         snipe_channel = guild.get_channel(SNIPE_CHANNEL_ID)
+        debug_log(f"Snipe channel: {snipe_channel}")
         if snipe_channel:
             content = f"<@&{ping_role_id}> {display_pokemon_name} listed for {VN_ALLSTARS_EMOJIS.vna_pokecoin} {listed_price:,}!"
+            debug_log(f"Snipe content: {content}")
 
             # 🧾 Build embed
             new_embed = discord.Embed(color=embed.color or 0x0855FB)
+            debug_log(f"Building new embed for snipe notification.")
             if embed.thumbnail:
                 new_embed.set_thumbnail(url=embed.thumbnail.url)
+                debug_log(f"Set thumbnail: {embed.thumbnail.url}")
             new_embed.set_author(
                 name=embed.author.name if embed.author else "",
                 icon_url=embed.author.icon_url if embed.author else None,
+            )
+            debug_log(
+                f"Set author: {embed.author.name if embed.author else ''}, icon: {embed.author.icon_url if embed.author else None}"
             )
             new_embed.add_field(name="Buy Command", value=f";m b {id}", inline=False)
             new_embed.add_field(name="ID", value=id, inline=True)
@@ -120,13 +137,21 @@ async def market_snipe_handler(
                 text="Kindly check market listing before purchasing.",
                 icon_url=guild.icon.url if guild else None,
             )
-            # await snipe_channel.send(content=content, embed=new_embed)
-            await send_webhook(
-                bot=bot,
-                channel=snipe_channel,
-                content=content,
-                embed=new_embed,
+            debug_log(
+                f"Set footer: Kindly check market listing before purchasing. Icon: {guild.icon.url if guild else None}"
             )
+            # await snipe_channel.send(content=content, embed=new_embed)
+            debug_log(f"Sending webhook for snipe notification.")
+            try:
+                await send_webhook(
+                    bot=bot,
+                    channel=snipe_channel,
+                    content=content,
+                    embed=new_embed,
+                )
+            except Exception as e:
+                debug_log(f"Exception in send_webhook for snipe: {e}", highlight=True)
+                return
 
             pretty_log(
                 "sent",
@@ -280,28 +305,32 @@ async def market_feeds_listener(bot: discord.Client, message: discord.Message):
             embed_color = embed.color.value
             display_pokemon_name = poke_name.title()
 
+            if original_id in processed_market_feed_ids:
+                debug_log(f"Market Feed ID {original_id} already processed")
+                continue
+            debug_log(f"Market Feed ID {original_id}")
+            processed_market_feed_ids.add(original_id)
+
             # If Listed Price is 30% or more below Lowest Market, it's a snipe
             if lowest_market > 0 and listed_price <= lowest_market * 0.7:
                 debug_log(
                     f"Snipe detected for {poke_name} at price {listed_price} (lowest market: {lowest_market})"
                 )
-                if original_id in processed_snipe_ids:
-                    debug_log(f"Snipe ID {original_id} already processed")
-                    continue
 
-                processed_snipe_ids.add(original_id)
-
-                await market_snipe_handler(
-                    bot=bot,
-                    poke_name=poke_name,
-                    listed_price=listed_price,
-                    id=original_id,
-                    lowest_market=lowest_market,
-                    amount=int(amount),
-                    listing_seen=listing_seen,
-                    guild=message.guild,
-                    embed=embed,
-                )
+                try:
+                    await market_snipe_handler(
+                        bot=bot,
+                        poke_name=poke_name,
+                        listed_price=listed_price,
+                        id=original_id,
+                        lowest_market=lowest_market,
+                        amount=int(amount),
+                        listing_seen=listing_seen,
+                        guild=message.guild,
+                        embed=embed,
+                    )
+                except Exception as e:
+                    debug_log(f"Exception in market_snipe_handler: {e}", highlight=True)
 
             # Check for market alerts
             if not market_alert_cache:
@@ -317,9 +346,13 @@ async def market_feeds_listener(bot: discord.Client, message: discord.Message):
             debug_log(f"Alerts to check: {alerts_to_check}")
 
             for alert in alerts_to_check:
+                if not isinstance(alert, dict):
+                    debug_log(f"Skipping alert (not a dict): {alert}")
+                    continue
                 debug_log(
                     f"Checking alert for user {alert['user_name']} and pokemon {alert['pokemon']}"
                 )
+                debug_log(f"Alert type: {type(alert)}, value: {alert}")
                 if (
                     alert["pokemon"].lower() == poke_name.lower()
                     and listed_price <= alert["max_price"]

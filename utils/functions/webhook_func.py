@@ -39,7 +39,8 @@ async def send_webhook(
     channel_id = channel.id
     key = (bot_id, channel_id)
     webhook_url_row = webhook_url_cache.get(key)
-    if not webhook_url_row:
+    # Handle legacy cache value (string) and correct dict structure
+    if webhook_url_row is None:
         channel_name = channel.name
         if "snipe" in channel_name.lower():
             webhook_name = "Arceus Market Snipe 🛒"
@@ -60,6 +61,13 @@ async def send_webhook(
         webhook_url_cache[key] = {
             "channel_name": channel_name,
             "url": webhook_url,
+        }
+        webhook_url_row = webhook_url_cache[key]
+    # If cache value is a string (legacy), convert to dict
+    elif isinstance(webhook_url_row, str):
+        webhook_url_cache[key] = {
+            "channel_name": channel.name,
+            "url": webhook_url_row,
         }
         webhook_url_row = webhook_url_cache[key]
 

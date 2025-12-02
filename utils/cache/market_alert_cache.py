@@ -39,6 +39,14 @@ async def load_market_alert_cache(bot: discord.Client):
             message=f"✅ Loaded {len(market_alert_cache)} market alerts into cache.",
             tag="cache",
         )
+        pretty_log(
+            message=f"Market Alert Cache Contents: {market_alert_cache}",
+            tag="cache",
+        )
+        pretty_log(
+                message=f"_market_alert_index Contents: {_market_alert_index}",
+                tag="cache",
+            )
         if len(market_alert_cache) == 0:
             pretty_log(
                 message="⚠️ Market alert cache is empty after loading.",

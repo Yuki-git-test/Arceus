@@ -22,7 +22,7 @@ _market_alert_index: dict[tuple[str, int], dict] = (
 #         "role_id": 192837465
 #     },
 
-webhook_url_cache: dict[tuple[int, int], str] = {}
+webhook_url_cache: dict[tuple[int, int], dict[str, str]] = {}
 #     ...
 #
 # }

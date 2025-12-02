@@ -206,7 +206,7 @@ async def add_market_alert_func(
                 description=(
                     f"**Alerts:** {current_alerts_used}/{current_max_alerts}\n"
                     f"**Pokemon:** {target_name.title()} #{dex_number}\n"
-                    f"**Max Price:** {VN_ALLSTARS_EMOJIS.vna_pokecoin} {max_price}\n"
+                    f"**Max Price:** {VN_ALLSTARS_EMOJIS.vna_pokecoin} {max_price:,}\n"
                     f"**Channel:** {channel.mention}\n"
                     f"**Role:** {role.mention if role else 'None'}\n\n"
                 ),
@@ -234,7 +234,7 @@ async def add_market_alert_func(
                     f"**User:** {user.mention}\n"
                     f"**Alerts:** {current_alerts_used}/{current_max_alerts}\n"
                     f"**Pokemon:** {target_name.title()} #{dex_number}\n"
-                    f"**Max Price:** {VN_ALLSTARS_EMOJIS.vna_pokecoin} {max_price}\n"
+                    f"**Max Price:** {VN_ALLSTARS_EMOJIS.vna_pokecoin} {max_price:,}\n"
                     f"**Channel:** {channel.mention}\n"
                     f"**Role:** {role.mention if role else 'None'}\n"
                 ),

@@ -154,7 +154,7 @@ async def remove_market_alert_func(
         desc = (
             f"**Alerts Used:** {new_alerts_used}/{max_alerts}\n"
             f"**Pokemon:** {target_name.title()} #{dex_number}\n"
-            f"**Max Price:** {VN_ALLSTARS_EMOJIS.vna_pokecoin} {max_price}\n"
+            f"**Max Price:** {VN_ALLSTARS_EMOJIS.vna_pokecoin} {max_price:,}\n"
             f"**Channel:** <#{channel_id}>\n"
             f"**Role:** {role_str}\n"
         )
@@ -175,7 +175,7 @@ async def remove_market_alert_func(
             f"**User:** {user.mention}\n"
             f"**Alerts Used:** {new_alerts_used}/{max_alerts}\n"
             f"**Pokemon:** {target_name.title()} #{dex_number}\n"
-            f"**Max Price:** {VN_ALLSTARS_EMOJIS.vna_pokecoin} {max_price}\n"
+            f"**Max Price:** {VN_ALLSTARS_EMOJIS.vna_pokecoin} {max_price:,}\n"
             f"**Channel:** <#{channel_id}>\n"
             f"**Role:** {role_str}\n"
         )

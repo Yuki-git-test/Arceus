@@ -19,9 +19,9 @@ from vn_allstars_constants import (
     VN_ALLSTARS_TEXT_CHANNELS,
 )
 
-enable_debug(f"{__name__}.market_snipe_handler")
-enable_debug(f"{__name__}.handle_market_alert")
-enable_debug(f"{__name__}.market_feeds_listener")
+#enable_debug(f"{__name__}.market_snipe_handler")
+#enable_debug(f"{__name__}.handle_market_alert")
+#enable_debug(f"{__name__}.market_feeds_listener")
 # 🟣────────────────────────────────────────────
 #  ⚡ Market Snipe ⚡
 # 🟣────────────────────────────────────────────
@@ -92,71 +92,76 @@ async def market_snipe_handler(
 
     debug_log(f"Final rarity: {rarity}")
     ping_role_id = SNIPE_MAP.get(rarity, {}).get("role")
-    debug_log(f"Ping role ID: {ping_role_id}")
-    if ping_role_id:
-        snipe_channel = guild.get_channel(SNIPE_CHANNEL_ID)
-        debug_log(f"Snipe channel: {snipe_channel}")
-        if snipe_channel:
-            content = f"<@&{ping_role_id}> {display_pokemon_name} listed for {VN_ALLSTARS_EMOJIS.vna_pokecoin} {listed_price:,}!"
-            debug_log(f"Snipe content: {content}")
+    ping_role_line = f"<@&{ping_role_id}> " if ping_role_id else ""
+    if rarity == "event_exclusive":
+        if "shiny" in poke_name.lower():
+            shiny_ping_role_id = SNIPE_MAP.get("shiny", {}).get("role")
+            ping_role_line += f"<@&{shiny_ping_role_id}> "
 
-            # 🧾 Build embed
-            new_embed = discord.Embed(color=embed.color or 0x0855FB)
-            debug_log(f"Building new embed for snipe notification.")
-            if embed.thumbnail:
-                new_embed.set_thumbnail(url=embed.thumbnail.url)
-                debug_log(f"Set thumbnail: {embed.thumbnail.url}")
-            new_embed.set_author(
-                name=embed.author.name if embed.author else "",
-                icon_url=embed.author.icon_url if embed.author else None,
-            )
-            debug_log(
-                f"Set author: {embed.author.name if embed.author else ''}, icon: {embed.author.icon_url if embed.author else None}"
-            )
-            new_embed.add_field(name="Buy Command", value=f";m b {id}", inline=False)
-            new_embed.add_field(name="ID", value=id, inline=True)
-            new_embed.add_field(
-                name="Listed Price",
-                value=f"{VN_ALLSTARS_EMOJIS.vna_pokecoin} {listed_price:,}",
-                inline=True,
-            )
-            new_embed.add_field(name="Amount", value=str(amount), inline=True)
-            new_embed.add_field(
-                name="Lowest Market",
-                value=f"{VN_ALLSTARS_EMOJIS.vna_pokecoin} {lowest_market:,}",
-                inline=True,
-            )
+    debug_log(f"Ping role line: {ping_role_line}")
 
-            new_embed.add_field(
-                name="Listing Seen",
-                value=listing_seen,
-                inline=True,
-            )
+    snipe_channel = guild.get_channel(SNIPE_CHANNEL_ID)
+    if snipe_channel:
+        content = f"{ping_role_line} {display_pokemon_name} listed for {VN_ALLSTARS_EMOJIS.vna_pokecoin} {listed_price:,}!"
+        debug_log(f"Snipe content: {content}")
 
-            new_embed.set_footer(
-                text="Kindly check market listing before purchasing.",
-                icon_url=guild.icon.url if guild else None,
-            )
-            debug_log(
-                f"Set footer: Kindly check market listing before purchasing. Icon: {guild.icon.url if guild else None}"
-            )
-            # await snipe_channel.send(content=content, embed=new_embed)
-            debug_log(f"Sending webhook for snipe notification.")
-            try:
-                await send_webhook(
-                    bot=bot,
-                    channel=snipe_channel,
-                    content=content,
-                    embed=new_embed,
-                )
-            except Exception as e:
-                debug_log(f"Exception in send_webhook for snipe: {e}", highlight=True)
-                return
+        # 🧾 Build embed
+        new_embed = discord.Embed(color=embed.color or 0x0855FB)
+        debug_log(f"Building new embed for snipe notification.")
+        if embed.thumbnail:
+            new_embed.set_thumbnail(url=embed.thumbnail.url)
+            debug_log(f"Set thumbnail: {embed.thumbnail.url}")
+        new_embed.set_author(
+            name=embed.author.name if embed.author else "",
+            icon_url=embed.author.icon_url if embed.author else None,
+        )
+        debug_log(
+            f"Set author: {embed.author.name if embed.author else ''}, icon: {embed.author.icon_url if embed.author else None}"
+        )
+        new_embed.add_field(name="Buy Command", value=f";m b {id}", inline=False)
+        new_embed.add_field(name="ID", value=id, inline=True)
+        new_embed.add_field(
+            name="Listed Price",
+            value=f"{VN_ALLSTARS_EMOJIS.vna_pokecoin} {listed_price:,}",
+            inline=True,
+        )
+        new_embed.add_field(name="Amount", value=str(amount), inline=True)
+        new_embed.add_field(
+            name="Lowest Market",
+            value=f"{VN_ALLSTARS_EMOJIS.vna_pokecoin} {lowest_market:,}",
+            inline=True,
+        )
 
-            pretty_log(
-                "sent",
-                f"Snipe notification sent in channel {snipe_channel.name} for {display_pokemon_name} at {listed_price:,}",
+        new_embed.add_field(
+            name="Listing Seen",
+            value=listing_seen,
+            inline=True,
+        )
+
+        new_embed.set_footer(
+            text="Kindly check market listing before purchasing.",
+            icon_url=guild.icon.url if guild else None,
+        )
+        debug_log(
+            f"Set footer: Kindly check market listing before purchasing. Icon: {guild.icon.url if guild else None}"
+        )
+        # await snipe_channel.send(content=content, embed=new_embed)
+        debug_log(f"Sending webhook for snipe notification.")
+        try:
+            await send_webhook(
+                bot=bot,
+                channel=snipe_channel,
+                content=content,
+                embed=new_embed,
             )
+        except Exception as e:
+            debug_log(f"Exception in send_webhook for snipe: {e}", highlight=True)
+            return
+
+        pretty_log(
+            "sent",
+            f"Snipe notification sent in channel {snipe_channel.name} for {display_pokemon_name} at {listed_price:,}",
+        )
 
 
 # 🟣────────────────────────────────────────────

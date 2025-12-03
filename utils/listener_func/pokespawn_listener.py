@@ -5,6 +5,7 @@ import discord
 from Constants.paldea_galar_dict import *
 from Constants.variables import PublicChannels, Roles
 from utils.logs.pretty_log import pretty_log
+from utils.functions.webhook_func import send_webhook
 
 # -------------------- Constants --------------------
 AUTO_SPAWN_ROLE_ID = Roles.Spawn_Hunter
@@ -134,7 +135,12 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
     mention_role = f"<@&{AUTO_SPAWN_RARE_ROLE_ID}>"
     content = f"{mention_role} A wild {shiny_text}{rarity_info.get('emoji', '❓')} {pokemon_name} has appeared!"
 
-    await message.channel.send(content)
+    #await message.channel.send(content)
+    await send_webhook(
+        bot,
+        content=content,
+        embed=None,
+    )
     pretty_log(
         message=f"Rare spawn ping sent: {shiny_text}{log_pokemon_name} in #{message.channel.name}",
         tag="sent",
@@ -152,4 +158,9 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
 
     rare_spawn_channel = message.guild.get_channel(PublicChannels.Rare_Spawns)
     if rare_spawn_channel:
-        await rare_spawn_channel.send(embed=rare_spawn_embed)
+        #await rare_spawn_channel.send(embed=rare_spawn_embed)
+        await send_webhook(
+            bot,
+            content="",
+            embed=rare_spawn_embed,
+        )

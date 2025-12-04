@@ -4,7 +4,7 @@ Legendary_icon_url = (
 )
 rarity_meta = {
     "common": {
-        "color": 810198,
+        "color": 546299,
         "emoji": Emojis.common,
     },
     "uncommon": {

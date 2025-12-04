@@ -161,6 +161,6 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
         #await rare_spawn_channel.send(embed=rare_spawn_embed)
         await send_webhook(
             bot,
-            content="",
             embed=rare_spawn_embed,
+            channel=rare_spawn_channel,
         )

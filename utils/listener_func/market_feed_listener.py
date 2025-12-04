@@ -8,6 +8,7 @@ from Constants.paldea_galar_dict import (
     Legendary_icon_url,
     get_rarity_by_color,
     rarity_meta,
+    icon_url_map,
 )
 from utils.cache.cache_list import _market_alert_index, market_alert_cache
 from utils.functions.webhook_func import send_webhook
@@ -19,9 +20,9 @@ from vn_allstars_constants import (
     VN_ALLSTARS_TEXT_CHANNELS,
 )
 
-#enable_debug(f"{__name__}.market_snipe_handler")
-#enable_debug(f"{__name__}.handle_market_alert")
-#enable_debug(f"{__name__}.market_feeds_listener")
+# enable_debug(f"{__name__}.market_snipe_handler")
+# enable_debug(f"{__name__}.handle_market_alert")
+# enable_debug(f"{__name__}.market_feeds_listener")
 # 🟣────────────────────────────────────────────
 #  ⚡ Market Snipe ⚡
 # 🟣────────────────────────────────────────────
@@ -94,9 +95,16 @@ async def market_snipe_handler(
     ping_role_id = SNIPE_MAP.get(rarity, {}).get("role")
     ping_role_line = f"<@&{ping_role_id}> " if ping_role_id else ""
     if rarity == "event_exclusive":
+        icon_url = embed.author.icon_url
         if "shiny" in poke_name.lower():
             shiny_ping_role_id = SNIPE_MAP.get("shiny", {}).get("role")
             ping_role_line += f"<@&{shiny_ping_role_id}> "
+        else:
+            second_snipe_rarity = icon_url_map.get(icon_url)
+            second_rarity_role_id = SNIPE_MAP.get(second_snipe_rarity, {}).get("role")
+            if second_rarity_role_id:
+                ping_role_line += f"<@&{second_rarity_role_id}> "
+            pass
 
     debug_log(f"Ping role line: {ping_role_line}")
 

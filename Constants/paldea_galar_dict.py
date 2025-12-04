@@ -37,7 +37,32 @@ rarity_meta = {
     },
     "event_exclusive": {"color": 15345163},
 }
-
+common_icon_url = (
+    "https://cdn.discordapp.com/emojis/834533715295600690.webp?size=96&quality=lossless"
+)
+uncommon_icon_url = (
+    "https://cdn.discordapp.com/emojis/834534158285537300.webp?size=96&quality=lossless"
+)
+rare_icon_url = (
+    "https://cdn.discordapp.com/emojis/834534205794287696.webp?size=96&quality=lossless"
+)
+superrare_icon_url = (
+    "https://cdn.discordapp.com/emojis/834534205701881866.webp?size=96&quality=lossless"
+)
+Legendary_icon_url = (
+    "https://cdn.discordapp.com/emojis/834534206007803984.webp?size=96&quality=lossless"
+)
+shiny_icon_url = (
+    "https://cdn.discordapp.com/emojis/834534205651419137.webp?size=96&quality=lossless"
+)
+icon_url_map = {
+    common_icon_url: "common",
+    uncommon_icon_url: "uncommon",
+    rare_icon_url: "rare",
+    superrare_icon_url: "superrare",
+    Legendary_icon_url: "legendary",
+    shiny_icon_url: "shiny",
+}
 
 paldea_galar_dict = {
     888: "Zacian",

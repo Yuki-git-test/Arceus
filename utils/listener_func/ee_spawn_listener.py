@@ -102,7 +102,8 @@ async def check_cc_bump_reminder(bot: commands.Bot, message: discord.Message):
         boss_key = "eternamax-eternatus"
         votes_left = embed_description.strip()
         last_seen_votes[boss_key] = votes_left
-        if votes_left <= 100 and boss_key not in near_spawn_alert_cache:
+        votes_left_int = int(votes_left.replace(",", ""))  # Handles numbers with commas
+        if votes_left_int <= 100 and boss_key not in near_spawn_alert_cache:
             near_spawn_alert_cache.add(boss_key)
             save_vote_cache()  # save after sending alert
             vna_guild = bot.get_guild(VNA_SERVER_ID)
@@ -118,7 +119,7 @@ async def check_cc_bump_reminder(bot: commands.Bot, message: discord.Message):
                 "ready",
                 f"Sent near-spawn alert for {boss_key}: {votes_left} votes left from cc  bump reminder",
             )
-    elif embed_title == "EE Spawned":
+    elif "EE Spawned" in embed_title:
         # Check if descroption has timestamp for spawned EE
         timestamp = embed_description.strip()
         await auto_wb_ping(
@@ -144,6 +145,14 @@ async def send_cc_bump_reminder(
         description = votes_left
         color = ARCEUS_EMBED_COLOR
 
+        bump_embed = discord.Embed(title=title, description=description, color=color)
+
+        await cc_bump_channel.send(embed=bump_embed)
+        pretty_log(
+            "success",
+            f"Sent CC bump reminder for ee votes left in {cc_bump_channel.name}",
+        )
+
     else:
         description = None
         if timestamp:
@@ -155,13 +164,25 @@ async def send_cc_bump_reminder(
             title = "EE Spawned"
             color = REG_EE_COLOR
 
-    bump_embed = discord.Embed(title=title, description=description, color=color)
+        # Cooldown check
+        cooldown_time = 300  # 5 minutes
+        now = time.time()
+        last_time = wb_shared_cooldowns.get(VNA_SERVER_ID, 0)
+        elapsed = now - last_time
+        if elapsed < cooldown_time:
+            pretty_log(
+                "info",
+                f"CC bump reminder blocked by shared cooldown ({int(cooldown_time - elapsed)}s remaining)",
+            )
+            return
 
-    await cc_bump_channel.send(embed=bump_embed)
-    pretty_log(
-        "success",
-        f"Sent CC bump reminder in {cc_bump_channel.name}",
-    )
+        bump_embed = discord.Embed(title=title, description=description, color=color)
+
+        await cc_bump_channel.send(embed=bump_embed)
+        pretty_log(
+            "success",
+            f"Sent CC bump reminder for ee spawn in {cc_bump_channel.name}",
+        )
 
 
 # -------------------- EE Near Spawn Checker --------------------

@@ -9,6 +9,7 @@ from Constants.paldea_galar_dict import (
     get_rarity_by_color,
     rarity_meta,
     icon_url_map,
+    paldean_mons
 )
 from utils.cache.cache_list import _market_alert_index, market_alert_cache
 from utils.functions.webhook_func import send_webhook
@@ -43,6 +44,7 @@ SNIPE_MAP = {
     "event_exclusive": {"role": VN_ALLSTARS_ROLES.eventexclusives_snipe},
     "gmax": {"role": VN_ALLSTARS_ROLES.gmax_snipe},
     "mega": {"role": VN_ALLSTARS_ROLES.mega_snipe},
+    "paldean": {"role": VN_ALLSTARS_ROLES.paldean_snipe},
 }
 
 SNIPE_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.snipe_channel
@@ -99,12 +101,16 @@ async def market_snipe_handler(
         if "shiny" in poke_name.lower():
             shiny_ping_role_id = SNIPE_MAP.get("shiny", {}).get("role")
             ping_role_line += f"<@&{shiny_ping_role_id}> "
+        elif poke_name.title() in paldean_mons:
+            second_snipe_rarity_role_id = VN_ALLSTARS_ROLES.paldean_snipe
+            ping_role_line += f"<@&{second_snipe_rarity_role_id}> "
+
         else:
             second_snipe_rarity = icon_url_map.get(icon_url)
             second_rarity_role_id = SNIPE_MAP.get(second_snipe_rarity, {}).get("role")
             if second_rarity_role_id:
                 ping_role_line += f"<@&{second_rarity_role_id}> "
-            pass
+
 
     debug_log(f"Ping role line: {ping_role_line}")
 

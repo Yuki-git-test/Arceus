@@ -482,7 +482,7 @@ class VN_ALLSTARS_CATEGORIES:
 #       VN_ALLSTARS_ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class VN_ALLSTARS_ROLES:
-
+    paldean_snipe = 1446581017501503628
     the_hopeless_romantic = 1312302066063900703
     owner = 909880769860759613
     panda = 1355260919675879434

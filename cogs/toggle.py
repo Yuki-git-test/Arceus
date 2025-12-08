@@ -42,6 +42,7 @@ class Toggle_Group_Command(commands.Cog):
             command_func=alert_settings_func,
             slash_cmd_name=slash_cmd_name,
         )
-
+        
+    toggle_alerts.extras = {"category": "Public"}
 async def setup(bot: commands.Bot):
     await bot.add_cog(Toggle_Group_Command(bot))

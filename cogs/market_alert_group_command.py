@@ -60,7 +60,7 @@ class Market_Alert_Group_Command(commands.Cog):
             channel=channel,
             ping_role=ping_role,
         )
-
+    market_alert_add.extras = {"category": "Public"}
     # 🍭──────────────────────────────
     #   🎀 /market-alert mine
     # 🍭──────────────────────────────
@@ -76,7 +76,7 @@ class Market_Alert_Group_Command(commands.Cog):
             slash_cmd_name=slash_cmd_name,
             command_func=mine_market_alert_func,
         )
-
+    market_alert_mine.extras = {"category": "Public"}
     # 🍭──────────────────────────────
     #   🎀 /market-alert remove
     # 🍭──────────────────────────────
@@ -101,7 +101,7 @@ class Market_Alert_Group_Command(commands.Cog):
             slash_cmd_name=slash_cmd_name,
             pokemon=pokemon,
         )
-
+    market_alert_remove.extras = {"category": "Public"}
     # 🍭──────────────────────────────
     #   🎀 /market-alert update
     # 🍭──────────────────────────────
@@ -136,6 +136,6 @@ class Market_Alert_Group_Command(commands.Cog):
             ping_role=ping_role,
         )
 
-
+    market_alert_update.extras = {"category": "Public"}
 async def setup(bot: commands.Bot):
     await bot.add_cog(Market_Alert_Group_Command(bot))

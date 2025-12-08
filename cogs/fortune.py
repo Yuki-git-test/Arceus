@@ -150,7 +150,8 @@ class Fortune(commands.Cog):
 
         if user_id != OWNER_ID:
             self.used_fortunes[user_id] = today
-
+            
+    fortune.extras = {"category": "Public"}
 
 # Extension loader
 async def setup(bot):

@@ -21,7 +21,8 @@ Reg_EE = "https://play.pokemonshowdown.com/sprites/xyani/eternatus-eternamax.gif
 Shiny_EE = "https://play.pokemonshowdown.com/sprites/ani-shiny/eternatus-eternamax.gif"
 REG_EE_COLOR = 4077189
 SHINY_EE_COLOR = 16561340
-
+from utils.logs.debug_log import debug_log, enable_debug
+enable_debug(f"{__name__}.check_cc_bump_reminder")
 # ⏳ Shared cooldowns across commands/listeners
 wb_shared_cooldowns: dict[int, float] = {}  # {guild_id: last_post_time}
 # -------------------- Persistent cache --------------------
@@ -41,11 +42,13 @@ def extract_battle_begins_time_from_wb_command(description: str):
         return match.group(1).strip()
     return None
 
+
 def extract_timestamp_from_wb_spawn_command(description: str):
     match = re.search(r"Challenge starts <t:(\d+):R>", description)
     if match:
         return match.group(1).strip()
     return None
+
 
 def load_vote_cache():
     global last_seen_votes, near_spawn_alert_cache
@@ -87,30 +90,42 @@ def save_vote_cache():
 
 
 async def check_cc_bump_reminder(bot: commands.Bot, message: discord.Message):
+    debug_log(
+        f"[check_cc_bump_reminder] Called for message.id: {getattr(message, 'id', None)} | bot: {getattr(bot, 'user', None)}"
+    )
     embed = message.embeds[0] if message.embeds else None
+    debug_log(f"[check_cc_bump_reminder] Embed: {embed}")
     if not embed:
+        debug_log("[check_cc_bump_reminder] No embed found, exiting.")
         return
 
-    # Return if the bot sent the message
     if message.author.id == bot.user.id:
+        debug_log("[check_cc_bump_reminder] Message sent by bot, exiting.")
         return
 
     embed_title = embed.title or ""
     embed_description = embed.description or ""
+    debug_log(f"[check_cc_bump_reminder] Embed title: {embed_title}")
+    debug_log(f"[check_cc_bump_reminder] Embed description: {embed_description}")
 
     if embed_title == "Votes left until EE Spawn":
         boss_key = "eternamax-eternatus"
         votes_left = embed_description.strip()
+        debug_log(f"[check_cc_bump_reminder] Votes left: {votes_left}")
         last_seen_votes[boss_key] = votes_left
         votes_left_int = int(votes_left.replace(",", ""))  # Handles numbers with commas
+        debug_log(f"[check_cc_bump_reminder] votes_left_int: {votes_left_int}")
         if votes_left_int <= 100 and boss_key not in near_spawn_alert_cache:
+            debug_log(f"[check_cc_bump_reminder] Alert condition met for {boss_key}.")
             near_spawn_alert_cache.add(boss_key)
             save_vote_cache()  # save after sending alert
             vna_guild = bot.get_guild(VNA_SERVER_ID)
+            debug_log(f"[check_cc_bump_reminder] vna_guild: {vna_guild}")
             channel_id = VN_ALLSTARS_TEXT_CHANNELS.off_topic
             ee_ping_role_id = VN_ALLSTARS_ROLES.ee_spawn_ping
 
             channel = vna_guild.get_channel(channel_id) or Object(id=channel_id)
+            debug_log(f"[check_cc_bump_reminder] Sending alert to channel: {channel}")
             await channel.send(
                 f"<@&{ee_ping_role_id}> ⚠️ Only {votes_left} votes left until Eternamax-Eternatus spawns!"
             )
@@ -119,9 +134,15 @@ async def check_cc_bump_reminder(bot: commands.Bot, message: discord.Message):
                 "ready",
                 f"Sent near-spawn alert for {boss_key}: {votes_left} votes left from cc  bump reminder",
             )
+        else:
+            debug_log(
+                f"[check_cc_bump_reminder] Alert condition not met or already alerted for {boss_key}."
+            )
     elif "EE Spawned" in embed_title:
-        # Check if descroption has timestamp for spawned EE
         timestamp = embed_description.strip()
+        debug_log(
+            f"[check_cc_bump_reminder] EE Spawned detected, timestamp: {timestamp}"
+        )
         await auto_wb_ping(
             bot=bot,
             variant="shiny" if "Shiny" in embed_title else "regular",

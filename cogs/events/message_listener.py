@@ -70,6 +70,11 @@ class MessageCreateListener(commands.Cog):
             # ————————————————————————————————
             if guild.id == CC_GUILD_ID:
                 if message.channel.id == CC_BUMP_CHANNEL_ID:
+                    pretty_log(
+                        "info",
+                        f"Detected message in CC bump channel: Message ID {message.id}",
+                        label="CC Bump Reminder Listener",
+                    )
                     await check_cc_bump_reminder(self.bot, message)
 
             # ————————————————————————————————

@@ -14,10 +14,14 @@ from utils.listener_func.ee_spawn_listener import (
     extract_boss_from_wb_command_embed,
     extract_boss_from_wb_spawn_command,
 )
+from utils.listener_func.faction_ball_listener import extract_faction_ball_from_fa
 from utils.listener_func.market_feed_listener import market_feeds_listener
+from utils.listener_func.pokemon_spawn_listener import pokemon_spawn_listener
 from utils.listener_func.pokespawn_listener import as_spawn_ping
 from utils.logs.pretty_log import pretty_log
 from vn_allstars_constants import VN_ALLSTARS_TEXT_CHANNELS
+
+FACTIONS = ["aqua", "flare", "galactic", "magma", "plasma", "rocket", "skull", "yell"]
 
 MARKET_FEED_CHANNEL_IDS = {
     VN_ALLSTARS_TEXT_CHANNELS.c_u_r_s_feed,
@@ -60,6 +64,7 @@ class MessageCreateListener(commands.Cog):
             if not guild:
                 return  # Skip DMs
 
+            content = message.content
             # ————————————————————————————————
             # 🩵 CC Bump Reminder Listener
             # ————————————————————————————————
@@ -71,6 +76,14 @@ class MessageCreateListener(commands.Cog):
             # 🩵 VNA message logic
             # ————————————————————————————————
             if guild.id == Server.VNA_ID:
+                first_embed = message.embeds[0] if message.embeds else None
+                first_embed_description = first_embed.description if first_embed else ""
+
+                # ————————————————————————————————
+                # 🩵 VNA Pokemon Spawn
+                # ————————————————————————————————
+                if content and "found a wild" in content.lower():
+                    await pokemon_spawn_listener(self.bot, message)
                 # ————————————————————————————————
                 # 🩵 VNA Autospawn
                 # ————————————————————————————————
@@ -128,6 +141,17 @@ class MessageCreateListener(commands.Cog):
                             label="EE Near Spawn Alert Checker",
                         )
                         await check_ee_near_spawn_alert(bot=self.bot, message=message)
+
+                # 🔧───────────────────────────────────────────────🔧
+                # 🔧 🩵 Faction Ball Listener from ;fa
+                # 🔧───────────────────────────────────────────────🔧
+                if first_embed:
+                    if first_embed.author and any(
+                        f in first_embed.author.name.lower() for f in FACTIONS
+                    ):
+                        await extract_faction_ball_from_fa(
+                            bot=self.bot, message=message
+                        )
 
         except Exception as e:
             # 🛑────────────────────────────────────────────

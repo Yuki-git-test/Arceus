@@ -31,6 +31,7 @@ TAGS = {
     "debug": "🐛 DEBUG",
     "success": "✅ SUCCESS",
     "cache": "🗄️ CACHE",
+    "schedule": "⏰ SCHEDULE",
 }
 
 # -------------------- 🎨 Arceus ANSI Colors --------------------

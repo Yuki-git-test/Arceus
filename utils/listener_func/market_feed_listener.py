@@ -7,11 +7,16 @@ import discord
 from Constants.paldea_galar_dict import (
     Legendary_icon_url,
     get_rarity_by_color,
-    rarity_meta,
     icon_url_map,
-    paldean_mons
+    paldean_mons,
+    rarity_meta,
 )
-from utils.cache.cache_list import _market_alert_index, market_alert_cache
+from utils.cache.cache_list import (
+    _market_alert_index,
+    market_alert_cache,
+    processed_market_feed_ids,
+    processed_market_feed_message_ids,
+)
 from utils.functions.webhook_func import send_webhook
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
@@ -48,9 +53,6 @@ SNIPE_MAP = {
 }
 
 SNIPE_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.snipe_channel
-
-processed_market_feed_message_ids = set()
-processed_market_feed_ids = set()
 
 
 # 🟣────────────────────────────────────────────
@@ -110,7 +112,6 @@ async def market_snipe_handler(
             second_rarity_role_id = SNIPE_MAP.get(second_snipe_rarity, {}).get("role")
             if second_rarity_role_id:
                 ping_role_line += f"<@&{second_rarity_role_id}> "
-
 
     debug_log(f"Ping role line: {ping_role_line}")
 

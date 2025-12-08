@@ -13,6 +13,8 @@ from utils.listener_func.market_feed_listener import (
     processed_market_feed_message_ids,
 )
 from utils.logs.pretty_log import pretty_log, set_arceus_bot
+from utils.schedule.scheduler import setup_scheduler
+from utils.cache.cache_list import clear_processed_messages_cache
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -37,9 +39,7 @@ async def refresh_all_caches():
     await load_all_cache(bot)
 
     # Clear processed message ID sets to prevent memory bloat
-    processed_market_feed_message_ids.clear()
-    processed_market_feed_ids.clear()
-    pretty_log(message="✅ Cleared processed message ID caches", tag="cache")
+    clear_processed_messages_cache()
 
 
 # 🟣────────────────────────────────────────────
@@ -115,6 +115,10 @@ async def main():
         )
         return  # Exit if DB connection fails
 
+    # Start the scheduler
+    await setup_scheduler(bot)
+
+    # Start the bot
     token = os.getenv("DISCORD_TOKEN")
     await bot.start(token)
 

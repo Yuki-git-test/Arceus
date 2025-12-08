@@ -24,10 +24,7 @@ async def load_webhook_url_cache(bot: discord.Client):
             message=f"✅ Loaded {len(webhook_url_cache)} webhook URLs into cache.",
             tag="cache",
         )
-        pretty_log(
-            message=f"Webhook URL Cache Contents: {webhook_url_cache}",
-            tag="cache",
-        )
+        
         if len(webhook_url_cache) == 0:
             pretty_log(
                 message="⚠️ Webhook URL cache is empty after loading.",

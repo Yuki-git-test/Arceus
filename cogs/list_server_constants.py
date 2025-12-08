@@ -290,6 +290,8 @@ class ServerConstants(commands.Cog):
             ephemeral=True,
         )
 
+    list_server.extras = {"category": "Owner"}
+
 
 # -------------------- Setup Cog --------------------
 async def setup(bot: commands.Bot):

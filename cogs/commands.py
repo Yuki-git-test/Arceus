@@ -24,13 +24,13 @@ CATEGORY_CONFIG = {
     "Public": {
         "emoji": PUBLIC_EMOJI,
         "label": "Public",
-        "color": 0xFFAB91,  # Peach Pink
+        "color": 0xF0E68C,  # Peach Pink
         "thumbnail": PUBLIC_THUMBNAIL,
     },
     "Staff": {
         "emoji": STAFF_EMOJI,
         "label": "Staff",
-        "color": 0xFF7F50 , # Coral
+        "color": 0xFFFF8F,  # Coral
         "thumbnail": STAFF_THUMBNAIL,
     },
 }
@@ -217,7 +217,7 @@ class CommandsView(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="commands", description="View Monika's commands!")
+    @app_commands.command(name="commands", description="View Arceus' commands!")
     async def commands(self, interaction: discord.Interaction):
         try:
             await interaction.response.defer(thinking=True)

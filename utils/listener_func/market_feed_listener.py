@@ -133,7 +133,10 @@ async def market_snipe_handler(
         debug_log(
             f"Set author: {embed.author.name if embed.author else ''}, icon: {embed.author.icon_url if embed.author else None}"
         )
-        new_embed.add_field(name="Buy Command", value=f";m b {id}", inline=False)
+        new_embed.add_field(name="Buy Command (Android)", value=f";m b {id}", inline=False)
+        new_embed.add_field(
+            name="Buy Command (Iphone)", value=f"`;m b {id}`", inline=False
+        )
         new_embed.add_field(name="ID", value=id, inline=True)
         new_embed.add_field(
             name="Listed Price",

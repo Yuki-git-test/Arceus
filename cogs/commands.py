@@ -24,13 +24,13 @@ CATEGORY_CONFIG = {
     "Public": {
         "emoji": PUBLIC_EMOJI,
         "label": "Public",
-        "color": 0xF0E68C,  # Peach Pink
+        "color": 0xF0E68C,
         "thumbnail": PUBLIC_THUMBNAIL,
     },
     "Staff": {
         "emoji": STAFF_EMOJI,
         "label": "Staff",
-        "color": 0xFFFF8F,  # Coral
+        "color": 0xFFFF8F,  
         "thumbnail": STAFF_THUMBNAIL,
     },
 }

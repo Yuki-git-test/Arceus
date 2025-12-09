@@ -290,7 +290,7 @@ class ServerConstants(commands.Cog):
             ephemeral=True,
         )
 
-    list_server.extras = {"category": "Owner"}
+    list_server.extras = {"category": "Staff"}
 
 
 # -------------------- Setup Cog --------------------

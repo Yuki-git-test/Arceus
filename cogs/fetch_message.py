@@ -269,7 +269,7 @@ class FetchMessageCog(commands.Cog):
             pretty_log("error", f"[fetch_message] Send failed: {e}")
             await send_text("❌ Failed to send the output.")
 
-    fetch_message_from_link_func.extras = {"category": "Owner"}
+    fetch_message_from_link_func.extras = {"category": "Staff"}
 # ────────────────────────────────────────────
 # Setup function to add cog to bot
 # ────────────────────────────────────────────

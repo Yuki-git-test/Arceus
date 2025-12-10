@@ -207,7 +207,8 @@ class ReactionRoles(commands.Cog):
         await interaction.response.send_message(
             "✅ Reaction role message created!", ephemeral=True
         )
-
+    setup_reactionroles.extras = {"category": "Staff"}
+    
     async def _extract_emoji(self, interaction, emoji_string):
         """Extracts a proper Emoji object or Unicode string from '<:name:id>' format."""
         if emoji_string.startswith("<:") or emoji_string.startswith("<a:"):

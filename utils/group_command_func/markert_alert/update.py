@@ -190,7 +190,7 @@ async def update_market_alert_func(
                 f"**Role:** {old_role_mention} → {new_role_mention}\n"
             )
         log_embed = design_embed(embed=log_embed, user=user, pokemon_name=target_name)
-        await send_log_to_server_log(bot, embed=log_embed)
+        await send_log_to_server_log(bot, embed=log_embed, guild=guild)
 
     except Exception as e:
         await loader.error(

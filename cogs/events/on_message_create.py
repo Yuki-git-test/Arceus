@@ -18,6 +18,7 @@ from utils.listener_func.faction_ball_listener import extract_faction_ball_from_
 from utils.listener_func.market_feed_listener import market_feeds_listener
 from utils.listener_func.pokemon_spawn_listener import pokemon_spawn_listener
 from utils.listener_func.pokespawn_listener import as_spawn_ping
+from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
 from utils.logs.pretty_log import pretty_log
 from vn_allstars_constants import VN_ALLSTARS_TEXT_CHANNELS
 
@@ -157,7 +158,20 @@ class MessageCreateListener(commands.Cog):
                         await extract_faction_ball_from_fa(
                             bot=self.bot, message=message
                         )
-
+                # 🔧───────────────────────────────────────────────🔧
+                # 🔧    🩵 WB Battle Reminder Registration Listener
+                # 🔧───────────────────────────────────────────────🔧
+                if first_embed:
+                    if first_embed_description:
+                        if (
+                            "<:checkedbox:752302633141665812> You are registered for this fight"
+                            in first_embed_description
+                            and ";wb fight" in first_embed_description
+                        ):
+                            await register_wb_battle_reminder(
+                                bot=self.bot, message=message
+                            )
+                            
         except Exception as e:
             # 🛑────────────────────────────────────────────
             #        Unhandled on_message Error Handler

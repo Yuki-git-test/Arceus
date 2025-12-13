@@ -90,3 +90,16 @@ vna_members_cache: dict[int, dict] = {}
 # "perks": str,
 # "faction": str,
 # }
+
+user_alerts_cache: dict[int, dict[str, dict[str, str]]] = {}
+# Structure:
+# {
+#   user_id: {
+#     alert_type: {
+#       "user_name": str,
+#       "notify": str
+#     },
+#     ...
+#   },
+#   ...
+# }

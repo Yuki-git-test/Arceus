@@ -8,6 +8,7 @@ from .faction_members_cache import load_faction_members_cache
 from .market_alert_cache import load_market_alert_cache
 from .vna_members_cache import load_vna_members_cache
 from .webhook_url_cache import load_webhook_url_cache
+from .user_alert_cache import load_user_alert_cache
 
 
 async def load_all_cache(bot: discord.Client):
@@ -32,6 +33,9 @@ async def load_all_cache(bot: discord.Client):
         # Load Daily Faction Ball Cache
         await load_daily_faction_ball_cache(bot)
 
+        # Load User Alert Cache
+        await load_user_alert_cache(bot)
+        
     except Exception as e:
         pretty_log(
             message=f"❌ Error loading caches: {e}",

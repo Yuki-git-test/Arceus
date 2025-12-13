@@ -62,10 +62,6 @@ class OnMessageEditCog(commands.Cog):
             first_embed_description
             and "fished a wild" in first_embed_description.lower()
         ):
-            pretty_log(
-                "info",
-                f"Detected fish spawn edit in CC guild for message ID: {after.id}",
-            )
             await fish_spawn_listener(self.bot, before, after)
 
 

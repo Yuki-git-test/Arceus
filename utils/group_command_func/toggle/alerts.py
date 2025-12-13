@@ -1,14 +1,16 @@
 import discord
 from discord import ButtonStyle
 from discord.ext import commands
+
 from Constants.vn_allstars_constants import VN_ALLSTARS_ROLES
+from utils.cache.cache_list import vna_members_cache
 from utils.db.faction_members import (
     fetch_faction_member,
     update_faction_member_notify,
     upsert_faction_member,
 )
+from utils.db.user_alerts_db import fetch_user_alert_notify, upsert_user_alert
 from utils.logs.pretty_log import pretty_log
-from utils.cache.cache_list import vna_members_cache
 
 
 # 💗────────────────────────────────────────────
@@ -18,7 +20,6 @@ async def alert_settings_func(
     bot: commands.Bot,
     interaction: discord.Interaction,
 ):
-
     """Toggle alert settings for faction members."""
     user = interaction.user
     user_id = user.id
@@ -76,11 +77,20 @@ async def alert_settings_func(
                 notify="off",
             )
             faction_member = await fetch_faction_member(bot, user_id)
+        # Get WB Battle Alert Setting
+        wb_battle_alert = await fetch_user_alert_notify(
+            bot=bot,
+            user_id=user_id,
+            alert_type="wb_battle",
+        )
+        # Fallback default
+        wb_battle_alert = wb_battle_alert or {"notify": "off"}
 
         view = Alert_Settings_View(
             bot=bot,
             user=user,
             faction_member=faction_member,
+            wb_battle_alert=wb_battle_alert,
         )
         message = await interaction.response.send_message(
             content="Modify your Alert Settings:",
@@ -110,11 +120,14 @@ async def alert_settings_func(
 # 💗────────────────────────────────────────────
 class Alert_Settings_View(discord.ui.View):
 
-    def __init__(self, bot: commands.Bot, user: discord.Member, faction_member):
+    def __init__(
+        self, bot: commands.Bot, user: discord.Member, faction_member, wb_battle_alert
+    ):
         super().__init__(timeout=180)
         self.bot = bot
         self.user = user
         self.faction_member = faction_member
+        self.wb_battle_alert = wb_battle_alert
         self.message = None  # set later
         self.update_button_styles()
 
@@ -192,6 +205,75 @@ class Alert_Settings_View(discord.ui.View):
                 ephemeral=True,
             )
             return
+    # 💫────────────────────────────────────
+    # [🎯 BUTTON] WB Battle Alert (2-State Cycle)
+    # 💫────────────────────────────────────
+    @discord.ui.button(
+        label="World Boss Battle Alert: OFF",
+        style=ButtonStyle.secondary,
+        emoji="⚔️",
+    )
+    async def wb_battle_alert_button(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        if interaction.user.id != self.user.id:
+            await interaction.response.send_message(
+                "❌ You cannot interact with this button.", ephemeral=True
+            )
+            return
+
+        await interaction.response.defer()
+
+        try:
+            current_state = (
+                str(self.wb_battle_alert.get("notify", "off")).lower()
+                if self.wb_battle_alert
+                else "off"
+            )
+
+            # 🔹 2-State Cycle: off → on → off
+            new_state = "on" if current_state == "off" else "off"
+
+            await upsert_user_alert(
+                bot=self.bot,
+                user_id=self.user.id,
+                alert_type="wb_battle",
+                user_name=self.user.name,
+                notify=new_state,
+            )
+            self.wb_battle_alert["notify"] = new_state
+
+            # 🔹 Refresh buttons
+            self.update_button_styles()
+
+            # 🔹 Display friendly text
+            display_text = {
+                "off": "Off",
+                "on": "On",
+            }.get(new_state, "OFF")
+
+            await interaction.edit_original_response(
+                content=f"Modify your Alert Settings:\n⚔️ World Boss Battle Alert set to **{display_text}**",
+                view=self,
+            )
+
+            pretty_log(
+                tag="ui",
+                message=f"{self.user.display_name} set World Boss Battle Alert to {display_text}",
+                bot=self.bot,
+            )
+
+        except Exception as e:
+            pretty_log(
+                tag="error",
+                message=f"Error toggling WB battle alert for {self.user.name} ({self.user.id}): {e}",
+                bot=self.bot,
+            )
+            await interaction.followup.send(
+                "❌ An error occurred while toggling your World Boss Battle alert. Please try again later.",
+                ephemeral=True,
+            )
+            return
 
     # 💫────────────────────────────────────
     # [🎨 STYLE UPDATE FUNCTION]
@@ -221,6 +303,22 @@ class Alert_Settings_View(discord.ui.View):
             self.faction_ball_alert_button.style = ButtonStyle.secondary
             self.faction_ball_alert_button.label = "Faction Ball Alert: OFF"
 
+        # ⚔️ WB Battle Alert Button (2 states)
+        wb_battle_alert_state = (
+            str(self.wb_battle_alert.get("notify", "off")).lower()
+            if self.wb_battle_alert
+            else "off"
+        )
+        if wb_battle_alert_state == "off":
+            self.wb_battle_alert_button.style = ButtonStyle.secondary
+            self.wb_battle_alert_button.label = "World Boss Battle Alert: OFF"
+        elif wb_battle_alert_state == "on":
+            self.wb_battle_alert_button.style = ButtonStyle.success
+            self.wb_battle_alert_button.label = "World Boss Battle Alert: ON"
+        else:
+            self.wb_battle_alert_button.style = ButtonStyle.secondary
+            self.wb_battle_alert_button.label = "World Boss Battle Alert: OFF"
+            
     # 💫────────────────────────────────────
     # [⏰ TIMEOUT HANDLER]
     # 💫────────────────────────────────────

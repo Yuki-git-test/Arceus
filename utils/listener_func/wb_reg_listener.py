@@ -78,6 +78,7 @@ async def world_boss_waiter(
             description=";wb f",
             color=ARCEUS_EMBED_COLOR,
         )
+        embed.add_field(name="Iphone Copy:", value="`;wb f`", inline=False)
         await channel.send(content=content, embed=embed)
         """# Remove the reminder after sending notification
         await remove_wb_reminder(bot, user.id)"""
@@ -97,6 +98,11 @@ async def start_world_boss_task(
         pretty_log("info", "World boss reminder task already scheduled.")
         return
     await message.add_reaction("📅")
+    
+    # make it ping 5 seconds earlier than the actual time
+    if unix_seconds > 5:
+        unix_seconds -= 5
+
     wb_task = asyncio.create_task(
         world_boss_waiter(
             bot=bot,

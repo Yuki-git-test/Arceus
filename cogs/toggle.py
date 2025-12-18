@@ -65,6 +65,8 @@ class Toggle_Group_Command(commands.Cog):
             slash_cmd_name=slash_cmd_name,
         )
 
+    toggle_timers.extras = {"category": "Public"}
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Toggle_Group_Command(bot))

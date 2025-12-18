@@ -103,3 +103,14 @@ user_alerts_cache: dict[int, dict[str, dict[str, str]]] = {}
 #   },
 #   ...
 # }
+
+timer_cache: dict[int, dict[str, str]] = {}
+# Structure:
+# {
+#   user_id: {
+#     "user_name": str,
+#     "pokemon_setting": str,
+#     "fish_setting": str,
+#     "battle_setting": str
+#   },
+#   ...

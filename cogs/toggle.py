@@ -1,12 +1,13 @@
+from typing import Literal, Optional
+
 import discord
 from discord import app_commands
 from discord.ext import commands
-from typing import Literal, Optional
 
 from utils.essentials.command_safe import run_command_safe
 from utils.group_command_func.toggle import *
-
 from utils.logs.pretty_log import pretty_log
+
 
 # 🍭──────────────────────────────
 #   🎀 Toggle Group Command
@@ -42,7 +43,28 @@ class Toggle_Group_Command(commands.Cog):
             command_func=alert_settings_func,
             slash_cmd_name=slash_cmd_name,
         )
-        
+
     toggle_alerts.extras = {"category": "Public"}
+
+    # 🍭──────────────────────────────
+    #   🎀 /toggle timers
+    # 🍭──────────────────────────────
+    @toggle.command(
+        name="timers",
+        description="Toggle timer notifications on or off.",
+    )
+    async def toggle_timers(
+        self,
+        interaction: discord.Interaction,
+    ):
+        slash_cmd_name = "toggle timers"
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            command_func=timer_settings_func,
+            slash_cmd_name=slash_cmd_name,
+        )
+
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(Toggle_Group_Command(bot))

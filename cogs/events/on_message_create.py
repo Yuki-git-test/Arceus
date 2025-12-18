@@ -8,6 +8,7 @@ from Constants.variables import (
     PublicChannels,
     Server,
 )
+from utils.listener_func.battle_timer import battle_timer_handler
 from utils.listener_func.ee_spawn_listener import (
     check_cc_bump_reminder,
     check_ee_near_spawn_alert,
@@ -15,8 +16,10 @@ from utils.listener_func.ee_spawn_listener import (
     extract_boss_from_wb_spawn_command,
 )
 from utils.listener_func.faction_ball_listener import extract_faction_ball_from_fa
+from utils.listener_func.fish_timer import fish_timer_handler
 from utils.listener_func.market_feed_listener import market_feeds_listener
 from utils.listener_func.pokemon_spawn_listener import pokemon_spawn_listener
+from utils.listener_func.pokemon_timer import pokemon_timer_handler
 from utils.listener_func.pokespawn_listener import as_spawn_ping
 from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
 from utils.logs.pretty_log import pretty_log
@@ -84,12 +87,36 @@ class MessageCreateListener(commands.Cog):
             if guild.id == Server.VNA_ID:
                 first_embed = message.embeds[0] if message.embeds else None
                 first_embed_description = first_embed.description if first_embed else ""
-
+                first_embed_author = (
+                    first_embed.author.name
+                    if first_embed and first_embed.author
+                    else ""
+                )
                 # ————————————————————————————————
                 # 🩵 VNA Pokemon Spawn
                 # ————————————————————————————————
                 if content and "found a wild" in content.lower():
+                    await pokemon_timer_handler(message)
                     await pokemon_spawn_listener(self.bot, message)
+
+                # ————————————————————————————————
+                # 🩵 VNA Fish Timer
+                # ————————————————————————————————
+                if message.embeds and message.embeds[0]:
+                    embed = message.embeds[0]
+                    embed_description = embed.description if embed else None
+                    if (
+                        embed_description
+                        and "cast a" in embed_description
+                        and "into the water" in embed_description
+                    ):
+                        await fish_timer_handler(message)
+                # ————————————————————————————————
+                # 🩵 VNA Battle Timer
+                # ————————————————————————————————
+                if first_embed_author and "PokeMeow Battles" in first_embed_author:
+                    await battle_timer_handler(bot=self.bot, message=message)
+
                 # ————————————————————————————————
                 # 🩵 VNA Autospawn
                 # ————————————————————————————————
@@ -171,7 +198,7 @@ class MessageCreateListener(commands.Cog):
                             await register_wb_battle_reminder(
                                 bot=self.bot, message=message
                             )
-                            
+
         except Exception as e:
             # 🛑────────────────────────────────────────────
             #        Unhandled on_message Error Handler

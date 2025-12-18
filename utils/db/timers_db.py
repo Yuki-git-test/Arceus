@@ -16,7 +16,7 @@ from utils.logs.pretty_log import pretty_log
 # Fetch all timer settings
 async def fetch_all_timers(bot: discord.Client):
     try:
-        async with bot.db_pool.acquire() as conn:
+        async with bot.pg_pool.acquire() as conn:
             rows = await conn.fetch(
                 """
                 SELECT user_id, user_name, pokemon_setting, fish_setting, battle_setting
@@ -50,7 +50,7 @@ async def upsert_timer(
     fish_setting = "off"
     battle_setting = "off"
     try:
-        async with bot.db_pool.acquire() as conn:
+        async with bot.pg_pool.acquire() as conn:
             await conn.execute(
                 """
                 INSERT INTO timers (user_id, user_name, pokemon_setting, fish_setting, battle_setting)
@@ -88,7 +88,7 @@ async def upsert_timer(
 
 async def fetch_timer(bot, user_id: int):
     try:
-        async with bot.db_pool.acquire() as conn:
+        async with bot.pg_pool.acquire() as conn:
             row = await conn.fetchrow(
                 """
                 SELECT user_id, user_name, pokemon_setting, fish_setting, battle_setting
@@ -129,7 +129,7 @@ async def update_pokemon_setting(
     pokemon_setting: str,
 ):
     try:
-        async with bot.db_pool.acquire() as conn:
+        async with bot.pg_pool.acquire() as conn:
             await conn.execute(
                 """
                 UPDATE timers
@@ -161,7 +161,7 @@ async def update_fish_setting(
     fish_setting: str,
 ):
     try:
-        async with bot.db_pool.acquire() as conn:
+        async with bot.pg_pool.acquire() as conn:
             await conn.execute(
                 """
                 UPDATE timers
@@ -193,7 +193,7 @@ async def update_battle_setting(
     battle_setting: str,
 ):
     try:
-        async with bot.db_pool.acquire() as conn:
+        async with bot.pg_pool.acquire() as conn:
             await conn.execute(
                 """
                 UPDATE timers
@@ -221,7 +221,7 @@ async def update_battle_setting(
 
 async def delete_timer(bot: discord.Client, user_id: int):
     try:
-        async with bot.db_pool.acquire() as conn:
+        async with bot.pg_pool.acquire() as conn:
             await conn.execute(
                 """
                 DELETE FROM timers

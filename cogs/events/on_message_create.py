@@ -8,6 +8,10 @@ from Constants.variables import (
     PublicChannels,
     Server,
 )
+
+# ————————————————————————————————
+# 🩵 Import Listener Functions
+# ————————————————————————————————
 from utils.listener_func.battle_timer import battle_timer_handler
 from utils.listener_func.ee_spawn_listener import (
     check_cc_bump_reminder,
@@ -21,10 +25,25 @@ from utils.listener_func.market_feed_listener import market_feeds_listener
 from utils.listener_func.pokemon_spawn_listener import pokemon_spawn_listener
 from utils.listener_func.pokemon_timer import pokemon_timer_handler
 from utils.listener_func.pokespawn_listener import as_spawn_ping
+from utils.listener_func.secret_santa_listener import (
+    secret_santa_listener,
+    secret_santa_timer_listener,
+)
+from utils.listener_func.special_battle_npc_listener import (
+    special_battle_npc_listener,
+    special_battle_npc_timer_listener,
+)
 from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
+
+# ————————————————————————————————
+# 🩵 Import DB Functions
+#  ———————————————————————————————
 from utils.logs.pretty_log import pretty_log
 from vn_allstars_constants import VN_ALLSTARS_TEXT_CHANNELS
 
+# ️────────────────────────────────────────────
+#        ⚔️ Faction Names and Market Feed Channels
+# ️────────────────────────────────────────────
 FACTIONS = ["aqua", "flare", "galactic", "magma", "plasma", "rocket", "skull", "yell"]
 
 MARKET_FEED_CHANNEL_IDS = {
@@ -33,11 +52,20 @@ MARKET_FEED_CHANNEL_IDS = {
     VN_ALLSTARS_TEXT_CHANNELS.shiny_feed,
     VN_ALLSTARS_TEXT_CHANNELS.l_m_gmax_feed,
 }
+# ️────────────────────────────────────────────
+#        ⚔️ Message Triggers
+# ️────────────────────────────────────────────
 triggers = {
     "wb_spawn": "spawned a world boss using 1x <:boss_coin:1249165805095092356>",
     "wb_command": "a world boss has spawned! register now!",
     "ee_vote_checker": "there is no active world boss",
 }
+secret_santa_phrases = [
+    "You sent <:PokeCoin:666879070650236928>",
+    "to a random user!",
+    "Your odds to receive items was boosted by",
+    "You received",
+]
 
 
 # 🐾────────────────────────────────────────────
@@ -69,6 +97,15 @@ class MessageCreateListener(commands.Cog):
                 return  # Skip DMs
 
             content = message.content
+            first_embed = message.embeds[0] if message.embeds else None
+            first_embed_author = (
+                first_embed.author.name if first_embed and first_embed.author else ""
+            )
+            first_embed_description = (
+                first_embed.description
+                if first_embed and first_embed.description
+                else ""
+            )
             # ————————————————————————————————
             # 🩵 CC Bump Reminder Listener
             # ————————————————————————————————
@@ -198,6 +235,53 @@ class MessageCreateListener(commands.Cog):
                             await register_wb_battle_reminder(
                                 bot=self.bot, message=message
                             )
+                # ————————————————————————————————
+                # 🩵 Special Battle NPC Listeners
+                # ————————————————————————————————
+                if first_embed:
+                    if (
+                        first_embed.description
+                        and "challenged <:xmas_blue:1451059140955734110> **XMAS Blue** to a battle!"
+                        in first_embed.description
+                    ):
+                        pretty_log(
+                            "info",
+                            f"🔹 Matched Special Battle NPC Listener for XMAS BLUE | message_id={message.id}",
+                        )
+                        await special_battle_npc_listener(bot=self.bot, message=message)
+                if (
+                    content
+                    and ":x: You cannot fight XMAS Blue yet! He will be available for you to re-battle"
+                    in content
+                ):
+                    pretty_log(
+                        "info",
+                        f"🔹 Matched Special Battle NPC Timer Listener for XMAS BLUE | message_id={message.id}",
+                    )
+                    await special_battle_npc_timer_listener(
+                        bot=self.bot, message=message
+                    )
+                # ————————————————————————————————
+                # 🩵 Secret Santa Listeners
+                # ————————————————————————————————
+                if message.content:
+                    # Check if all ss phrases are in the message content
+                    if all(
+                        phrase in message.content for phrase in secret_santa_phrases
+                    ):
+                        pretty_log(
+                            "info",
+                            f"🎅 Matched Secret Santa Listener | Message ID: {message.id} | Channel: {message.channel.name}",
+                        )
+                        await secret_santa_listener(bot=self.bot, message=message)
+                # Secret Santa Timer Listener
+                if message.content:
+                    if ":x: You may send out another gift on" in message.content:
+                        pretty_log(
+                            "info",
+                            f"🎅 Matched Secret Santa Timer Listener | Message ID: {message.id} | Channel: {message.channel.name}",
+                        )
+                        await secret_santa_timer_listener(bot=self.bot, message=message)
 
         except Exception as e:
             # 🛑────────────────────────────────────────────

@@ -1,12 +1,12 @@
 import discord
 
+from Constants.timer_settings import BATTLE_EMOJI
 from utils.db.special_npc_timer_db_func import (
     fetch_due_special_battle_timers,
     remove_special_battle_timer,
 )
 from utils.logs.pretty_log import pretty_log
 
-from Constants.timer_settings import BATTLE_EMOJI
 
 # 🍭 Background task to check special battle timers
 async def special_battle_timer_checker(bot: discord.Client):
@@ -47,7 +47,7 @@ async def special_battle_timer_checker(bot: discord.Client):
             else:
                 pretty_log(
                     "warn",
-                    f"Member {member.name} not found in guild {channel.guild.id} for notifying about special battle timer for npc {npc_name}",
+                    f"Member  not found in guild {channel.guild.id} for notifying about special battle timer for npc {npc_name}",
                 )
                 # Remove timer from database since member not found
                 await remove_special_battle_timer(bot, user_id, npc_name)

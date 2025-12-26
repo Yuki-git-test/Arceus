@@ -83,8 +83,11 @@ async def alert_settings_func(
             user_id=user_id,
             alert_type="wb_battle",
         )
-        # Fallback default
-        wb_battle_alert = wb_battle_alert or {"notify": "off"}
+        # Always wrap as dict for downstream usage
+        if isinstance(wb_battle_alert, str):
+            wb_battle_alert = {"notify": wb_battle_alert}
+        elif not wb_battle_alert:
+            wb_battle_alert = {"notify": "off"}
 
         view = Alert_Settings_View(
             bot=bot,
@@ -205,6 +208,7 @@ class Alert_Settings_View(discord.ui.View):
                 ephemeral=True,
             )
             return
+
     # 💫────────────────────────────────────
     # [🎯 BUTTON] WB Battle Alert (2-State Cycle)
     # 💫────────────────────────────────────
@@ -318,7 +322,7 @@ class Alert_Settings_View(discord.ui.View):
         else:
             self.wb_battle_alert_button.style = ButtonStyle.secondary
             self.wb_battle_alert_button.label = "World Boss Battle Alert: OFF"
-            
+
     # 💫────────────────────────────────────
     # [⏰ TIMEOUT HANDLER]
     # 💫────────────────────────────────────

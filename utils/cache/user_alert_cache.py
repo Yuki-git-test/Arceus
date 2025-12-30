@@ -67,6 +67,20 @@ def upsert_user_alert_cache(
         message=f"Upserted alert for user_id {user_id}, alert_type {alert_type} into cache.",
 
     )
+def remove_user_alerts_for_user_cache(user_id: int):
+    """Remove all alerts for a user from the cache."""
+    if user_id in user_alerts_cache:
+        del user_alerts_cache[user_id]
+        pretty_log(
+            tag="cache",
+            message=f"Removed all alerts for user_id {user_id} from cache.",
+        )
+    else:
+        pretty_log(
+            tag="info",
+            message=f"Attempted to remove alerts for non-existent user_id {user_id} from cache.",
+        )
+    
 def delete_user_alert_cache(user_id: int, alert_type: str):
     """Delete a user alert from the cache."""
     if user_id in user_alerts_cache and alert_type in user_alerts_cache[user_id]:

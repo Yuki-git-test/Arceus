@@ -118,7 +118,7 @@ async def fetch_user_alert_notify(
             bot=bot,
         )
         return None
-    
+
 async def fetch_user_alert(bot, user_id: int, alert_type: str) -> dict | None:
     """Fetch a user alert setting."""
     try:
@@ -155,7 +155,32 @@ async def fetch_all_user_alerts(bot) -> list[dict]:
         )
         return []
 
-
+async def remove_user_alerts_for_user(bot, user_id: int):
+    """Remove all alert settings for a specific user."""
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            await conn.execute(
+                """
+                DELETE FROM user_alerts
+                WHERE user_id = $1
+                """,
+                user_id,
+            )
+        pretty_log(
+            tag="db",
+            message=f"Removed all alert settings for user_id {user_id}",
+            bot=bot,
+        )
+        # Update cache as well
+        from utils.cache.user_alert_cache import remove_user_alerts_for_user_cache
+        remove_user_alerts_for_user_cache(user_id=user_id)
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Failed to remove user alert settings for user_id {user_id}: {e}",
+            bot=bot,
+        )
+    
 async def delete_user_alert(bot, user_id: int, alert_type: str):
     """Delete a user alert setting."""
     try:

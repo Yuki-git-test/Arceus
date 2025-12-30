@@ -264,3 +264,28 @@ async def update_alerts_used(
             tag="error",
             include_trace=True,
         )
+async def remove_market_alert_user(
+    bot: discord.Client, user_id: int
+):
+    """
+    Removes a market alert user from the database.
+    """
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            await conn.execute(
+                """
+                DELETE FROM market_alert_users
+                WHERE user_id = $1
+                """,
+                user_id,
+            )
+            pretty_log(
+                message=f"✅ Removed market alert user with ID: {user_id}",
+                tag="db",
+            )
+    except Exception as e:
+        pretty_log(
+            message=f"❌ Failed to remove market alert user with ID: {user_id}: {e}",
+            tag="error",
+            include_trace=True,
+        )

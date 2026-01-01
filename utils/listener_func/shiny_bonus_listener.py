@@ -169,6 +169,8 @@ async def handle_pokemeow_global_bonus(
 
         new_ends_unix = old_ends_unix + added_seconds
         new_ends_dt = datetime.fromtimestamp(new_ends_unix)
+        # Convert news_ends_dt to unix seconds
+        new_ends_unix = int(new_ends_dt.timestamp())
 
         # Human-readable duration
         if added_seconds < 60:
@@ -184,7 +186,7 @@ async def handle_pokemeow_global_bonus(
         new_embed = await build_extended_shiny_bonus_embed(
             bot=bot,
             channel=channel,
-            ends_on=new_ends_dt,
+            ends_on=new_ends_unix,
             added_duration_str=added_str,
         )
 

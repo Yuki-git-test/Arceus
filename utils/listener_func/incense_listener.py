@@ -241,7 +241,7 @@ async def incense_command_handler(
     remaining_charges = (
         int(charges_match.group(1).replace(",", "")) if charges_match else 0
     )
-    if not charges_match:
+    if not charges_match and remaining_charges != 0:
         pretty_log(
             "info",
             "Failed to extract remaining incense charges from embed description.",

@@ -74,7 +74,7 @@ def build_incense_embed(
     amount: int,
     member_name: str,
 ):
-    desc = f"""### {guild.name} has {INCENSE} {total_charges} incense charges remaining.
+    desc = f"""### {guild.name} has {INCENSE} {total_charges:,} incense charges remaining.
 > - 1 charge is consumed per `;pokemon` or `;fish` encounter,
 > - Use an incense with `;incense use <amount>`
 > - Incense charges are shared & used by every player in this server
@@ -242,6 +242,7 @@ async def incense_command_handler(
             "info",
             "Failed to extract remaining incense charges from embed description.",
         )
+        return
 
     amount = 0
     # Extract the most recent contributor
@@ -249,6 +250,11 @@ async def incense_command_handler(
         r"\*\*(.+?)\*\* activated .*? (\d+)x Incense(?:s)?(?: for [\d,]+ charges)?",
         embed_desc,
     )
+    if not contributor_matches:
+        debug_log(
+            "incense_command_handler: No contributor matches found in embed description."
+        )
+        return
 
     debug_log(f"incense_command_handler: Remaining charges: {remaining_charges}")
     if remaining_charges == 0:

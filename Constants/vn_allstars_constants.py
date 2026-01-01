@@ -486,6 +486,7 @@ class VN_ALLSTARS_CATEGORIES:
 #       VN_ALLSTARS_ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class VN_ALLSTARS_ROLES:
+    ee_spawn_ping = 1443756412613431449
     calm_waters = 1456030935941382235
     os_lotto_ping = 1456081515736993792
     daily_ping = 1456081448368083005

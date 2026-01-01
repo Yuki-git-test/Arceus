@@ -11,7 +11,7 @@ class Emojis_Factions:
     aqua = "<:aqua:1447364971447975986>"
     magma = "<:magma:1447365009586782322>"
     plasma = "<:plasma:1447365034136309851>"
-    galatic = "<:galatic:1447365053748744203>"
+    galactic = "<:galactic:1447365053748744203>"
     flare = "<:flare:1447365091971432622>"
     yell = "<:yell:1447365115656540260>"
     skull = "<:skull:1447365137605595196>"

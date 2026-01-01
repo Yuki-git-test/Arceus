@@ -10,6 +10,7 @@ from .timers_cache import load_timer_cache
 from .user_alert_cache import load_user_alert_cache
 from .vna_members_cache import load_vna_members_cache
 from .webhook_url_cache import load_webhook_url_cache
+from .ping_message_id_cache import load_ping_message_id_cache
 
 
 async def load_all_cache(bot: discord.Client):
@@ -19,6 +20,9 @@ async def load_all_cache(bot: discord.Client):
     - Market Alert Cache
     """
     try:
+        # Load Ping Message ID Cache
+        await load_ping_message_id_cache(bot)
+        
         # Load VNA Members Cache
         await load_vna_members_cache(bot)
 

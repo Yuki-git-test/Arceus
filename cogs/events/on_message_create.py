@@ -8,6 +8,7 @@ from Constants.variables import (
     PublicChannels,
     Server,
 )
+from Constants.vn_allstars_constants import VN_ALLSTARS_TEXT_CHANNELS
 
 # ————————————————————————————————
 # 🩵 Import Listener Functions
@@ -21,6 +22,12 @@ from utils.listener_func.ee_spawn_listener import (
 )
 from utils.listener_func.faction_ball_listener import extract_faction_ball_from_fa
 from utils.listener_func.fish_timer import fish_timer_handler
+from utils.listener_func.incense_listener import (
+    incense_command_handler,
+    incense_depleted_handler,
+    incense_use_handler,
+    server_has_incense_handler,
+)
 from utils.listener_func.market_feed_listener import market_feeds_listener
 from utils.listener_func.pokemon_spawn_listener import pokemon_spawn_listener
 from utils.listener_func.pokemon_timer import pokemon_timer_handler
@@ -34,12 +41,11 @@ from utils.listener_func.special_battle_npc_listener import (
     special_battle_npc_timer_listener,
 )
 from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
-
+from utils.listener_func.shiny_bonus_listener import handle_pokemeow_global_bonus
 # ————————————————————————————————
 # 🩵 Import DB Functions
 #  ———————————————————————————————
 from utils.logs.pretty_log import pretty_log
-from vn_allstars_constants import VN_ALLSTARS_TEXT_CHANNELS
 
 # ️────────────────────────────────────────────
 #        ⚔️ Faction Names and Market Feed Channels
@@ -59,6 +65,11 @@ triggers = {
     "wb_spawn": "spawned a world boss using 1x <:boss_coin:1249165805095092356>",
     "wb_command": "a world boss has spawned! register now!",
     "ee_vote_checker": "there is no active world boss",
+    "incense_command": "Incense charges are shared & used by every player in this server",
+    "has_incense": "<:incense:1202436296874922065> An `;incense` is currently active in this server!",
+    "incense_depleted": "your server's incense has run out!",
+    "incense_use": "Incense. Your server has received the following benefits",
+    "global_bonus": "Global bonuses",
 }
 secret_santa_phrases = [
     "You sent <:PokeCoin:666879070650236928>",
@@ -105,6 +116,12 @@ class MessageCreateListener(commands.Cog):
                 first_embed.description
                 if first_embed and first_embed.description
                 else ""
+            )
+            first_embed_footer = (
+                first_embed.footer.text if first_embed and first_embed.footer else ""
+            )
+            first_embed_title = (
+                first_embed.title if first_embed and first_embed.title else ""
             )
             # ————————————————————————————————
             # 🩵 CC Bump Reminder Listener
@@ -282,6 +299,47 @@ class MessageCreateListener(commands.Cog):
                             f"🎅 Matched Secret Santa Timer Listener | Message ID: {message.id} | Channel: {message.channel.name}",
                         )
                         await secret_santa_timer_listener(bot=self.bot, message=message)
+            # ————————————————————————————————
+            # 🩵 Shiny Bonus Listener
+            # ————————————————————————————————
+            if first_embed:
+                if triggers["global_bonus"] in first_embed_title:
+                    pretty_log(
+                        "info",
+                        f"Detected global bonus embed from PokéMeow bot: Message ID {message.id}",
+                        label="Shiny Bonus Listener",
+                    )
+                    await handle_pokemeow_global_bonus(bot=self.bot, message=message)
+            # ————————————————————————————————
+            # 🩵 Incense Listeners
+            # ————————————————————————————————
+            if first_embed:
+                # Incense Command Handler
+                if triggers["incense_command"] in first_embed_footer:
+                    pretty_log(
+                        "info",
+                        f"Detected incense command embed from PokéMeow bot: Message ID {message.id}",
+                        label="Incense Command Handler",
+                    )
+                    await incense_command_handler(bot=self.bot, message=message)
+            if message.content and triggers["incense_use"] in message.content:
+                pretty_log(
+                    "info",
+                    f"Detected incense use message from PokéMeow bot: Message ID {message.id}",
+                    label="Incense Use Handler",
+                )
+                await incense_use_handler(bot=self.bot, message=message)
+
+            if message.content and triggers["has_incense"] in message.content:
+                await server_has_incense_handler(bot=self.bot, message=message)
+
+            if message.content and triggers["incense_depleted"] in message.content:
+                pretty_log(
+                    "info",
+                    f"Detected incense depleted message from PokéMeow bot: Message ID {message.id}",
+                    label="Incense Depleted Handler",
+                )
+                await incense_depleted_handler(bot=self.bot, message=message)
 
         except Exception as e:
             # 🛑────────────────────────────────────────────

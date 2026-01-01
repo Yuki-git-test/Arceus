@@ -15,7 +15,7 @@ from utils.listener_func.market_feed_listener import (
 from utils.logs.pretty_log import pretty_log, set_arceus_bot
 from utils.schedule.scheduler import setup_scheduler
 from utils.cache.cache_list import clear_processed_messages_cache
-
+from utils.essentials.persist_views import register_persistent_views
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
@@ -118,6 +118,9 @@ async def main():
     # Start the scheduler
     await setup_scheduler(bot)
 
+    # Register persistent views
+    await register_persistent_views(bot)
+    
     # Start the bot
     token = os.getenv("DISCORD_TOKEN")
     await bot.start(token)

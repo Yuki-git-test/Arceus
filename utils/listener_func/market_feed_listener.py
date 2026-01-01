@@ -20,7 +20,7 @@ from utils.cache.cache_list import (
 from utils.functions.webhook_func import send_webhook
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
-from vn_allstars_constants import (
+from Constants.vn_allstars_constants import (
     VN_ALLSTARS_EMOJIS,
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,

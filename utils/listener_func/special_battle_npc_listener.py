@@ -17,7 +17,7 @@ BATTLE_TIMER = 30 * 60  # 30 minutes in seconds
 REACTION_EMOJI = "📅"
 
 # Extracts the timestamp from a string like '<t:1766190355:R>'
-enable_debug(f"{__name__}.special_battle_npc_timer_listener")
+#enable_debug(f"{__name__}.special_battle_npc_timer_listener")
 
 
 def extract_timestamp_from_message(content: str) -> int | None:

@@ -114,3 +114,10 @@ timer_cache: dict[int, dict[str, str]] = {}
 #     "battle_setting": str
 #   },
 #   ...
+
+ping_message_id_cache: dict[str, int] = {}
+# Structure:
+# {
+#   type: message_id,
+#   ...
+# }

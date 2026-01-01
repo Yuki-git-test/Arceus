@@ -7,7 +7,7 @@ from utils.background_task.special_battle_timer_checker import (
     special_battle_timer_checker,
 )
 from utils.background_task.secret_santa_timer_checker import secret_santa_timer_checker
-
+from utils.background_task.shiny_bonus_checker import check_and_handle_expired_shiny_bonus
 
 # 🍰──────────────────────────────
 #   🎀 Cog: CentralLoop
@@ -53,6 +53,9 @@ class CentralLoop(commands.Cog):
                 # 🎅 Check if any Secret Santa reminders are due
                 await secret_santa_timer_checker(bot=self.bot)
 
+                # 💎 Check if shiny bonus has expired
+                await check_and_handle_expired_shiny_bonus(bot=self.bot)
+
             except Exception as e:
                 pretty_log(
                     "error",
@@ -80,5 +83,6 @@ async def setup(bot: commands.Bot):
     print("  ─────────────────────────────────────────────")
     print("  ✅ ⏰  special_battle_timer_checker")
     print("  ✅ 🎅  secret_santa_timer_checker")
+    print("  ✅ 💎  shiny_bonus_checker")
     print("  🧭 CentralLoop ticking every 60 seconds!")
     print("  ─────────────────────────────────────────────\n")

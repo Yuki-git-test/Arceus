@@ -1,3 +1,5 @@
 from utils.logs.pretty_log import pretty_log
 from utils.functions.webhook_func import send_webhook
 from utils.pokemeow.get_pokemeow_reply import get_pokemeow_reply_member
+from utils.logs.debug_log import debug_log, enable_debug
+enable_debug(f"{__name__}.parse_special_mega_input")

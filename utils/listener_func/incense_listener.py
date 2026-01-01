@@ -137,7 +137,9 @@ async def incense_use_handler(
         amount,
         member.name,
     )
-    sent_msg = await bump_channel.send(content=content, embed=embed, view=ToggleIncensePingButton())
+    sent_msg = await bump_channel.send(
+        content=content, embed=embed, view=ToggleIncensePingButton()
+    )
 
     # Upsert in db
     await upsert_ping_message_id(
@@ -186,7 +188,9 @@ async def server_has_incense_handler(
         icon_url=guild.icon.url if guild.icon else None,
     )
     embed.set_thumbnail(url=Thumbnails.incense)
-    sent_msg = await bump_channel.send(content=content, embed=embed, view=ToggleIncensePingButton())
+    sent_msg = await bump_channel.send(
+        content=content, embed=embed, view=ToggleIncensePingButton()
+    )
 
     # Upsert in db
     await upsert_ping_message_id(
@@ -231,7 +235,7 @@ async def incense_command_handler(
     username = None
     # Extract charges remaining
     charges_match = re.search(
-        r"has\s+(?:<:[\w\d_]+:\d+>\s+)?<:incense:\d+>\s+\*\*([\d,]+)\*\*\s+incense charges remaining",
+        r"has\s+(?:(?::[\w\d_]+:\s+)?(?:<:[\w\d_]+:\d+>\s+))*<:incense:\d+>\s+\*\*([\d,]+)\*\*\s+incense charges remaining",
         embed_desc,
     )
     remaining_charges = (
@@ -290,7 +294,9 @@ async def incense_command_handler(
     if new_incense_msg:
         debug_log("incense_command_handler: Creating new incense message.")
         content = f"{incense_ping_role.mention} The server has {remaining_charges} incense charges!"
-        sent_msg = await bump_channel.send(content=content, embed=embed, view=ToggleIncensePingButton())
+        sent_msg = await bump_channel.send(
+            content=content, embed=embed, view=ToggleIncensePingButton()
+        )
         # Upsert in db
         await upsert_ping_message_id(
             bot,

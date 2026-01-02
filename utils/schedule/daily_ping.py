@@ -30,7 +30,7 @@ async def send_daily_ping(bot):
         f"- ;sw - To claim your free 2x swap tickets\n"
     )
     holiday_add_on = (
-        f";ss join - To join the Secret Santa list,\n"
+        f"- ;ss join - To join the Secret Santa list,\n"
         f"- ;hiker - To help the hiker.\n"
         f"- ;xmas - To claim your free gifts in Pokemeow Official Server.\n"
     )

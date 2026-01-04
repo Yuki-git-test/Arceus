@@ -36,12 +36,16 @@ from utils.listener_func.secret_santa_listener import (
     secret_santa_listener,
     secret_santa_timer_listener,
 )
+from utils.listener_func.shiny_bonus_listener import (
+    handle_pokemeow_global_bonus,
+    read_shiny_bonus_timestamp_from_cc_channel,
+)
 from utils.listener_func.special_battle_npc_listener import (
     special_battle_npc_listener,
     special_battle_npc_timer_listener,
 )
 from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
-from utils.listener_func.shiny_bonus_listener import handle_pokemeow_global_bonus
+
 # ————————————————————————————————
 # 🩵 Import DB Functions
 #  ———————————————————————————————
@@ -78,6 +82,8 @@ secret_santa_phrases = [
     "You received",
 ]
 
+CC_SHINY_BONUS_CHANNEL_ID = 1457171231445876746
+
 
 # 🐾────────────────────────────────────────────
 #        🌸 Message Create Listener Cog
@@ -91,7 +97,37 @@ class MessageCreateListener(commands.Cog):
     # 🦋────────────────────────────────────────────
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
+        # ————————————————————————————————
+        # 🏰 Guild Check — Route by server
+        # ————————————————————————————————
+        guild = message.guild
+        if not guild:
+            return  # Skip DMs
+
         try:
+            # ————————————————————————————————
+            # 🩵 CC Bump Reminder Listener
+            # ————————————————————————————————
+            if guild.id == CC_GUILD_ID:
+                if message.channel.id == CC_BUMP_CHANNEL_ID:
+                    pretty_log(
+                        "info",
+                        f"Detected message in CC bump channel: Message ID {message.id}",
+                        label="CC Bump Reminder Listener",
+                    )
+                    await check_cc_bump_reminder(self.bot, message)
+                if message.channel.id == CC_SHINY_BONUS_CHANNEL_ID:
+                    pretty_log(
+                        "info",
+                        f"Detected message in CC shiny bonus channel: Message ID {message.id}",
+                        label="CC Shiny Bonus Listener",
+                    )
+                    await read_shiny_bonus_timestamp_from_cc_channel(
+                        bot=self.bot, message=message
+                    )
+            # ————————————————————————————————
+            # 🏰 Ignore non-PokéMeow bot messages
+            # ————————————————————————————————
             # 🚫 Ignore all bots except PokéMeow to prevent loops
             if (
                 message.author.bot
@@ -99,13 +135,6 @@ class MessageCreateListener(commands.Cog):
                 and not message.webhook_id
             ):
                 return
-
-            # ————————————————————————————————
-            # 🏰 Guild Check — Route by server
-            # ————————————————————————————————
-            guild = message.guild
-            if not guild:
-                return  # Skip DMs
 
             content = message.content
             first_embed = message.embeds[0] if message.embeds else None
@@ -123,17 +152,6 @@ class MessageCreateListener(commands.Cog):
             first_embed_title = (
                 first_embed.title if first_embed and first_embed.title else ""
             )
-            # ————————————————————————————————
-            # 🩵 CC Bump Reminder Listener
-            # ————————————————————————————————
-            if guild.id == CC_GUILD_ID:
-                if message.channel.id == CC_BUMP_CHANNEL_ID:
-                    pretty_log(
-                        "info",
-                        f"Detected message in CC bump channel: Message ID {message.id}",
-                        label="CC Bump Reminder Listener",
-                    )
-                    await check_cc_bump_reminder(self.bot, message)
 
             # ————————————————————————————————
             # 🩵 VNA message logic

@@ -9,7 +9,8 @@ from Constants.vn_allstars_constants import (
     VN_ALLSTARS_EMOJIS,
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
-    VNA_SERVER_ID
+    VNA_SERVER_ID,
+    KHY_USER_ID
 )
 from utils.db.shiny_bonus_db import (
     extend_shiny_bonus,
@@ -26,6 +27,47 @@ BONUS_NAME = f"{Emojis.shiny_bo} Checklist Shiny Bonus Active!"
 BONUS_EFFECT = f"+25% {VN_ALLSTARS_EMOJIS.vna_shiny} Checklist Pokemon spawn rates."
 NEW_EMOJI = "🆕"
 PLUS_EMOJI = "➕"
+
+CC_SHINY_BONUS_CHANNEL_ID = 1457171231445876746
+
+
+async def send_timestamp_to_cc_channel(bot: commands.Bot, expires_unix: int) -> None:
+    """Sends the expiration timestamp to the CC shiny bonus channel."""
+
+    channel = bot.get_channel(CC_SHINY_BONUS_CHANNEL_ID)
+    if channel:
+        await channel.send(expires_unix)
+    else:
+        pretty_log("warn", "CC shiny bonus channel not found.")
+
+
+async def read_shiny_bonus_timestamp_from_cc_channel(
+    bot: commands.Bot, message: discord.Message
+):
+    """Reads the expiration timestamp from the CC shiny bonus channel message."""
+    if message.channel.id != CC_SHINY_BONUS_CHANNEL_ID:
+        return
+    # Ignore human messages
+    if message.author.id == KHY_USER_ID:
+        return
+
+    try:
+        expires_unix = int(message.content)
+        pretty_log(
+            "info",
+            f"Read shiny bonus expiration timestamp: {expires_unix}",
+        )
+        await handle_pokemeow_global_bonus(
+            bot=bot,
+            message=message,
+            cc_expires_unix=expires_unix,
+        )
+    except ValueError:
+        pretty_log(
+            "warn",
+            f"Failed to parse expiration timestamp from message: {message.content}",
+        )
+        return
 
 
 class ToggleShinyBonusButton(discord.ui.View):
@@ -110,24 +152,40 @@ async def build_extended_shiny_bonus_embed(
 
 
 async def handle_pokemeow_global_bonus(
-    bot: commands.Bot, message: discord.Message, delta_seconds: int = 0
+    bot: commands.Bot,
+    message: discord.Message,
+    delta_seconds: int = 0,
+    cc_expires_unix: int = 0,
 ) -> bool:
     """💎 Check PokéMeow embed and post/update shiny bonus in multiple servers."""
-    if not message.embeds:
-        return False
 
-    embed = message.embeds[0]
-    desc = embed.description or ""
+    if not cc_expires_unix:
+        pretty_log(
+            "info",
+            f"Parsing PokéMeow global shiny bonus message for expiration timestamp.",
+        )
+        if not message.embeds:
+            return False
 
-    # 🔍 Extract expiration timestamp
-    match = re.search(
-        r"- <:\w+:\d+> \+25% Checklist Shiny rate: <:\w+:\d+> Active, expires <t:(\d+):R>",
-        desc,
-    )
-    if not match:
-        return False
+        embed = message.embeds[0]
+        desc = embed.description or ""
 
-    expires_unix = int(match.group(1))
+        # 🔍 Extract expiration timestamp
+        match = re.search(
+            r"- <:\w+:\d+> \+25% Checklist Shiny rate: <:\w+:\d+> Active, expires <t:(\d+):R>",
+            desc,
+        )
+        if not match:
+            return False
+
+        expires_unix = int(match.group(1))
+    else:
+        pretty_log(
+            "info",
+            f"Using provided expiration timestamp from CC channel: {cc_expires_unix}",
+        )
+        expires_unix = cc_expires_unix
+
     # Return if expiration is less than an hour away
     if expires_unix - int(datetime.now().timestamp()) < 3600:
         return False
@@ -217,6 +275,7 @@ async def handle_pokemeow_global_bonus(
         pretty_log(
             "info" f"Extended bonus, new message {new_msg.id}",
         )
+        await send_timestamp_to_cc_channel(bot, new_ends_unix)
 
     else:
         # 🌟 No active bonus, create one
@@ -239,3 +298,4 @@ async def handle_pokemeow_global_bonus(
             "info",
             f"Created new bonus, message {new_msg.id}",
         )
+        await send_timestamp_to_cc_channel(bot, expires_unix)

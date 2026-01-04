@@ -165,3 +165,27 @@ async def delete_shiny_bonus(bot):
             "warn",
             f"Failed to delete shiny bonus record: {e}",
         )
+
+async def fetch_ends_on(bot) -> int | None:
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT ends_on FROM shiny_bonus
+                WHERE id = 1
+                """,
+            )
+            if row:
+                return row["ends_on"]
+            else:
+                pretty_log(
+                    "info",
+                    f"No shiny bonus ends_on found",
+                )
+                return None
+    except Exception as e:
+        pretty_log(
+            "warn",
+            f"Failed to fetch shiny bonus ends_on: {e}",
+        )
+        return None

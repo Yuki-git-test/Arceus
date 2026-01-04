@@ -6,14 +6,15 @@ from discord.ext import commands
 
 from Constants.aesthetic import Emojis, Thumbnails
 from Constants.vn_allstars_constants import (
+    KHY_USER_ID,
     VN_ALLSTARS_EMOJIS,
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
     VNA_SERVER_ID,
-    KHY_USER_ID
 )
 from utils.db.shiny_bonus_db import (
     extend_shiny_bonus,
+    fetch_ends_on,
     fetch_shiny_bonus,
     update_shiny_bonus_ends_on,
     update_shiny_bonus_message_id,
@@ -49,6 +50,14 @@ async def read_shiny_bonus_timestamp_from_cc_channel(
         return
     # Ignore human messages
     if message.author.id == KHY_USER_ID:
+        return
+
+    # Return if its from the bot itself
+    if message.author.id == bot.user.id:
+        pretty_log(
+            "info",
+            f"Ignoring bot's own message in CC shiny bonus channel.",
+        )
         return
 
     try:
@@ -301,6 +310,6 @@ async def handle_pokemeow_global_bonus(
             "info",
             f"Created new bonus, message {new_msg.id}",
         )
-        
+
         if not cc_expires_unix:
             await send_timestamp_to_cc_channel(bot, expires_unix)

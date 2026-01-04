@@ -27,7 +27,7 @@ BONUS_NAME = f"{Emojis.shiny_bo} Checklist Shiny Bonus Active!"
 BONUS_EFFECT = f"+25% {VN_ALLSTARS_EMOJIS.vna_shiny} Checklist Pokemon spawn rates."
 NEW_EMOJI = "🆕"
 PLUS_EMOJI = "➕"
-
+CHECK_EMOJI = "✅"
 CC_SHINY_BONUS_CHANNEL_ID = 1457171231445876746
 
 
@@ -62,6 +62,8 @@ async def read_shiny_bonus_timestamp_from_cc_channel(
             message=message,
             cc_expires_unix=expires_unix,
         )
+        # Check react
+        await message.add_reaction(CHECK_EMOJI)
     except ValueError:
         pretty_log(
             "warn",
@@ -275,7 +277,8 @@ async def handle_pokemeow_global_bonus(
         pretty_log(
             "info" f"Extended bonus, new message {new_msg.id}",
         )
-        await send_timestamp_to_cc_channel(bot, new_ends_unix)
+        if not cc_expires_unix:
+            await send_timestamp_to_cc_channel(bot, new_ends_unix)
 
     else:
         # 🌟 No active bonus, create one
@@ -298,4 +301,6 @@ async def handle_pokemeow_global_bonus(
             "info",
             f"Created new bonus, message {new_msg.id}",
         )
-        await send_timestamp_to_cc_channel(bot, expires_unix)
+        
+        if not cc_expires_unix:
+            await send_timestamp_to_cc_channel(bot, expires_unix)

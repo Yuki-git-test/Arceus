@@ -288,7 +288,8 @@ async def handle_pokemeow_global_bonus(
         )
         if not cc_expires_unix:
             await send_timestamp_to_cc_channel(bot, new_ends_unix)
-
+        else:
+            await message.add_reaction(PLUS_EMOJI)
     else:
         # 🌟 No active bonus, create one
         new_msg = await channel.send(
@@ -313,3 +314,5 @@ async def handle_pokemeow_global_bonus(
 
         if not cc_expires_unix:
             await send_timestamp_to_cc_channel(bot, expires_unix)
+        else:
+            await message.add_reaction(PLUS_EMOJI)

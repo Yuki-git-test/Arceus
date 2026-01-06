@@ -526,23 +526,23 @@ class GOLDEN_POKEMON_URL:
 
     drifloon = "https://graphics.tppcrpg.net/xy/golden/425M.gif?quality=lossless"
 
-    buneary = "https://graphics.tppcrpg.net/xy/golden/426M.gif?quality=lossless"
+    buneary = "https://graphics.tppcrpg.net/xy/golden/427M.gif?quality=lossless"
 
-    lopunny = "https://graphics.tppcrpg.net/xy/golden/427M.gif?quality=lossless"
+    lopunny = "https://graphics.tppcrpg.net/xy/golden/428M.gif?quality=lossless"
 
-    mismagius = "https://graphics.tppcrpg.net/xy/golden/428M.gif?quality=lossless"
+    mismagius = "https://graphics.tppcrpg.net/xy/golden/429M.gif?quality=lossless"
 
-    bonsly = "https://graphics.tppcrpg.net/xy/golden/429M.gif?quality=lossless"
+    bonsly = "https://graphics.tppcrpg.net/xy/golden/438M.gif?quality=lossless"
 
-    mimejr = "https://graphics.tppcrpg.net/xy/golden/438M.gif?quality=lossless"
+    mimejr = "https://graphics.tppcrpg.net/xy/golden/439M.gif?quality=lossless"
 
-    chatot = "https://graphics.tppcrpg.net/xy/golden/439M.gif?quality=lossless"
+    chatot = "https://graphics.tppcrpg.net/xy/golden/441M.gif?quality=lossless"
 
-    spiritomb = "https://graphics.tppcrpg.net/xy/golden/441M.gif?quality=lossless"
+    spiritomb = "https://graphics.tppcrpg.net/xy/golden/442M.gif?quality=lossless"
 
-    gible = "https://graphics.tppcrpg.net/xy/golden/442M.gif?quality=lossless"
+    gible = "https://graphics.tppcrpg.net/xy/golden/443M.gif?quality=lossless"
 
-    gabite = "https://graphics.tppcrpg.net/xy/golden/443M.gif?quality=lossless"
+    gabite = "https://graphics.tppcrpg.net/xy/golden/444M.gif?quality=lossless"
 
     garchomp = "https://graphics.tppcrpg.net/xy/golden/445M.gif?quality=lossless"
 

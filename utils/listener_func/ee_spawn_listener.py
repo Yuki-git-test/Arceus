@@ -27,6 +27,7 @@ SHINY_EE_COLOR = 16561340
 enable_debug(f"{__name__}.check_cc_bump_reminder")
 # ⏳ Shared cooldowns across commands/listeners
 wb_shared_cooldowns: dict[int, float] = {}  # {guild_id: last_post_time}
+cc_shared_cooldowns: dict[int, float] = {}  # {guild_id: last_post_time}
 # -------------------- Persistent cache --------------------
 CACHE_FILE = "Data/ee_votes_cache.json"
 
@@ -191,7 +192,7 @@ async def send_cc_bump_reminder(
         # Cooldown check
         cooldown_time = 300  # 5 minutes
         now = time.time()
-        last_time = wb_shared_cooldowns.get(VNA_SERVER_ID, 0)
+        last_time = cc_shared_cooldowns.get(VNA_SERVER_ID, 0)
         elapsed = now - last_time
         if elapsed < cooldown_time:
             pretty_log(
@@ -199,7 +200,9 @@ async def send_cc_bump_reminder(
                 f"CC bump reminder blocked by shared cooldown ({int(cooldown_time - elapsed)}s remaining)",
             )
             return
-
+        # ✅ Update the shared cooldown
+        cc_shared_cooldowns[VNA_SERVER_ID] = now
+        
         bump_embed = discord.Embed(title=title, description=description, color=color)
 
         await cc_bump_channel.send(embed=bump_embed)

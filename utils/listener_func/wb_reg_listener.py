@@ -16,7 +16,8 @@ from utils.pokemeow.get_pokemeow_reply import (
     get_pokemeow_reply_member,
 )
 
-wb_task = None
+# Structure: {boss_name: {"time": unix_seconds, "users": set(user_ids), "task": asyncio.Task, "channels": {user_id: channel}}}
+wb_tasks = {}
 
 
 def extract_wb_unix_seconds(description: str) -> int | None:
@@ -71,17 +72,36 @@ async def world_boss_waiter(
     seconds_until_fight = unix_seconds - now
     if seconds_until_fight > 0:
         await asyncio.sleep(seconds_until_fight)
-        content = (
-            f"{user.mention}, You can now join the World Boss Battle for **{wb_name}**!"
-        )
+        task_info = wb_tasks.get(wb_name)
+        if task_info:
+            return
+
         embed = discord.Embed(
             description=";wb f",
             color=ARCEUS_EMBED_COLOR,
         )
         embed.add_field(name="Iphone Copy:", value="`;wb f`", inline=False)
-        await channel.send(content=content, embed=embed)
-        """# Remove the reminder after sending notification
-        await remove_wb_reminder(bot, user.id)"""
+        for user_id in list(task_info["users"]):
+            channel = task_info["channels"].get(user_id)
+            user = bot.get_user(user_id)
+            if not channel or not user:
+                continue
+
+            content = f"{user.mention}, You can now join the World Boss Battle for **{wb_name}**!"
+            try:
+                await channel.send(content=content, embed=embed)
+                pretty_log(
+                    "info",
+                    f"Sent World Boss Battle reminder to user {user_id} in channel {channel.id}",
+                )
+            except Exception as e:
+                pretty_log(
+                    "error",
+                    f"Failed to send World Boss Battle reminder to user {user_id} in channel {channel.id}: {e}",
+                )
+
+        # Clean up the task info
+        wb_tasks.pop(wb_name, None)
 
 
 async def start_world_boss_task(
@@ -92,27 +112,53 @@ async def start_world_boss_task(
     wb_name: str,
     message: discord.Message,
 ):
-    global wb_task
-    # If a task is running and not done, don't start another
-    if wb_task and not wb_task.done():
-        pretty_log("info", "World boss reminder task already scheduled.")
-        return
-    await message.add_reaction("📅")
-    
-    # make it ping 5 seconds earlier than the actual time
-    if unix_seconds > 5:
-        unix_seconds -= 5
+    user_id = user.id
 
-    wb_task = asyncio.create_task(
-        world_boss_waiter(
-            bot=bot,
-            unix_seconds=unix_seconds,
-            channel=channel,
-            user=user,
-            wb_name=wb_name,
+    # Subtract 5 seconds for early ping
+    ping_time = unix_seconds - 5
+
+    # Check if there's an existing task for this boss
+    if wb_name in wb_tasks:
+        task_info = wb_tasks[wb_name]
+
+        # Check if user is already registered
+        if user_id in task_info["users"]:
+            pretty_log(
+                "info",
+                f"User {user_id} already registered for World Boss {wb_name} reminder.",
+            )
+            return
+        # If the time is different, update it, else ignore
+        if ping_time > task_info["time"]:
+            task_info["time"] = ping_time
+        task_info["users"].add(user_id)
+        task_info["channels"][user_id] = channel
+        pretty_log(
+            "info",
+            f"Added user {user_id} to existing World Boss {wb_name} reminder task.",
         )
-    )
-    pretty_log("info", "World boss reminder task started.")
+        await message.add_reaction("📅")
+
+    # No existing task, create a new one
+    else:
+        try:
+            wb_tasks[wb_name] = {
+                "time": ping_time,
+                "users": set([user_id]),
+                "channels": {user_id: channel},
+                "task": asyncio.create_task(world_boss_waiter(bot, ping_time, wb_name)),
+            }
+            await message.add_reaction("📅")
+            pretty_log(
+                "info",
+                f"Created new World Boss {wb_name} reminder task for user {user_id}.",
+            )
+        except Exception as e:
+            pretty_log(
+                "error",
+                f"Failed to create World Boss {wb_name} reminder task: {e}",
+            )
+            return
 
 
 async def register_wb_battle_reminder(

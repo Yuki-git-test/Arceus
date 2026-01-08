@@ -63,7 +63,7 @@ CRITICAL_LOG_CHANNEL_LIST = [
 
 # -------------------- 🌟 Pretty Log --------------------
 def pretty_log(
-    tag: str = None,
+    tag: str = "info",
     message: str = "",
     *,
     label: str = None,

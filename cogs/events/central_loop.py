@@ -31,6 +31,8 @@ class CentralLoop(commands.Cog):
     async def central_loop(self):
         """Background loop that ticks every 60 seconds"""
         await self.bot.wait_until_ready()
+        from utils.cache.weekly_goal_tracker_cache import flush_weekly_goal_cache
+        from utils.cache.monthly_goal_tracker_cache import flush_monthly_goal_cache
 
         pretty_log(
             "",
@@ -55,6 +57,12 @@ class CentralLoop(commands.Cog):
 
                 # 💎 Check if shiny bonus has expired
                 await check_and_handle_expired_shiny_bonus(bot=self.bot)
+
+                # 🧼 Flush weekly goal cache
+                await flush_weekly_goal_cache(bot=self.bot)
+
+                # 🧼 Flush monthly goal cache
+                await flush_monthly_goal_cache(bot=self.bot)
 
             except Exception as e:
                 pretty_log(
@@ -84,5 +92,7 @@ async def setup(bot: commands.Bot):
     print("  ✅ ⏰  special_battle_timer_checker")
     print("  ✅ 🎅  secret_santa_timer_checker")
     print("  ✅ 💎  shiny_bonus_checker")
+    print("  ✅ 🧼  weekly_goal_tracker_cache_flush")
+    print("  ✅ 🧼  monthly_goal_tracker_cache_flush")
     print("  🧭 CentralLoop ticking every 60 seconds!")
     print("  ─────────────────────────────────────────────\n")

@@ -24,7 +24,7 @@ from utils.pokemeow.get_pokemeow_reply import get_pokemeow_reply_member
 FISHING_COLOR = 0x87CEFA
 from utils.logs.debug_log import debug_log, enable_debug
 
-#enable_debug(f"{__name__}.fish_spawn_listener")
+# enable_debug(f"{__name__}.fish_spawn_listener")
 
 
 async def fish_spawn_listener(
@@ -43,15 +43,11 @@ async def fish_spawn_listener(
     embed_description = embed.description or ""
     debug_log(f" Embed description: {embed_description}")
     if "fished a wild" not in embed_description:
-        debug_log(
-            " 'fished a wild' not in embed description, exiting."
-        )
+        debug_log(" 'fished a wild' not in embed description, exiting.")
         return
 
     if after_message.id in processed_fish_spawn_message_ids:
-        debug_log(
-            f" Message ID {after_message.id} already processed, exiting."
-        )
+        debug_log(f" Message ID {after_message.id} already processed, exiting.")
         return
     processed_fish_spawn_message_ids.add(after_message.id)
 
@@ -70,13 +66,9 @@ async def fish_spawn_listener(
             debug_log(" No trainer name extracted, exiting.")
             return
         member = get_faction_member_via_trainer_name(bot, guild, trainer_name)
-        debug_log(
-            f" Member from get_faction_member_via_trainer_name: {member}"
-        )
+        debug_log(f" Member from get_faction_member_via_trainer_name: {member}")
         if not member:
-            debug_log(
-                " No member found via trainer name, exiting."
-            )
+            debug_log(" No member found via trainer name, exiting.")
             return
 
     if "<:team_logo:" in embed_description:
@@ -97,3 +89,4 @@ async def fish_spawn_listener(
                 f" Notifying via faction_ball_alert for member {getattr(member, 'id', None)}."
             )
             await faction_ball_alert(member, before_message, after_message)
+    return

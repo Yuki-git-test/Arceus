@@ -87,10 +87,10 @@ async def fetch_shiny_bonus(bot) -> dict[str, int] | None:
                     "ends_on": row["ends_on"],
                 }
             else:
-                pretty_log(
+                """pretty_log(
                     "info",
                     f"No shiny bonus record found",
-                )
+                )"""
                 return None
     except Exception as e:
         pretty_log(

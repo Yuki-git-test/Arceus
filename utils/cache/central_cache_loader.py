@@ -6,11 +6,13 @@ from .cache_list import market_alert_cache
 from .daily_fa_ball_cache import load_daily_faction_ball_cache
 from .faction_members_cache import load_faction_members_cache
 from .market_alert_cache import load_market_alert_cache
+from .monthly_goal_tracker_cache import load_monthly_goal_cache
+from .ping_message_id_cache import load_ping_message_id_cache
 from .timers_cache import load_timer_cache
 from .user_alert_cache import load_user_alert_cache
 from .vna_members_cache import load_vna_members_cache
 from .webhook_url_cache import load_webhook_url_cache
-from .ping_message_id_cache import load_ping_message_id_cache
+from .weekly_goal_tracker_cache import load_weekly_goal_cache
 
 
 async def load_all_cache(bot: discord.Client):
@@ -22,9 +24,15 @@ async def load_all_cache(bot: discord.Client):
     try:
         # Load Ping Message ID Cache
         await load_ping_message_id_cache(bot)
-        
+
         # Load VNA Members Cache
         await load_vna_members_cache(bot)
+
+        # Load Weekly Goal Cache
+        await load_weekly_goal_cache(bot)
+
+        # Load Monthly Goal Cache
+        await load_monthly_goal_cache(bot)
 
         # Load Timer Cache
         await load_timer_cache(bot)

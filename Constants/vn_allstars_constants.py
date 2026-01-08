@@ -4,6 +4,8 @@ YUKI_USER_ID = 705447976658665552
 VNA_EMBED_COLOR = 0x135CC0
 ARCEUS_EMBED_COLOR = 0xD1D3D4
 KHY_USER_ID = 952071312124313611
+WEEKLY_REQUIREMENT = 1500
+MONTHLY_REQUIREMENT = 6000
 # 💦☁────────────────────────────────────────────💦☁
 #       VN_ALLSTARS_TEXT_CHANNELS
 # 💦☁────────────────────────────────────────────💦☁

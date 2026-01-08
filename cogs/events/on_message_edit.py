@@ -11,8 +11,22 @@ from Constants.variables import (
     PublicChannels,
     Server,
 )
+from utils.listener_func.explore_caught_listener import explore_caught_listener
 from utils.listener_func.fish_spawn_listener import fish_spawn_listener
+from utils.listener_func.monthly_stats_listener import monthly_stats_listener
+from utils.listener_func.pokemon_caught_listener import pokemon_caught_listener
+from utils.listener_func.weekly_stats_listener import weekly_stats_listener
 from utils.logs.pretty_log import pretty_log
+
+# ️────────────────────────────────────────────
+#        ⚔️ Message Triggers
+# ️────────────────────────────────────────────
+triggers = {
+    "weekly_stats_command": "**Clan Weekly Stats — VN Allstar**",
+    "monthly_stats_command": "**Clan Monthly Stats — VN Allstar**",
+    "explore_listener": ":stopwatch: Your explore session has ended!",
+    "caught_listener": "You caught a",
+}
 
 
 # 🍭──────────────────────────────
@@ -43,12 +57,6 @@ class OnMessageEditCog(commands.Cog):
         first_embed_title = first_embed.title if first_embed else ""
 
         # ————————————————————————————————
-        # 🩵 CC Edit Listener
-        # ————————————————————————————————
-        """if after.guild and after.guild.id == CC_GUILD_ID:
-            # Check for fish spawn edits
-            pass"""
-        # ————————————————————————————————
         # 🩵 VNA Edit Listener
         # ————————————————————————————————
         # Only log edits in VNA server
@@ -63,6 +71,49 @@ class OnMessageEditCog(commands.Cog):
             and "fished a wild" in first_embed_description.lower()
         ):
             await fish_spawn_listener(self.bot, before, after)
+        # ————————————————————————————————
+        # 🩵 VNA Pokemon Caught Listener
+        # ————————————————————————————————
+        if first_embed:
+            if triggers["caught_listener"] in first_embed_description:
+                pretty_log(
+                    "info",
+                    f"Detected edit triggering VNA Pokemon Caught Listener in {after.channel.name}",
+                )
+                await pokemon_caught_listener(self.bot, before, after)
+
+        # ————————————————————————————————
+        # 🩵 VNA Weekly Stats Listener
+        # ————————————————————————————————
+        if first_embed:
+            if triggers["weekly_stats_command"] in first_embed_title:
+                pretty_log(
+                    "info",
+                    f"Detected edit triggering VNA Weekly Stats Listener in {after.channel.name}",
+                )
+                await weekly_stats_listener(self.bot, before, after)
+        # ————————————————————————————————
+        # 🩵 VNA Monthly Stats Listener
+        # ————————————————————————————————
+        if first_embed:
+            if triggers["monthly_stats_command"] in first_embed_title:
+
+                pretty_log(
+                    "info",
+                    f"Detected edit triggering VNA Monthly Stats Listener in {after.channel.name}",
+                )
+                await monthly_stats_listener(self.bot, before, after)
+
+        # ————————————————————————————————
+        # 🩵 VNA Explore Caught Listener
+        # ————————————————————————————————
+        if content:
+            if triggers["explore_listener"] in content:
+                pretty_log(
+                    "info",
+                    f"Detected edit triggering VNA Explore Caught Listener in {after.channel.name}",
+                )
+                await explore_caught_listener(self.bot, before, after)
 
 
 async def setup(bot: commands.Bot):

@@ -29,6 +29,7 @@ from utils.listener_func.incense_listener import (
     server_has_incense_handler,
 )
 from utils.listener_func.market_feed_listener import market_feeds_listener
+from utils.listener_func.monthly_stats_listener import monthly_stats_listener
 from utils.listener_func.pokemon_spawn_listener import pokemon_spawn_listener
 from utils.listener_func.pokemon_timer import pokemon_timer_handler
 from utils.listener_func.pokespawn_listener import as_spawn_ping
@@ -45,6 +46,7 @@ from utils.listener_func.special_battle_npc_listener import (
     special_battle_npc_timer_listener,
 )
 from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
+from utils.listener_func.weekly_stats_listener import weekly_stats_listener
 
 # ————————————————————————————————
 # 🩵 Import DB Functions
@@ -74,6 +76,8 @@ triggers = {
     "incense_depleted": "your server's incense has run out!",
     "incense_use": "Incense. Your server has received the following benefits",
     "global_bonus": "Global bonuses",
+    "weekly_stats_command": "**Clan Weekly Stats — VN Allstar**",
+    "monthly_stats_command": "**Clan Monthly Stats — VN Allstar**",
 }
 secret_santa_phrases = [
     "You sent <:PokeCoin:666879070650236928>",
@@ -200,7 +204,33 @@ class MessageCreateListener(commands.Cog):
                 # ————————————————————————————————
                 if message.channel.id in MARKET_FEED_CHANNEL_IDS:
                     await market_feeds_listener(self.bot, message)
-
+                    
+                # ————————————————————————————————
+                # 🩵 VNA Weekly Stats Listener
+                # ————————————————————————————————
+                if first_embed:
+                    if triggers["weekly_stats_command"] in first_embed_title:
+                        pretty_log(
+                            "info",
+                            f"Detected weekly stats embed from PokéMeow bot: Message ID {message.id}",
+                            label="Weekly Stats Listener",
+                        )
+                        await weekly_stats_listener(
+                            bot=self.bot, before_message=message, after_message=message
+                        )
+                # ————————————————————————————————
+                # 🩵 VNA Monthly Stats Listener
+                # ————————————————————————————————
+                if first_embed:
+                    if triggers["monthly_stats_command"] in first_embed_title:
+                        pretty_log(
+                            "info",
+                            f"Detected monthly stats embed from PokéMeow bot: Message ID {message.id}",
+                            label="Monthly Stats Listener",
+                        )
+                        await monthly_stats_listener(
+                            bot=self.bot, before_message=message, after_message=message
+                        )
                 # 🔧───────────────────────────────────────────────🔧
                 # 🔧    🩵 World Boss Spawn Listener
                 # 🔧───────────────────────────────────────────────🔧

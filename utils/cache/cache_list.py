@@ -5,6 +5,11 @@ processed_faction_ball_alerts = set()
 processed_pokemon_spawn_msgs = set()
 processed_market_feed_message_ids = set()
 processed_market_feed_ids = set()
+processed_explore_messages = set()
+processed_caught_messages = set()
+processed_weekly_stats_messages = set()
+processed_monthly_stats_messages = set()
+
 
 def clear_processed_messages_cache():
     """Clears all processed message ID caches."""
@@ -13,6 +18,10 @@ def clear_processed_messages_cache():
     processed_faction_ball_alerts.clear()
     processed_market_feed_message_ids.clear()
     processed_market_feed_ids.clear()
+    processed_explore_messages.clear()
+    processed_caught_messages.clear()
+    processed_weekly_stats_messages.clear()
+    processed_monthly_stats_messages.clear()
 
     pretty_log(message="✅ Cleared all processed message ID caches", tag="cache")
 
@@ -120,4 +129,26 @@ ping_message_id_cache: dict[str, int] = {}
 # {
 #   type: message_id,
 #   ...
+# }
+
+weekly_goal_cache: dict[int, dict] = {}
+# Structure:
+# user_id -> {
+#   "user_name": str,
+#   "pokemon_caught": int,
+#   "fish_caught": int,
+#   "battles_won": int,
+#   "channel_id": int,
+#   "weekly_requirement_mark": bool,
+# }
+
+monthly_goal_cache: dict[int, dict] = {}
+# Structure:
+# user_id -> {
+#   "user_name": str,
+#   "pokemon_caught": int,
+#   "fish_caught": int,
+#   "battles_won": int,
+#   "channel_id": int,
+#   "monthly_requirement_mark": bool,
 # }

@@ -3,15 +3,23 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from utils.logs.pretty_log import pretty_log
-from utils.schedule.daily_faction_ball_reset import daily_ball_reset
-from utils.schedule.daily_ping import send_daily_ping
-from utils.schedule.os_lotto_ping import send_lotto_reminder
 from utils.schedule.schedule_helper import SchedulerManager
 
 NYC = zoneinfo.ZoneInfo("America/New_York")  # auto-handles EST/EDT
 
 # 🛠️ Create a SchedulerManager instance with Asia/Manila timezone
 scheduler_manager = SchedulerManager(timezone_str="Asia/Manila")
+
+# 🍥──────────────────────────────────────────────
+# Scheduled Tasks Imports
+# 🍥──────────────────────────────────────────────
+from utils.schedule.daily_faction_ball_reset import daily_ball_reset
+from utils.schedule.daily_ping import send_daily_ping
+from utils.schedule.goal_track_reset import (
+    monthly_goal_track_reset,
+    weekly_goal_track_reset,
+)
+from utils.schedule.os_lotto_ping import send_lotto_reminder
 
 
 def format_next_run_manila(next_run_time):
@@ -106,5 +114,59 @@ async def setup_scheduler(bot):
         pretty_log(
             tag="error",
             message=f"Failed to schedule OS Lotto reminder job: {e}",
+            bot=bot,
+        )
+    # ✨─────────────────────────────────────────────────────────
+    # 🎯 Weekly Goal Tracker Reset Every Sunday at Midnight EST
+    # ✨─────────────────────────────────────────────────────────
+    try:
+        weekly_goal_reset_job = scheduler_manager.add_cron_job(
+            weekly_goal_track_reset,
+            "weekly_goal_tracker_reset",
+            day_of_week="sun",
+            hour=0,
+            minute=0,
+            args=[bot],
+            timezone=NYC,
+        )
+        readable_next_run = format_next_run_manila(
+            weekly_goal_reset_job.next_run_time
+        )
+        pretty_log(
+            tag="schedule",
+            message=f"Weekly goal tracker reset job scheduled at {readable_next_run}",
+            bot=bot,
+        )
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Failed to schedule weekly goal tracker reset job: {e}",
+            bot=bot,
+        )
+    # ✨─────────────────────────────────────────────────────────
+    # 🎯 Monthly Goal Tracker Reset — 1st of the Month at Midnight EST
+    # ✨─────────────────────────────────────────────────────────
+    try:
+        monthly_goal_reset_job = scheduler_manager.add_cron_job(
+            monthly_goal_track_reset,
+            "monthly_goal_tracker_reset",
+            day_of_month=1,
+            hour=0,
+            minute=0,
+            args=[bot],
+            timezone=NYC,
+        )
+        readable_next_run = format_next_run_manila(
+            monthly_goal_reset_job.next_run_time
+        )
+        pretty_log(
+            tag="schedule",
+            message=f"Monthly goal tracker reset job scheduled at {readable_next_run}",
+            bot=bot,
+        )
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Failed to schedule monthly goal tracker reset job: {e}",
             bot=bot,
         )

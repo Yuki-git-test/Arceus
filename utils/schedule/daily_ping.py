@@ -11,7 +11,7 @@ from Constants.vn_allstars_constants import (
 )
 from utils.logs.pretty_log import pretty_log
 
-holiday = True  # Set to False when not in holiday season
+holiday = False  # Set to False when not in holiday season
 
 
 async def send_daily_ping(bot):

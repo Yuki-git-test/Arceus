@@ -42,12 +42,10 @@ async def send_webhook(
     # Handle legacy cache value (string) and correct dict structure
     if webhook_url_row is None:
         channel_name = channel.name
-        if "poke-spawn" in channel_name.lower() or "rare-spawn" in channel_name.lower():
-            webhook_name = "Arceus"
-        elif "log" in channel_name.lower():
+        if "log" in channel_name.lower():
             webhook_name = "Arceus Logs 📜"
         else:
-            webhook_name = f"Arceus Market Alerts 📢"
+            webhook_name = "Arceus"
         webhook_url = await create_webhook_func(bot, channel, webhook_name)
         if not webhook_url:
             pretty_log(

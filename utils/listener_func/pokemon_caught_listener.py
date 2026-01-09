@@ -3,6 +3,7 @@ import re
 import discord
 
 from Constants.vn_allstars_constants import (
+    ARCEUS_EMBED_COLOR,
     MONTHLY_REQUIREMENT,
     VN_ALLSTARS_TEXT_CHANNELS,
     WEEKLY_REQUIREMENT,
@@ -10,12 +11,13 @@ from Constants.vn_allstars_constants import (
 from utils.cache.cache_list import processed_caught_messages
 from utils.db.monthly_goal_tracker import upsert_monthly_goal
 from utils.db.weekly_goal_tracker import upsert_weekly_goal
+from utils.functions.webhook_func import send_webhook
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 from utils.pokemeow.get_pokemeow_reply import get_pokemeow_reply_member
 
 enable_debug(f"{__name__}.goal_checker")
-#enable_debug(f"{__name__}.pokemon_caught_listener")
+# enable_debug(f"{__name__}.pokemon_caught_listener")
 FISHING_COLOR = 0x87CEFA
 
 
@@ -29,11 +31,10 @@ async def goal_checker(
     top_line_monthly_catches: int = None,
     context: str = None,
 ):
-    #return  # Temporarily disable goal checking
+    # return  # Temporarily disable goal checking
     from utils.cache.cache_list import monthly_goal_cache, weekly_goal_cache
     from utils.cache.monthly_goal_tracker_cache import update_monthly_requirement_mark
     from utils.cache.weekly_goal_tracker_cache import update_weekly_requirement_mark
-
 
     # Get current caught counts
     weekly_pokemon_caught = weekly_goal_cache.get(user_id, {}).get("pokemon_caught", 0)
@@ -66,19 +67,31 @@ async def goal_checker(
         ) or (
             top_line_weekly_catches and top_line_weekly_catches >= WEEKLY_REQUIREMENT
         ):
-            #
-            # update_weekly_requirement_mark(user_id, True)
+
+            update_weekly_requirement_mark(user_id, True)
             pretty_log(f"User {user_name} has met the weekly requirement.")
             if not context or context != "stats_command":
-                pass
-                """await channel.send(
+                await channel.send(
                     f"🎉 Congratulations {user_name}! You have met the weekly requirement of {WEEKLY_REQUIREMENT:,}"
-                )"""
+                )
             if goal_tracker_channel:
-                pass
-                """await goal_tracker_channel.send(
-                    f"🎉 {user_name} has met the weekly requirement of {WEEKLY_REQUIREMENT:,} catches!"
-                )"""
+                user = guild.get_member(user_id)
+
+                if not user:
+                    # Fetch user via user id
+                    user = await bot.fetch_user(user_id)
+                user_line = user.mention if user else user_name
+                avatar_url = user.display_avatar.url if user else None
+                embed = discord.Embed(
+                    description=f"🎉 {user_line} has met the weekly requirement of __{WEEKLY_REQUIREMENT:,}__ catches!",
+                    color=ARCEUS_EMBED_COLOR,
+                )
+                embed.set_author(name=user.display_name, icon_url=avatar_url)
+                await send_webhook(
+                    bot=bot,
+                    channel=goal_tracker_channel,
+                    embed=embed,
+                )
 
     if not monthly_requirement_mark:
         if (
@@ -88,18 +101,31 @@ async def goal_checker(
         ) or (
             top_line_monthly_catches and top_line_monthly_catches >= MONTHLY_REQUIREMENT
         ):
-            #update_monthly_requirement_mark(user_id, True)
+            update_monthly_requirement_mark(user_id, True)
             pretty_log(f"User {user_name} has met the monthly requirement.")
             if not context or context != "stats_command":
-                pass
-                """await channel.send(
+                await channel.send(
                     f"🏆 Congratulations {user_name}! You have met the monthly requirement of {MONTHLY_REQUIREMENT:,}"
-                )"""
+                )
             if goal_tracker_channel:
-                pass
-                """await goal_tracker_channel.send(
-                    f"🏆 {user_name} has met the monthly requirement of {MONTHLY_REQUIREMENT:,} catches!"
-                )"""
+                user = guild.get_member(user_id)
+
+                if not user:
+                    # Fetch user via user id
+                    user = await bot.fetch_user(user_id)
+
+                avatar_url = user.display_avatar.url if user else None
+                user_line = user.mention if user else user_name
+                embed = discord.Embed(
+                    description=f"🏆 {user_line} has met the monthly requirement of __{MONTHLY_REQUIREMENT:,}__ catches!",
+                    color=0xFFD700,
+                )
+                embed.set_author(name=user.display_name, icon_url=avatar_url)
+                await send_webhook(
+                    bot=bot,
+                    channel=goal_tracker_channel,
+                    embed=embed,
+                )
 
 
 def extract_member_username_from_embed(embed: discord.Embed) -> str | None:

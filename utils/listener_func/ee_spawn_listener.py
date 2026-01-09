@@ -127,7 +127,7 @@ async def check_cc_bump_reminder(bot: commands.Bot, message: discord.Message):
             save_vote_cache()  # save after sending alert
             vna_guild = bot.get_guild(VNA_SERVER_ID)
             debug_log(f"vna_guild: {vna_guild}")
-            channel_id = VN_ALLSTARS_TEXT_CHANNELS.off_topic
+            channel_id = VN_ALLSTARS_TEXT_CHANNELS.bumps
             ee_ping_role_id = VN_ALLSTARS_ROLES.ee_spawn_ping
 
             channel = vna_guild.get_channel(channel_id) or Object(id=channel_id)
@@ -151,6 +151,7 @@ async def check_cc_bump_reminder(bot: commands.Bot, message: discord.Message):
             variant="shiny" if "Shiny" in embed_title else "regular",
             boss="eternatus",
             battle_begins_time=timestamp,
+            source="cc_bump_reminder",
         )
     await message.add_reaction(CHECK_EMOJI)
 
@@ -161,6 +162,7 @@ async def send_cc_bump_reminder(
     votes_left: str = None,
     variant: str = "regular",
     timestamp: str = None,
+    source: str = "server",
 ):
 
     cc_guild = bot.get_guild(CC_GUILD_ID)
@@ -202,14 +204,15 @@ async def send_cc_bump_reminder(
             return
         # ✅ Update the shared cooldown
         cc_shared_cooldowns[VNA_SERVER_ID] = now
-        
+
         bump_embed = discord.Embed(title=title, description=description, color=color)
 
-        await cc_bump_channel.send(embed=bump_embed)
-        pretty_log(
-            "success",
-            f"Sent CC bump reminder for ee spawn in {cc_bump_channel.name}",
-        )
+        if source == "server":
+            await cc_bump_channel.send(embed=bump_embed)
+            pretty_log(
+                "success",
+                f"Sent CC bump reminder for ee spawn in {cc_bump_channel.name}",
+            )
 
 
 # -------------------- EE Near Spawn Checker --------------------
@@ -270,7 +273,7 @@ async def check_ee_near_spawn_alert(bot: commands.Bot, message: discord.Message)
                 near_spawn_alert_cache.add(boss_key)
                 save_vote_cache()  # save after sending alert
 
-                channel_id = VN_ALLSTARS_TEXT_CHANNELS.off_topic
+                channel_id = VN_ALLSTARS_TEXT_CHANNELS.bumps
                 ee_ping_role_id = VN_ALLSTARS_ROLES.ee_spawn_ping
 
                 channel = bot.get_channel(channel_id) or Object(id=channel_id)
@@ -377,12 +380,13 @@ async def extract_boss_from_wb_spawn_command(
             battle_begins_time=battle_begins_time,
         )
         # Trigger CC bump reminder
-        await send_cc_bump_reminder(
+        """await send_cc_bump_reminder(
             bot=bot,
             context="spawned",
             variant=variant,
             timestamp=battle_begins_time,
         )
+    """
 
 
 async def extract_boss_from_wb_command_embed(
@@ -418,13 +422,6 @@ async def extract_boss_from_wb_command_embed(
                 # Trigger auto ping only for etrnamax-eternatus
                 if boss_name.lower() == "eternatus":
                     await auto_wb_ping(bot=bot, variant=variant, boss=boss_name)
-                    # Trigger CC bump reminder
-                    await send_cc_bump_reminder(
-                        bot=bot,
-                        context="spawned",
-                        variant=variant,
-                        timestamp=battle_begins_time,
-                    )
 
                 return
     except Exception as e:
@@ -454,6 +451,7 @@ async def auto_wb_ping(
     spawned_by: discord.Member | None = None,
     battle_begins_time: str | None = None,
     message: discord.Message | None = None,
+    source: str = "server",
 ):
 
     # 🕒 Cooldown check
@@ -473,7 +471,7 @@ async def auto_wb_ping(
     # ✅ Update the shared cooldown
     wb_shared_cooldowns[guild.id] = now
 
-    channel_id = VN_ALLSTARS_TEXT_CHANNELS.off_topic
+    channel_id = VN_ALLSTARS_TEXT_CHANNELS.bumps
     ee_ping_role_id = VN_ALLSTARS_ROLES.ee_spawn_ping
     channel = guild.get_channel(channel_id)
     ee_ping_role = guild.get_role(ee_ping_role_id)
@@ -518,6 +516,15 @@ async def auto_wb_ping(
     pretty_log(
         "success",
         f"Sent auto WB ping for {variant} {boss_name} in {channel.name}",
+    )
+
+    # Trigger CC bump reminder
+    await send_cc_bump_reminder(
+        bot=bot,
+        context="spawned",
+        variant=variant,
+        timestamp=battle_begins_time,
+        source=source,
     )
     if message:
         await message.add_reaction(PLUS_EMOJI)

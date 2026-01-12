@@ -146,7 +146,9 @@ async def start_world_boss_task(
                 "time": ping_time,
                 "users": set([user_id]),
                 "channels": {user_id: channel},
-                "task": asyncio.create_task(world_boss_waiter(bot, ping_time, wb_name)),
+                "task": asyncio.create_task(
+                    world_boss_waiter(bot, ping_time, channel, user, wb_name)
+                ),
             }
             await message.add_reaction("📅")
             pretty_log(

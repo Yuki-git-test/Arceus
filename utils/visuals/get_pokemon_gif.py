@@ -12,6 +12,8 @@ hyphen_mon_names = [
     "tapu-bulu",
     "tapu-fini",
 ]
+
+
 def get_pokemon_gif(input_name: str):
     """
     Returns the pokemon gif
@@ -124,6 +126,15 @@ def get_pokemon_gif(input_name: str):
                 gif_url = f"https://play.pokemonshowdown.com/sprites/{shiny_prefix}/charizard-megay.gif?quality=lossless"
             else:
                 gif_url = f"https://play.pokemonshowdown.com/sprites/{shiny_prefix}/{base_name}{suffix}.gif?quality=lossless"
+
+        elif "primal" in base_name:
+            # Make it groudon-primal or kyogre-primal
+            if "groudon" in base_name:
+                gif_url = f"https://play.pokemonshowdown.com/sprites/{shiny_prefix}/groudon-primal.gif?quality=lossless"
+            elif "kyogre" in base_name:
+                gif_url = f"https://play.pokemonshowdown.com/sprites/{shiny_prefix}/kyogre-primal.gif?quality=lossless"
+            elif "dialga" in base_name:
+                gif_url = REGULAR_POKEMON_URL.primal_dialga
         else:
             gif_url = f"https://play.pokemonshowdown.com/sprites/{shiny_prefix}/{base_name}{suffix}.gif?quality=lossless"
 

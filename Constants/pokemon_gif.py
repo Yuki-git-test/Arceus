@@ -1,4 +1,5 @@
 class REGULAR_POKEMON_URL:
+    primal_dialga = "https://media.discordapp.net/attachments/897481393322475520/914666106969530390/jfa7a1g.gif?ex=69658a31&is=696438b1&hm=a280e887792a23a65eb9f34a89f80c2974467bb3afeff7205006c19efd5b9d3d&=&width=94&height=114"
     miraidon = "https://media.discordapp.net/attachments/706993472070090855/1443715101717823518/miraidon.gif?ex=692c0e37&is=692abcb7&hm=e371ec7dbe667d5a1aa8e08ff9d68ad8232a1f78f732d8f9fa48e9d0b22778af&=&width=103&height=120"
     missingno = "https://images-ext-1.discordapp.net/external/hvd_B-gSWeoAlOQolPLFq_79tfAmtuYC982RGOR2ZT0/https/i.ibb.co/x7YzV7v/YIFFB5I.gif"
     diglett = "https://media.discordapp.net/attachments/1410396560151543830/1410396591340257341/diglett.gif?ex=68b0ddaf&is=68af8c2f&hm=3a317661e11456ca87415add28cf04d3ba752402ddcf1bb594472239ce335d8a&="

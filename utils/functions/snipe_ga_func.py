@@ -26,6 +26,7 @@ blaclisted_roles_display = ", ".join(f"<@&{role_id}>" for role_id in BLACKLISTED
 
 def build_snipe_ga_embed(
     host: discord.Member,
+    prize: str,
     entries: int = 0,
     ends_at: datetime = None,
     winner: discord.Member = None,
@@ -35,7 +36,7 @@ def build_snipe_ga_embed(
     color = ARCEUS_EMBED_COLOR
     desc = f"""## SNIPE GIVEAWAY
 - Hosted By: {host.mention}
-- Prize: ???
+- Prize: {prize}
 - Allowed roles: {allowed_roles_display}
 - Blacklisted roles: {blaclisted_roles_display}
 
@@ -50,9 +51,10 @@ def build_snipe_ga_embed(
 
 
 class SnipeGAView(discord.ui.View):
-    def __init__(self, bot, author=None, embed_color=None, timeout=None):
+    def __init__(self, bot, prize: str, author=None, embed_color=None, timeout=None):
         super().__init__(timeout=timeout)
         self.bot = bot
+        self.prize = prize
         self.author = author
         self.host = author
         self.timeout = timeout  # Explicitly store timeout
@@ -135,6 +137,7 @@ class SnipeGAView(discord.ui.View):
 
             new_embed = build_snipe_ga_embed(
                 host=self.host,
+                prize=self.prize,
                 entries=len(self.joined_users),
                 ends_at=self.ends_at,
             )
@@ -188,6 +191,7 @@ class SnipeGAView(discord.ui.View):
 
         updated_embed = build_snipe_ga_embed(
             host=self.host,
+            prize=self.prize,
             entries=len(self.joined_users),  # includes winner
             ends_at=self.ends_at,
             winner=self.winner,

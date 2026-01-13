@@ -12,7 +12,6 @@ from utils.functions.snipe_ga_func import SnipeGAView, build_snipe_ga_embed
 from utils.logs.pretty_log import pretty_log
 from utils.visuals.pretty_defer import pretty_defer
 
-
 REQUIRED_ROLES = [
     VN_ALLSTARS_ROLES.staff,
     VN_ALLSTARS_ROLES.giveaway_host,
@@ -52,9 +51,12 @@ class SnipeGA(commands.Cog):
         description="Start a quick snipe giveaway",
     )
     @app_commands.describe(
+        prize="Prize for the giveaway",
         duration="Duration of the giveaway in seconds",
     )
-    async def snipe_ga(self, interaction: discord.Interaction, duration: int):
+    async def snipe_ga(
+        self, interaction: discord.Interaction, prize: str, duration: int
+    ):
         """Starts a quick snipe giveaway."""
 
         # Check if user has required roles to use the command
@@ -85,7 +87,6 @@ class SnipeGA(commands.Cog):
             )
             return
 
-
         # Set the snipe giveaway as active
         globals.snipe_ga_active = True
 
@@ -99,10 +100,12 @@ class SnipeGA(commands.Cog):
         content = f"SNIPE <@&{VN_ALLSTARS_ROLES.giveaways}>!"
         snipe_ga_embed = build_snipe_ga_embed(
             host=interaction.user,
+            prize=prize,
             ends_at=ends_at,
         )
         view = SnipeGAView(
             bot=self.bot,
+            prize=prize,
             author=interaction.user,
             embed_color=ARCEUS_EMBED_COLOR,
             timeout=duration,

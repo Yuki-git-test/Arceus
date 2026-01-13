@@ -16,7 +16,7 @@ from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 from utils.pokemeow.get_pokemeow_reply import get_pokemeow_reply_member
 
-enable_debug(f"{__name__}.goal_checker")
+#enable_debug(f"{__name__}.goal_checker")
 # enable_debug(f"{__name__}.pokemon_caught_listener")
 FISHING_COLOR = 0x87CEFA
 

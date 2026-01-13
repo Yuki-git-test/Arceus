@@ -152,3 +152,5 @@ monthly_goal_cache: dict[int, dict] = {}
 #   "channel_id": int,
 #   "monthly_requirement_mark": bool,
 # }
+
+snipe_ga_active = False

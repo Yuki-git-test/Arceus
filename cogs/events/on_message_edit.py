@@ -76,10 +76,6 @@ class OnMessageEditCog(commands.Cog):
         # ————————————————————————————————
         if first_embed:
             if triggers["caught_listener"] in first_embed_description:
-                pretty_log(
-                    "info",
-                    f"Detected edit triggering VNA Pokemon Caught Listener in {after.channel.name}",
-                )
                 await pokemon_caught_listener(self.bot, before, after)
 
         # ————————————————————————————————

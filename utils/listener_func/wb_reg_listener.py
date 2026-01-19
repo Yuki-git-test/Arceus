@@ -219,9 +219,15 @@ async def register_wb_battle_reminder(
     boss_name = extract_wb_boss_name(embed.description)
 
     now = int(time.time())
+    if unix_seconds is None:
+        pretty_log(
+            "info",
+            f"Failed to extract unix_seconds from embed description for message {message.id}. Skipping reminder registration.",
+        )
+        return
     seconds_until_fight = unix_seconds - now
 
-    if unix_seconds and boss_name and seconds_until_fight > 0:
+    if boss_name and seconds_until_fight > 0:
         await start_world_boss_task(
             bot=bot,
             unix_seconds=unix_seconds,

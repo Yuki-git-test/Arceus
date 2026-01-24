@@ -135,6 +135,8 @@ def get_pokemon_gif(input_name: str):
                 gif_url = f"https://play.pokemonshowdown.com/sprites/{shiny_prefix}/kyogre-primal.gif?quality=lossless"
             elif "dialga" in base_name:
                 gif_url = REGULAR_POKEMON_URL.primal_dialga
+        elif "ash-greninja" in base_name:
+            gif_url = f"https://play.pokemonshowdown.com/sprites/{shiny_prefix}/greninja-ash.gif?quality=lossless"
         else:
             gif_url = f"https://play.pokemonshowdown.com/sprites/{shiny_prefix}/{base_name}{suffix}.gif?quality=lossless"
 

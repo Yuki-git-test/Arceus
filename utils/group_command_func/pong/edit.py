@@ -81,7 +81,7 @@ async def edit_reminder_func(
         if new_notify_type != "DM":
             vna_member_info = vna_members_cache.get(user_id)
             member_channel_id = (
-                vna_member_info.get("personal_channel_id") if vna_member_info else None
+                vna_member_info.get("channel_id") if vna_member_info else None
             )
             target_channel = (
                 interaction.guild.get_channel(member_channel_id)

@@ -2,12 +2,16 @@
 # Helper: normalize Mega Pokemon name for database/display
 # ─────────────────────────────────────────────
 import re
+from datetime import datetime, timedelta
 from typing import Optional
+from zoneinfo import ZoneInfo
+
+from utils.db.timezone_db import is_valid_timezone
 
 from Constants.vn_allstars_constants import VN_ALLSTARS_EMOJIS
 from Constants.weakness_chart import weakness_chart
-from utils.logs.pretty_log import pretty_log
 from utils.logs.debug_log import debug_log, enable_debug
+from utils.logs.pretty_log import pretty_log
 
 Shiny_Emoji = VN_ALLSTARS_EMOJIS.vna_shiny
 Golden_Emoji = VN_ALLSTARS_EMOJIS.vna_golden
@@ -19,6 +23,8 @@ PREFIX_EMOJI_MAP = {
 FORM_BASE_DEX_OFFSET = 7001
 
 enable_debug(f"{__name__}.parse_special_mega_input")
+
+
 # ─────────────────────────────────────────────
 # Helper: Resolve Pokemon Name and Dex
 # ─────────────────────────────────────────────
@@ -318,3 +324,5 @@ def parse_prefix(input_str: str) -> str:
 
     # If no recognized prefix, return as-is
     return stripped.title()
+
+

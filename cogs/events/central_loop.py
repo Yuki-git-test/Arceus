@@ -1,13 +1,18 @@
 import asyncio
+
 from discord.ext import commands
-from utils.logs.pretty_log import pretty_log
 
 # 🧹 Import your scheduled tasks
+from utils.background_task.reminders_checker import check_and_trigger_reminders
+from utils.background_task.secret_santa_timer_checker import secret_santa_timer_checker
+from utils.background_task.shiny_bonus_checker import (
+    check_and_handle_expired_shiny_bonus,
+)
 from utils.background_task.special_battle_timer_checker import (
     special_battle_timer_checker,
 )
-from utils.background_task.secret_santa_timer_checker import secret_santa_timer_checker
-from utils.background_task.shiny_bonus_checker import check_and_handle_expired_shiny_bonus
+from utils.logs.pretty_log import pretty_log
+
 
 # 🍰──────────────────────────────
 #   🎀 Cog: CentralLoop
@@ -31,8 +36,8 @@ class CentralLoop(commands.Cog):
     async def central_loop(self):
         """Background loop that ticks every 60 seconds"""
         await self.bot.wait_until_ready()
-        from utils.cache.weekly_goal_tracker_cache import flush_weekly_goal_cache
         from utils.cache.monthly_goal_tracker_cache import flush_monthly_goal_cache
+        from utils.cache.weekly_goal_tracker_cache import flush_weekly_goal_cache
 
         pretty_log(
             "",
@@ -64,6 +69,9 @@ class CentralLoop(commands.Cog):
                 # 🧼 Flush monthly goal cache
                 await flush_monthly_goal_cache(bot=self.bot)
 
+                # ⏰ Check and trigger due reminders
+                await check_and_trigger_reminders(bot=self.bot)
+
             except Exception as e:
                 pretty_log(
                     "error",
@@ -94,5 +102,6 @@ async def setup(bot: commands.Bot):
     print("  ✅ 💎  shiny_bonus_checker")
     print("  ✅ 🧼  weekly_goal_tracker_cache_flush")
     print("  ✅ 🧼  monthly_goal_tracker_cache_flush")
+    print("  ✅ ⏰  reminders_checker")
     print("  🧭 CentralLoop ticking every 60 seconds!")
     print("  ─────────────────────────────────────────────\n")

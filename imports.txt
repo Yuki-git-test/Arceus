@@ -5,3 +5,4 @@ from utils.logs.debug_log import debug_log, enable_debug
 enable_debug(f"{__name__}.parse_special_mega_input")
 
 from utils.visuals.pretty_defer import pretty_defer
+from utils.visuals.design_embed import design_embed

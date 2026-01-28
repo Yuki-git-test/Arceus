@@ -1,10 +1,14 @@
 ARCEUS_EMBED_COLOR = 0xD1D3D4
 
+
 class Emojis:
     loading = "<a:colorful_loading:1324199044456779807>"
     pokespawn = "<:pokeball:1451132011145330770>"
     shiny_bo = "<:cl_bo:1456112527812464727>"
     incense = "<:incense:1456112493440270356>"
+    repeat_interval = "🔁"
+    reminder = "⏰"
+
 
 class Emojis_Factions:
     rocket = "<:rocket:1447364948622835723>"
@@ -15,6 +19,7 @@ class Emojis_Factions:
     flare = "<:flare:1447365091971432622>"
     yell = "<:yell:1447365115656540260>"
     skull = "<:skull:1447365137605595196>"
+
 
 class Emojis_Balls:
     pokeball = "<:pokeball:1447364644460302547>"
@@ -27,6 +32,7 @@ class Emojis_Balls:
 class Dividers:
     dots = "https://media.discordapp.net/attachments/1394913073520967680/1447596515597222008/image.png?ex=693832d0&is=6936e150&hm=2253da0037e5fa852c06aa482ee5bcae8c828a6e25bfd584631e8b5b4e368d79&=&format=webp&quality=lossless&width=1465&height=94"
 
+
 class Thumbnails:
     butterfly = "https://media.discordapp.net/attachments/1394913073520967680/1447598066482942094/image.png?ex=69383442&is=6936e2c2&hm=1d643372e6c138f883c09b072b5fc22fdda01f80bc8b0e55485461985e356a90&=&format=webp&quality=lossless&width=261&height=261"
     cloud = "https://media.discordapp.net/attachments/1394913073520967680/1447591709835001998/image.png?ex=69382e56&is=6936dcd6&hm=9898d66154ce3370499bd13b212cc6ec8726be5d52b124bf86459ac4b01cfa31&=&format=webp&quality=lossless&width=375&height=375"
@@ -36,3 +42,4 @@ class Thumbnails:
     daily_ping = "https://media.discordapp.net/attachments/1394913073520967680/1456135554281373706/image.png?ex=69574369&is=6955f1e9&hm=7ed33f09a8273748cde15914391ef7e6426561aa97d24d508b1048535040d362&=&format=webp&quality=lossless&width=480&height=480"
     SNIPE_GA_GIFT = "https://media.discordapp.net/attachments/1394913073520967680/1415694887898058842/gift-box.png?ex=68c4241b&is=68c2d29b&hm=40df2c5b0e7659e4b3e381aaf1059818ce2ddc75b3328415085cc2645870480b&=&format=webp&quality=lossless"
     CELEBRATE = "https://media.discordapp.net/attachments/1394913073520967680/1460459976802828379/image.png?ex=6966fed8&is=6965ad58&hm=3512b6f40e5ac6ec55139efdea755a7a80266506698b418dcee392e5db1984b1&=&format=webp&quality=lossless&width=480&height=480"
+    pong = "https://media.discordapp.net/attachments/1459004743295963206/1465904445769519175/image.png?ex=697acd67&is=69797be7&hm=0aad575babbe5a28d963f311b9343eb72bc033533d3963560c3116095b22bdba&=&format=webp&quality=lossless"

@@ -9,7 +9,7 @@ from Constants.vn_allstars_constants import (
     WEEKLY_REQUIREMENT,
 )
 from utils.cache.cache_list import processed_monthly_stats_messages, vna_members_cache
-from utils.db.monthly_goal_tracker import upsert_monthly_goal, fetch_all_monthly_goals
+from utils.db.monthly_goal_tracker import fetch_all_monthly_goals, upsert_monthly_goal
 from utils.db.weekly_goal_tracker import fetch_all_weekly_goals, upsert_weekly_goal
 from utils.essentials.stats_parsers import (
     parse_clan_stats_message,
@@ -24,9 +24,10 @@ from utils.pokemeow.get_pokemeow_reply import (
 from .pokemon_caught_listener import goal_checker
 from .weekly_stats_listener import extract_current_page_number
 
+
 async def monthly_stats_listener(
-        bot: discord.Client, before_message: discord.Message, after_message: discord.Message
-    ):
+    bot: discord.Client, before_message: discord.Message, after_message: discord.Message
+):
     embed = after_message.embeds[0] if after_message.embeds else None
     if not embed:
         return
@@ -63,6 +64,7 @@ async def monthly_stats_listener(
     vna_member_info = vna_members_cache.get(command_user_id)
     personal_channel_id = vna_member_info.get("channel_id") if vna_member_info else None
     if command_user_id not in weekly_goal_cache:
+
         await upsert_weekly_goal(
             bot=bot,
             user_id=command_user_id,
@@ -135,6 +137,9 @@ async def monthly_stats_listener(
             member_id = fetch_vna_member_id_by_username_or_pokemeow_name(username)
             member_info = vna_members_cache.get(member_id) if member_id else None
             channel_id = member_info.get("channel_id") if member_info else None
+            if username == "neverlikenever_42984":
+                member_id = 1327864338018730044  # Manually set member ID for this user
+                
             await upsert_monthly_goal(
                 bot=bot,
                 user_id=member_id,

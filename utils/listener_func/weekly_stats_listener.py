@@ -147,6 +147,8 @@ async def weekly_stats_listener(
             member_id = fetch_vna_member_id_by_username_or_pokemeow_name(username)
             member_info = vna_members_cache.get(member_id) if member_id else None
             channel_id = member_info.get("channel_id") if member_info else None
+            if username == "neverlikenever_42984":
+                member_id = 1327864338018730044  # Manually set member ID for this user
             await upsert_weekly_goal(
                 bot=bot,
                 user_id=member_id,

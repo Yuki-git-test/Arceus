@@ -1,4 +1,5 @@
 from Constants.variables import Emojis
+
 Legendary_icon_url = (
     "https://cdn.discordapp.com/emojis/834534206007803984.webp?size=96&quality=lossless"
 )
@@ -1394,6 +1395,19 @@ dex = {
     998: "baxcalibur",
     999: "gimmighoul",
 }
+
+
+def get_dex_number_by_name(name: str) -> int | None:
+    """
+    Returns the dex number for a given Pokémon name.
+    Example: get_dex_number_by_name("flutter-mane") -> 987
+    Returns None if not found.
+    """
+    # Only return if the name matches exactly (case-sensitive)
+    for dex_num, poke_name in dex.items():
+        if poke_name == name:
+            return dex_num
+    return None
 
 
 def get_rarity_by_color(color_value):

@@ -1,5 +1,6 @@
 from typing import Literal
 
+from Constants.paldea_galar_dict import get_dex_number_by_name
 from Constants.pokemon_gif import *
 from utils.logs.pretty_log import pretty_log
 
@@ -12,9 +13,13 @@ hyphen_mon_names = [
     "tapu-bulu",
     "tapu-fini",
 ]
+from utils.logs.debug_log import debug_log, enable_debug
+
+enable_debug(f"{__name__}.get_pokemon_gif")
+# sync
 
 
-def get_pokemon_gif(input_name: str):
+async def get_pokemon_gif(input_name: str):
     """
     Returns the pokemon gif
     """
@@ -23,18 +28,23 @@ def get_pokemon_gif(input_name: str):
     golden = False
     form: Literal["regular", "mega", "gmax"] = "regular"
     region_suffix = ""
-
+    debug_log(f"Input Pokémon name: {input_name}")
     # Normalize input
     name_parts = input_name.lower().replace("_", "-").split()
-
+    debug_log(f"Normalized name_parts: {name_parts}")
+    dex_number = None
     if "golden" in name_parts:
         golden = True
         name_parts.remove("golden")
+        debug_log("Detected 'golden' in name_parts, setting golden=True")
+
     if "shiny" in name_parts:
         shiny = True
         name_parts.remove("shiny")
+        debug_log("Detected 'shiny' in name_parts, setting shiny=True")
 
     remaining_name = "-".join(name_parts)
+    debug_log(f"Remaining name after removing shiny/golden: {remaining_name}")
 
     regions = {
         "alolan": "-alola",
@@ -45,14 +55,19 @@ def get_pokemon_gif(input_name: str):
     for region_prefix, suffix in regions.items():
         if remaining_name.startswith(region_prefix + "-"):
             region_suffix = suffix
+            debug_log(
+                f"Detected region prefix '{region_prefix}', applying suffix '{suffix}' and stripping prefix from remaining_name."
+            )
             remaining_name = remaining_name[len(region_prefix) + 1 :]
             break
 
     if remaining_name.startswith("mega-"):
         form = "mega"
+        debug_log("Detected 'mega-' prefix, setting form='mega'")
         remaining_name = remaining_name.replace("mega-", "")
     elif remaining_name.startswith(("gigantamax-", "gmax-")):
         form = "gmax"
+        debug_log("Detected 'gigantamax-' or 'gmax-' prefix, setting form='gmax'")
         remaining_name = remaining_name.replace("gigantamax-", "").replace("gmax-", "")
 
     # 🔹 Special gmax aliases
@@ -62,9 +77,13 @@ def get_pokemon_gif(input_name: str):
         "eternamax-eternatus": "eternatus",
     }
     if form == "gmax" and remaining_name in gmax_aliases:
+        debug_log(
+            f"Gmax alias detected for '{remaining_name}', replacing with '{gmax_aliases[remaining_name]}'"
+        )
         remaining_name = gmax_aliases[remaining_name]
 
     base_name = f"{remaining_name}{region_suffix}".lower()
+    debug_log(f"Base name for sprites: {base_name}")
     # Remove "shiny" and "golden" from the input for comparison
     compare_name = (
         input_name.lower()
@@ -78,18 +97,51 @@ def get_pokemon_gif(input_name: str):
         base_name = base_name.replace("-", "")
 
     attr_name = remaining_name.replace("-", "_")
+    debug_log(f"Attribute name for URL lookup: {attr_name}")
 
     gif_url = None
 
     # 🔹 Golden check (priority)
     if golden:
+        # Remove Golden from name and normalize for dex lookup
+        golden_base_name = (
+            original_input.lower().replace("golden", "").replace("_", "-").strip()
+        )
+        golden_base_name = "-".join(
+            golden_base_name.split()
+        )  # Replace spaces with hyphens
+        golden_base_name_attr = golden_base_name.replace("-", "_")
+        debug_log(f"Golden base name for dex lookup: {golden_base_name}")
+        dex_number = get_dex_number_by_name(golden_base_name)
+        debug_log(f"Dex number for golden form: {dex_number}")
+        pretty_log(
+            tag="debug",
+            message=(
+                f"Golden form detected. Looking up dex number for '{golden_base_name}': {dex_number}"
+            ),
+        )
         if form == "mega":
             golden_attr_name = f"mega_{attr_name}"
             gif_url = getattr(GOLDEN_MEGA_POKEMON_URL, golden_attr_name, None)
+            debug_log(
+                f"Golden mega form: attr_name={golden_attr_name}, gif_url={gif_url}"
+            )
         elif form == "gmax":
             gif_url = getattr(GOLDEN_POKEMON_URL, f"gmax_{attr_name}", None)
+            debug_log(
+                f"Golden gmax form: attr_name=gmax_{attr_name}, gif_url={gif_url}"
+            )
         else:
-            gif_url = getattr(GOLDEN_POKEMON_URL, attr_name, None)
+            if dex_number:
+                # Try the direct URL first
+                gif_url = f"https://graphics.tppcrpg.net/xy/golden/{dex_number}M.gif"
+                debug_log(f"Golden regular form: direct gif_url={gif_url}")
+
+            else:
+                gif_url = getattr(GOLDEN_POKEMON_URL, golden_base_name_attr, None)
+                debug_log(
+                    f"Golden regular form: no dex number, fallback gif_url={gif_url}"
+                )
 
     # 🔹 Shiny check (priority, same idea as golden)
     if shiny and not gif_url:

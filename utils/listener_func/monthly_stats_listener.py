@@ -140,7 +140,12 @@ async def monthly_stats_listener(
             else:
                 member_id = fetch_vna_member_id_by_username_or_pokemeow_name(username)
             if member_id is None:
-                # Skip if member_id is still None
+                pretty_log(
+                    "info",
+                    f"[MONTHLY STATS] Skipping upsert: Could not resolve user_id for username '{username}'",
+                    label="💥 MONTHLY STATS USER_ID NULL",
+                    bot=bot,
+                )
                 continue
             member_info = vna_members_cache.get(member_id)
             channel_id = member_info.get("channel_id") if member_info else None
@@ -166,6 +171,14 @@ async def monthly_stats_listener(
         # Compare values
         for username, catches, fishes in clan_members_stats:
             member_id = fetch_vna_member_id_by_username_or_pokemeow_name(username)
+            if member_id is None:
+                pretty_log(
+                    "info",
+                    f"[MONTHLY STATS] Skipping upsert: Could not resolve user_id for username '{username}'",
+                    label="💥 MONTHLY STATS USER_ID NULL",
+                    bot=bot,
+                )
+                continue
             # Compare from old weekly goals from db
             old_goal = old_monthly_goals_dict.get(member_id)
             old_catches = old_goal.get("pokemon_caught") if old_goal else 0

@@ -126,6 +126,9 @@ async def goal_checker(
                     channel=goal_tracker_channel,
                     embed=embed,
                 )
+                pretty_log(
+                    f"Sent monthly requirement met webhook for user {user_name}."
+                )
 
 
 def extract_member_username_from_embed(embed: discord.Embed) -> str | None:

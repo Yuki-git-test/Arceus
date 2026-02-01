@@ -15,7 +15,7 @@ hyphen_mon_names = [
 ]
 from utils.logs.debug_log import debug_log, enable_debug
 
-enable_debug(f"{__name__}.get_pokemon_gif")
+#enable_debug(f"{__name__}.get_pokemon_gif")
 # sync
 
 

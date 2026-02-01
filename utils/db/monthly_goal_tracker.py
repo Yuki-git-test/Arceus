@@ -80,4 +80,6 @@ async def delete_all_monthly_goals(bot: discord.Client):
     async with bot.pg_pool.acquire() as conn:
         query = "DELETE FROM monthly_goal_tracker;"
         await conn.execute(query)
-        pretty_log("Deleted all monthly goal records from the database.")
+        pretty_log(
+            "info", message="Deleted all monthly goal records from the database."
+        )

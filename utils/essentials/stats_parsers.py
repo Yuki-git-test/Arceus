@@ -113,7 +113,7 @@ def trim_header(message: str) -> str:
             line
             and not line.startswith(":dexcaught:")
             and not line.startswith("<:dexcaught:")
-            and not line.startswith("You're Rank")
+            and "You're Rank" not in line
             and not line.startswith(":calendar:")
             and not line.startswith(":bar_chart:")
         ):

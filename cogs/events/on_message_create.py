@@ -199,12 +199,12 @@ class MessageCreateListener(commands.Cog):
                 if message.channel.id == PublicChannels.Poke_Spawn:
                     await as_spawn_ping(self.bot, message)
 
-                # ————————————————————————————————
+                """# ————————————————————————————————
                 # 🩵 VNA Market Snipe
                 # ————————————————————————————————
                 if message.channel.id in MARKET_FEED_CHANNEL_IDS:
-                    await market_feeds_listener(self.bot, message)
-                    
+                    await market_feeds_listener(self.bot, message)"""
+
                 # ————————————————————————————————
                 # 🩵 VNA Weekly Stats Listener
                 # ————————————————————————————————

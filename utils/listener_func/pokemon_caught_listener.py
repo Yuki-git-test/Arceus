@@ -10,13 +10,14 @@ from Constants.vn_allstars_constants import (
 )
 from utils.cache.cache_list import processed_caught_messages
 from utils.db.monthly_goal_tracker import upsert_monthly_goal
+from utils.db.vna_members_db_func import update_member_pokemeow_name
 from utils.db.weekly_goal_tracker import upsert_weekly_goal
 from utils.functions.webhook_func import send_webhook
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 from utils.pokemeow.get_pokemeow_reply import get_pokemeow_reply_member
 
-#enable_debug(f"{__name__}.goal_checker")
+# enable_debug(f"{__name__}.goal_checker")
 # enable_debug(f"{__name__}.pokemon_caught_listener")
 FISHING_COLOR = 0x87CEFA
 
@@ -150,6 +151,46 @@ def extract_member_username_from_embed(embed: discord.Embed) -> str | None:
         if match:
             return match.group(1).strip()
     return None
+
+
+async def check_pokemeow_name(bot, member: discord.Member, pokemeow_name: str):
+    """Check if the PokéMeow name matches the cached name for the member ID., if not updates it"""
+    from utils.cache.vna_members_cache import (
+        update_pokemeow_name_in_cache,
+        vna_members_cache,
+    )
+
+    member_id = member.id
+    vna_member_info = vna_members_cache.get(member_id)
+    if not vna_member_info:
+        debug_log(f"No VNA member info found in cache for member ID {member_id}.")
+        return
+
+    cached_pokemeow_name = vna_member_info.get("pokemeow_name")
+    if cached_pokemeow_name != pokemeow_name:
+        debug_log(
+            f"PokéMeow name mismatch for member ID {member_id}: cached='{cached_pokemeow_name}', new='{pokemeow_name}'. Updating cache."
+        )
+        await update_member_pokemeow_name(member_id, pokemeow_name)
+        log_channel = member.guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.member_logs)
+        embed = discord.Embed(
+            title="PokéMeow Name Updated",
+            description=(
+                f"**Member:** <@{member_id}>\n"
+                f"**Old PokéMeow Name:** {cached_pokemeow_name}\n"
+                f"**New PokéMeow Name:** {pokemeow_name}"
+            ),
+            color=0x00FF00,
+        )
+        embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
+        embed.set_thumbnail(url=member.display_avatar.url)
+        embed.set_footer(text=f"Member ID: {member_id}", icon_url=member.guild.icon.url)
+        if log_channel:
+            await send_webhook(
+                bot=bot,
+                channel=log_channel,
+                embed=embed,
+            )
 
 
 # Pokemon Caught Listener
@@ -308,3 +349,7 @@ async def pokemon_caught_listener(
         guild=after_message.guild,
         channel=after_message.channel,
     )
+    # Check and update PokéMeow name if needed
+    pokemeow_name = vna_member_info.get("pokemeow_name")
+    if pokemeow_name:
+        await check_pokemeow_name(bot, member, pokemeow_name)

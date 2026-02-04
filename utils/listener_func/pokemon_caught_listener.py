@@ -155,10 +155,7 @@ def extract_member_username_from_embed(embed: discord.Embed) -> str | None:
 
 async def check_pokemeow_name(bot, member: discord.Member, pokemeow_name: str):
     """Check if the PokéMeow name matches the cached name for the member ID., if not updates it"""
-    from utils.cache.vna_members_cache import (
-        update_pokemeow_name_in_cache,
-        vna_members_cache,
-    )
+    from utils.cache.vna_members_cache import vna_members_cache
 
     member_id = member.id
     vna_member_info = vna_members_cache.get(member_id)
@@ -171,7 +168,7 @@ async def check_pokemeow_name(bot, member: discord.Member, pokemeow_name: str):
         debug_log(
             f"PokéMeow name mismatch for member ID {member_id}: cached='{cached_pokemeow_name}', new='{pokemeow_name}'. Updating cache."
         )
-        await update_member_pokemeow_name(member_id, pokemeow_name)
+        await update_member_pokemeow_name(bot, member, pokemeow_name)
         log_channel = member.guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.member_logs)
         embed = discord.Embed(
             title="PokéMeow Name Updated",

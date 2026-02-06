@@ -2,10 +2,12 @@ import re
 
 import discord
 
+from Constants.clan_wars_constants import CLAN_WARS_ROLES, CLAN_WARS_TEXT_CHANNELS
 from Constants.paldea_galar_dict import *
-from Constants.variables import PublicChannels, Roles
-from utils.logs.pretty_log import pretty_log
+from Constants.variables import PublicChannels, Roles, Server
+from Constants.vn_allstars_constants import VN_ALLSTARS_ROLES, VN_ALLSTARS_TEXT_CHANNELS
 from utils.functions.webhook_func import send_webhook
+from utils.logs.pretty_log import pretty_log
 
 # -------------------- Constants --------------------
 AUTO_SPAWN_ROLE_ID = Roles.Spawn_Hunter
@@ -48,6 +50,20 @@ def remove_bold_title_case(text: str) -> str:
     return text.title()
 
 
+GUILD_MAP = {
+    Server.VNA_ID: {
+        "auto_spawn_ping_role_id": VN_ALLSTARS_ROLES.as_spawn_ping,
+        "rare_spawn_ping_role_id": VN_ALLSTARS_ROLES.as_rare_spawn_hunter,
+        "rare_spawn_channel_id": VN_ALLSTARS_TEXT_CHANNELS.rare_spawn,
+    },
+    Server.CLAN_WARS_SERVER_ID: {
+        "auto_spawn_ping_role_id": CLAN_WARS_ROLES.autospawn_ping,
+        "rare_spawn_ping_role_id": CLAN_WARS_ROLES.rare_autospawn_ping,
+        "rare_spawn_channel_id": CLAN_WARS_TEXT_CHANNELS.rarespawn,
+    },
+}
+
+
 async def as_spawn_ping(bot: discord.Client, message: discord.Message):
     """
     Detects a wild Pokémon spawn in a message and sends the appropriate pings and embeds
@@ -68,6 +84,20 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
 
     # Only proceed if the embed title indicates a wild spawn
     if not (embed.title and "A wild" in embed.title):
+        return
+    guild = message.guild
+    if guild.id not in GUILD_MAP:
+        return
+
+    AUTO_SPAWN_ROLE_ID = GUILD_MAP[guild.id]["auto_spawn_ping_role_id"]
+    AUTO_SPAWN_RARE_ROLE_ID = GUILD_MAP[guild.id]["rare_spawn_ping_role_id"]
+    RARESPAWN_CHANNEL_ID = GUILD_MAP[guild.id]["rare_spawn_channel_id"]
+
+    AUTOSPAWN_PING_ROLE = guild.get_role(AUTO_SPAWN_ROLE_ID)
+    RARESPAWN_PING_ROLE = guild.get_role(AUTO_SPAWN_RARE_ROLE_ID)
+    RARESPAWN_CHANNEL = guild.get_channel(RARESPAWN_CHANNEL_ID)
+
+    if not AUTOSPAWN_PING_ROLE or not RARESPAWN_PING_ROLE or not RARESPAWN_CHANNEL:
         return
 
     embed_color = embed.color
@@ -118,10 +148,7 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
     if not (is_paldean or is_legendary_or_rare):
         # Only ping AS Channel channel
         emoji = rarity_info.get("emoji", "❓")
-        AUTO_SPAWN_ROLE_MENTION = f"<@&{AUTO_SPAWN_ROLE_ID}>"
-        content = (
-            f"{AUTO_SPAWN_ROLE_MENTION} A wild {emoji} {pokemon_name} has appeared!"
-        )
+        content = f"{AUTOSPAWN_PING_ROLE} A wild {emoji} {pokemon_name} has appeared!"
 
         await send_webhook(
             bot,
@@ -136,10 +163,8 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
         return
 
     # -------------------- Rare / shiny / Paldean spawn --------------------
-    mention_role = f"<@&{AUTO_SPAWN_RARE_ROLE_ID}>"
-    content = f"{mention_role} A wild {shiny_text}{rarity_info.get('emoji', '❓')} {pokemon_name} has appeared!"
+    content = f"{RARESPAWN_PING_ROLE} A wild {shiny_text}{rarity_info.get('emoji', '❓')} {pokemon_name} has appeared!"
 
-    # await message.channel.send(content)
     await send_webhook(
         bot,
         content=content,
@@ -152,15 +177,17 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
 
     # Send embed to rare spawn channel
     message_link = f"https://discord.com/channels/{message.guild.id}/{message.channel.id}/{message.id}"
-    desc = f"### A wild {rarity_info['emoji']} {pokemon_name} has spawned!\n- [Jump to Message]({message_link})"
+    desc = f"A wild {rarity_info['emoji']} {pokemon_name} has spawned!"
     footer_text = f"Spawned in {message.guild.name}"
     footer_icon = message.guild.icon.url
 
-    rare_spawn_embed = discord.Embed(description=desc, color=embed_color)
+    rare_spawn_embed = discord.Embed(
+        title=desc, url=message.jump_url, color=embed_color
+    )
     rare_spawn_embed.set_image(url=image_url)
     rare_spawn_embed.set_footer(text=footer_text, icon_url=footer_icon)
 
-    rare_spawn_channel = message.guild.get_channel(PublicChannels.Rare_Spawns)
+    rare_spawn_channel = RARESPAWN_CHANNEL
     if rare_spawn_channel:
         # await rare_spawn_channel.send(embed=rare_spawn_embed)
         await send_webhook(

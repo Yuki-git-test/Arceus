@@ -205,7 +205,7 @@ async def pokemon_caught_listener(
         debug_log("No embeds found in after_message.")
         return
     embed = after_message.embeds[0]
-
+    guild = after_message.guild
     member = await get_pokemeow_reply_member(before_message)
     debug_log(f"Pokémon caught listener - initial member: {member}")
     if not member:
@@ -225,8 +225,11 @@ async def pokemon_caught_listener(
                 "info",
                 f"⚠️ Could not find VNA member for username '{username}' from Pokémon caught message embed.",
             )
-            return
-        member = after_message.guild.get_member(user_id)
+            # Try searching username in guild members as a last resort
+            member = guild.get_member_named(username)
+            user_id = member.id if member else None
+
+        member = after_message.guild.get_member(user_id) if user_id else None
         debug_log(f"Fetched member from guild: {member}")
         if not member:
             pretty_log(

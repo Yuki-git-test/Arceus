@@ -31,6 +31,7 @@ class Emojis_Balls:
 
 class Dividers:
     dots = "https://media.discordapp.net/attachments/1394913073520967680/1447596515597222008/image.png?ex=693832d0&is=6936e150&hm=2253da0037e5fa852c06aa482ee5bcae8c828a6e25bfd584631e8b5b4e368d79&=&format=webp&quality=lossless&width=1465&height=94"
+    clan_wars_ping_roles = "https://media.discordapp.net/attachments/1459004743295963206/1469177036164694279/image.png?ex=6986b53d&is=698563bd&hm=9b50b4fa157940abe2e3c87e33a16220b3d8c0cd7c8477e1804438bcaf98fde9&=&format=webp&quality=lossless&width=1865&height=149"
 
 
 class Thumbnails:
@@ -43,3 +44,4 @@ class Thumbnails:
     SNIPE_GA_GIFT = "https://media.discordapp.net/attachments/1394913073520967680/1415694887898058842/gift-box.png?ex=68c4241b&is=68c2d29b&hm=40df2c5b0e7659e4b3e381aaf1059818ce2ddc75b3328415085cc2645870480b&=&format=webp&quality=lossless"
     CELEBRATE = "https://media.discordapp.net/attachments/1394913073520967680/1460459976802828379/image.png?ex=6966fed8&is=6965ad58&hm=3512b6f40e5ac6ec55139efdea755a7a80266506698b418dcee392e5db1984b1&=&format=webp&quality=lossless&width=480&height=480"
     pong = "https://media.discordapp.net/attachments/1459004743295963206/1465904445769519175/image.png?ex=697acd67&is=69797be7&hm=0aad575babbe5a28d963f311b9343eb72bc033533d3963560c3116095b22bdba&=&format=webp&quality=lossless"
+    trophy = "https://media.discordapp.net/attachments/1394913073520967680/1446779819919540365/image.png?ex=69353a34&is=6933e8b4&hm=8e3653f39c661402105bd07c9ad39e3758ba37b92c765b73d61d8d149ce3a52b&=&format=webp&quality=lossless"

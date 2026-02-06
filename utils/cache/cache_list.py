@@ -153,4 +153,11 @@ monthly_goal_cache: dict[int, dict] = {}
 #   "monthly_requirement_mark": bool,
 # }
 
+clan_wars_server_members_cache: dict[int, dict[str, str | None]] = {}
+# Structure:
+# user_id -> {
+#   "user_name": str,
+#   "clan_name": str or None
+# }
+
 snipe_ga_active = False

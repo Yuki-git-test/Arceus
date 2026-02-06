@@ -11,7 +11,7 @@ from Constants.vn_allstars_constants import (
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
 
-ALLOWED_GUILD_IDS = [VNA_SERVER_ID, 1220718310455250996]
+ALLOWED_GUILD_IDS = [VNA_SERVER_ID, 1220718310455250996, 1311620784720183316]
 
 from utils.logs.pretty_log import pretty_log
 

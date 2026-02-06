@@ -3,6 +3,7 @@ import discord
 from utils.logs.pretty_log import pretty_log
 
 from .cache_list import market_alert_cache
+from .clan_wars_cache import load_clan_wars_server_members_cache
 from .daily_fa_ball_cache import load_daily_faction_ball_cache
 from .faction_members_cache import load_faction_members_cache
 from .market_alert_cache import load_market_alert_cache
@@ -22,17 +23,19 @@ async def load_all_cache(bot: discord.Client):
     - Market Alert Cache
     """
     try:
-        # Load Ping Message ID Cache
-        await load_ping_message_id_cache(bot)
-
         # Load VNA Members Cache
         await load_vna_members_cache(bot)
+        # Load Ping Message ID Cache
+        await load_ping_message_id_cache(bot)
 
         # Load Weekly Goal Cache
         await load_weekly_goal_cache(bot)
 
         # Load Monthly Goal Cache
         await load_monthly_goal_cache(bot)
+
+        # Load Clan Wars Server Members Cache
+        await load_clan_wars_server_members_cache(bot)
 
         # Load Timer Cache
         await load_timer_cache(bot)

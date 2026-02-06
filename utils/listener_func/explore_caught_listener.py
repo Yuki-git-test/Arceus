@@ -27,7 +27,7 @@ async def explore_caught_listener(
     processed_explore_messages.add(after_message.id)
 
     # Get member info
-    member: discord.Member = get_pokemeow_reply_member(before_message)
+    member: discord.Member = await get_pokemeow_reply_member(before_message)
     if not member:
         return
 
@@ -91,7 +91,7 @@ async def explore_caught_listener(
     caught_count = int(match.group(1))
     pretty_log(
         "info",
-        f"🟢 Explore caught listener: Member {member_name} ({member_id}) has caught {caught_count} Pokémon.",
+        f"🟢 explore caught listener: Member {member_name} ({member_id}) has caught {caught_count} Pokémon.",
     )
 
     # Get current weekly and monthly caught counts
@@ -120,5 +120,5 @@ async def explore_caught_listener(
     )
     pretty_log(
         "info",
-        f"✅ Explore caught listener processing complete for Member {member_name} ({member_id}).",
+        f"✅ g listener processing complete for Member {member_name} ({member_id}).",
     )

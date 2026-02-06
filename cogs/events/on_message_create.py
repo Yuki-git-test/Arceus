@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 
+from Constants.clan_wars_constants import CLAN_WARS_SERVER_ID, CLAN_WARS_TEXT_CHANNELS
 from Constants.variables import (
     CC_BUMP_CHANNEL_ID,
     CC_GUILD_ID,
@@ -9,6 +10,7 @@ from Constants.variables import (
     Server,
 )
 from Constants.vn_allstars_constants import VN_ALLSTARS_TEXT_CHANNELS
+from utils.clan_wars.stats_listener import stats_command_listener
 
 # ————————————————————————————————
 # 🩵 Import Listener Functions
@@ -156,6 +158,22 @@ class MessageCreateListener(commands.Cog):
             first_embed_title = (
                 first_embed.title if first_embed and first_embed.title else ""
             )
+            # ————————————————————————————————
+            # 🩵 Clan wars server message logic
+            # ————————————————————————————————
+            if guild.id == CLAN_WARS_SERVER_ID:
+                if first_embed:
+                    if "Stats" in first_embed_author:
+                        pretty_log(
+                            "info",
+                            f"Detected stats command embed from PokéMeow bot: Message ID {message.id}",
+                            label="Clan Wars Stats Listener",
+                        )
+                        await stats_command_listener(
+                            bot=self.bot, before_message=message, after_message=message
+                        )
+                if message.channel.id == CLAN_WARS_TEXT_CHANNELS.autospawn:
+                    await as_spawn_ping(self.bot, message)
 
             # ————————————————————————————————
             # 🩵 VNA message logic

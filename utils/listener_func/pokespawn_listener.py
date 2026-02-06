@@ -148,7 +148,7 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
     if not (is_paldean or is_legendary_or_rare):
         # Only ping AS Channel channel
         emoji = rarity_info.get("emoji", "❓")
-        content = f"{AUTOSPAWN_PING_ROLE} A wild {emoji} {pokemon_name} has appeared!"
+        content = f"{AUTOSPAWN_PING_ROLE.mention} A wild {emoji} {pokemon_name} has appeared!"
 
         await send_webhook(
             bot,
@@ -163,7 +163,7 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
         return
 
     # -------------------- Rare / shiny / Paldean spawn --------------------
-    content = f"{RARESPAWN_PING_ROLE} A wild {shiny_text}{rarity_info.get('emoji', '❓')} {pokemon_name} has appeared!"
+    content = f"{RARESPAWN_PING_ROLE.mention} A wild {shiny_text}{rarity_info.get('emoji', '❓')} {pokemon_name} has appeared!"
 
     await send_webhook(
         bot,

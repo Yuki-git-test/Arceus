@@ -1,7 +1,7 @@
 from .clan_wars_constants import CLAN_WARS_ROLES
 
 PARTICIPATING_CLANS = {
-    "Random Corp": {
+    "Random Corp.": {
         "clan_role": CLAN_WARS_ROLES.random_corp,
         "supporter_role": CLAN_WARS_ROLES.random_corp_supporter,
     },

@@ -14,7 +14,7 @@ scheduler_manager = SchedulerManager(timezone_str="Asia/Manila")
 # Scheduled Tasks Imports
 # 🍥──────────────────────────────────────────────
 from utils.schedule.daily_faction_ball_reset import daily_ball_reset
-from utils.schedule.daily_ping import send_daily_ping
+from utils.schedule.daily_ping import send_clan_wars_sub_reset_msg, send_daily_ping
 from utils.schedule.goal_track_reset import (
     monthly_goal_track_reset,
     weekly_goal_track_reset,
@@ -129,9 +129,7 @@ async def setup_scheduler(bot):
             args=[bot],
             timezone=NYC,
         )
-        readable_next_run = format_next_run_manila(
-            weekly_goal_reset_job.next_run_time
-        )
+        readable_next_run = format_next_run_manila(weekly_goal_reset_job.next_run_time)
         pretty_log(
             tag="schedule",
             message=f"Weekly goal tracker reset job scheduled at {readable_next_run}",
@@ -156,9 +154,7 @@ async def setup_scheduler(bot):
             args=[bot],
             timezone=NYC,
         )
-        readable_next_run = format_next_run_manila(
-            monthly_goal_reset_job.next_run_time
-        )
+        readable_next_run = format_next_run_manila(monthly_goal_reset_job.next_run_time)
         pretty_log(
             tag="schedule",
             message=f"Monthly goal tracker reset job scheduled at {readable_next_run}",
@@ -168,5 +164,32 @@ async def setup_scheduler(bot):
         pretty_log(
             tag="error",
             message=f"Failed to schedule monthly goal tracker reset job: {e}",
+            bot=bot,
+        )
+
+    # ✨─────────────────────────────────────────────────────────
+    # 🎯 Clan Wars Sub Reset Ping — Everyday at 12:00 AM Est
+    # ✨─────────────────────────────────────────────────────────
+    try:
+        clan_wars_sub_reset_job = scheduler_manager.add_cron_job(
+            send_clan_wars_sub_reset_msg,
+            "clan_wars_sub_reset_ping",
+            hour=0,
+            minute=0,
+            args=[bot],
+            timezone=NYC,
+        )
+        readable_next_run = format_next_run_manila(
+            clan_wars_sub_reset_job.next_run_time
+        )
+        pretty_log(
+            tag="schedule",
+            message=f"Clan Wars sub reset ping job scheduled at {readable_next_run}",
+            bot=bot,
+        )
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Failed to schedule Clan Wars sub reset ping job: {e}",
             bot=bot,
         )

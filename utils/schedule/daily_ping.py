@@ -3,6 +3,7 @@ from datetime import datetime
 import discord
 
 from Constants.aesthetic import Thumbnails
+from Constants.clan_wars_constants import CLAN_WARS_SERVER_ID, CLAN_WARS_TEXT_CHANNELS
 from Constants.vn_allstars_constants import (
     ARCEUS_EMBED_COLOR,
     VN_ALLSTARS_ROLES,
@@ -12,6 +13,7 @@ from Constants.vn_allstars_constants import (
 from utils.logs.pretty_log import pretty_log
 
 holiday = False  # Set to False when not in holiday season
+CLAN_WARS_ACTIVE = True
 
 
 async def send_daily_ping(bot):
@@ -49,3 +51,21 @@ async def send_daily_ping(bot):
     content = f"{daily_role.mention} Time to do your daily checklist!"
     await channel.send(content=content, embed=embed)
     pretty_log("info", "Sent daily ping message.")
+
+
+async def send_clan_wars_sub_reset_msg(bot):
+    if not CLAN_WARS_ACTIVE:
+        pretty_log("info", "Clan Wars is not active. Skipping sub reset ping.")
+        return
+
+    guild = bot.get_guild(CLAN_WARS_SERVER_ID)
+    if not guild:
+        pretty_log("warn", "Guild not found for clan wars sub reset ping.")
+        return
+    channel = guild.get_channel(CLAN_WARS_TEXT_CHANNELS.subsititute)
+    if not channel:
+        pretty_log("warn", "Channel not found for clan wars sub reset ping.")
+        return
+    content = "Subs Reset!"
+    await channel.send(content=content)
+    pretty_log("info", "Sent clan wars sub reset ping message.")

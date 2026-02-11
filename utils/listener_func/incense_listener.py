@@ -128,6 +128,12 @@ async def incense_use_handler(
     guild = message.guild
     bump_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.bumps)
     incense_ping_role = guild.get_role(VN_ALLSTARS_ROLES.incense_ping)
+    if not incense_ping_role:
+        pretty_log(
+            "warning",
+            f"Incense Ping role (id={VN_ALLSTARS_ROLES.incense_ping}) not found in guild {guild.name} ({guild.id})",
+        )
+        return
     content = (
         f"{incense_ping_role.mention} The server has {total_charges} incense charges!"
     )
@@ -169,6 +175,12 @@ async def server_has_incense_handler(
     guild = message.guild
     bump_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.bumps)
     incense_ping_role = guild.get_role(VN_ALLSTARS_ROLES.incense_ping)
+    if not incense_ping_role:
+        pretty_log(
+            "warning",
+            f"Incense Ping role (id={VN_ALLSTARS_ROLES.incense_ping}) not found in guild {guild.name} ({guild.id})",
+        )
+        return
     content = f"{incense_ping_role.mention} The server has incense charges!"
     desc = f"""### {guild.name} has {INCENSE} incense charges.
 > - 1 charge is consumed per `;pokemon` or `;fish` encounter,
@@ -291,6 +303,12 @@ async def incense_command_handler(
     )
     bump_channel = message.guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.bumps)
     incense_ping_role = message.guild.get_role(VN_ALLSTARS_ROLES.incense_ping)
+    if not incense_ping_role:
+        pretty_log(
+            "warning",
+            f"Incense Ping role (id={VN_ALLSTARS_ROLES.incense_ping}) not found in guild {message.guild.name} ({message.guild.id})",
+        )
+        return
     if new_incense_msg:
         debug_log("incense_command_handler: Creating new incense message.")
         content = f"{incense_ping_role.mention} The server has {remaining_charges} incense charges!"
@@ -352,7 +370,12 @@ async def incense_depleted_handler(
     guild = message.guild
     bump_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.bumps)
     incense_ping_role = guild.get_role(VN_ALLSTARS_ROLES.incense_ping)
-
+    if not incense_ping_role:
+        pretty_log(
+            "warning",
+            f"Incense Ping role (id={VN_ALLSTARS_ROLES.incense_ping}) not found in guild {guild.name} ({guild.id})",
+        )
+        return
     content = f"{incense_ping_role.mention} There are no more incense charges."
     await bump_channel.send(content=content)
     # Remove view

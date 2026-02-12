@@ -90,6 +90,7 @@ async def trophy_multi_func(
             summary_lines.append(desc_line)
         elif action == "remove":
             new_amount = max(current_amount - amount, 0)  # Prevent negative trophies
+            new_amount_formatted = format_trophy_amount(new_amount)
             desc_line = (
                 f"> - {clan.name}: {current_amount_formatted} ➔ {new_amount_formatted}"
             )

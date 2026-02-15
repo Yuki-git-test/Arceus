@@ -170,7 +170,7 @@ async def setup_scheduler(bot):
     # ✨─────────────────────────────────────────────────────────
     # 🎯 Clan Wars Sub Reset Ping — Everyday at 12:00 AM Est
     # ✨─────────────────────────────────────────────────────────
-    try:
+    """try:
         clan_wars_sub_reset_job = scheduler_manager.add_cron_job(
             send_clan_wars_sub_reset_msg,
             "clan_wars_sub_reset_ping",
@@ -192,4 +192,4 @@ async def setup_scheduler(bot):
             tag="error",
             message=f"Failed to schedule Clan Wars sub reset ping job: {e}",
             bot=bot,
-        )
+        )"""

@@ -73,7 +73,7 @@ async def world_boss_waiter(
     if seconds_until_fight > 0:
         await asyncio.sleep(seconds_until_fight)
         task_info = wb_tasks.get(wb_name)
-        if task_info:
+        if not task_info:
             return
 
         embed = discord.Embed(

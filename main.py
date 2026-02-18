@@ -96,6 +96,12 @@ async def on_ready():
         refresh_all_caches.start()
         pretty_log(message="✅ Started hourly cache refresh task", tag="ready")
 
+    try:
+        await bot.change_presence(
+            activity=discord.Game(name="To be or not to be... what was the question?")
+        )
+    except Exception:
+        pass
 
 # 🟣────────────────────────────────────────────
 #               ⚡ Main Entry Point ⚡
@@ -120,7 +126,7 @@ async def main():
 
     # Register persistent views
     await register_persistent_views(bot)
-    
+
     # Start the bot
     token = os.getenv("DISCORD_TOKEN")
     await bot.start(token)

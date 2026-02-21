@@ -160,9 +160,15 @@ async def battle_timer_handler(bot: commands.Bot, message: discord.Message):
                 elif 600 <= int(enemy_id) <= 743:
                     mc_npc_id = find_key_by_npc_id(int(enemy_id))
                     battle_embed.description = f";b npc {mc_npc_id}"
+
+                # If id is 15 or more than 15 digits, it's likely a user ID
+                elif enemy_id and (len(enemy_id) >= 15 or int(enemy_id) == 15):
+                    battle_embed.description = f";b user {enemy_id}"
+
                 # Regular NPC
                 elif enemy_id:
                     battle_embed.description = f";b npc {enemy_id}"
+                    
                 else:
                     battle_embed.description = (
                         "Your </battle:1015311084422434819> command is ready!"

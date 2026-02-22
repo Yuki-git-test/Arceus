@@ -8,6 +8,8 @@ from Constants.variables import (
     POKEMEOW_APPLICATION_ID,
     PublicChannels,
     Server,
+    CC_PROMO_CHANNEL_ID
+
 )
 from Constants.vn_allstars_constants import VN_ALLSTARS_TEXT_CHANNELS
 from utils.clan_wars.stats_listener import stats_command_listener
@@ -30,6 +32,7 @@ from utils.listener_func.incense_listener import (
     incense_use_handler,
     server_has_incense_handler,
 )
+from utils.listener_func.cc_promo_team_listener import promo_team_listener
 from utils.listener_func.market_feed_listener import market_feeds_listener
 from utils.listener_func.monthly_stats_listener import monthly_stats_listener
 from utils.listener_func.pokemon_spawn_listener import pokemon_spawn_listener
@@ -49,7 +52,7 @@ from utils.listener_func.special_battle_npc_listener import (
 )
 from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
 from utils.listener_func.weekly_stats_listener import weekly_stats_listener
-
+from utils.AR.promo import promo_team
 # ————————————————————————————————
 # 🩵 Import DB Functions
 #  ———————————————————————————————
@@ -131,6 +134,13 @@ class MessageCreateListener(commands.Cog):
                     await read_shiny_bonus_timestamp_from_cc_channel(
                         bot=self.bot, message=message
                     )
+                if message.channel.id == CC_PROMO_CHANNEL_ID:
+                    pretty_log(
+                        "info",
+                        f"Detected message in CC promo channel: Message ID {message.id}",
+                        label="CC Promo Team Listener",
+                    )
+                    await promo_team_listener(bot=self.bot, message=message)
             # ————————————————————————————————
             # 🏰 Ignore non-PokéMeow bot messages
             # ————————————————————————————————
@@ -158,6 +168,17 @@ class MessageCreateListener(commands.Cog):
             first_embed_title = (
                 first_embed.title if first_embed and first_embed.title else ""
             )
+            # ————————————————————————————————
+            # 🩵 Promo Team
+            # ————————————————————————————————
+            if content and "!promo" in content.lower():
+                pretty_log(
+                    "info",
+                    f"Detected !promo command message: Message ID {message.id}",
+                    label="Promo Team Listener",
+                )
+                await promo_team(bot=self.bot, message=message)
+                
             # ————————————————————————————————
             # 🩵 Clan wars server message logic
             # ————————————————————————————————

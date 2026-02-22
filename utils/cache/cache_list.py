@@ -161,3 +161,4 @@ clan_wars_server_members_cache: dict[int, dict[str, str | None]] = {}
 # }
 
 snipe_ga_active = False
+market_value_cache: dict[str, dict] = {}

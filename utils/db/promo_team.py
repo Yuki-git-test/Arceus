@@ -73,13 +73,13 @@ async def get_promo_mon(bot: discord.Client) -> str | None:
             f"Failed to get promo team: {e}",
         )
         return None
-    
+
 async def get_promo_team(bot: discord.Client):
     try:
         async with bot.pg_pool.acquire() as conn:
             row = await conn.fetchrow(
                 """
-                SELECT promo_mon, egg_mon, instructions, image_link, thumbnail_link
+                SELECT promo_mon, egg_mon, instructions, image_link, thumbnail_link, ends_on
                 FROM promo_team
                 WHERE id = 1
                 """,
@@ -91,6 +91,7 @@ async def get_promo_team(bot: discord.Client):
                     "instructions": row["instructions"],
                     "image_link": row["image_link"],
                     "thumbnail_link": row["thumbnail_link"],
+                    "ends_on": row["ends_on"],
                 }
             else:
                 pretty_log(

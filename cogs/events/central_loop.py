@@ -47,12 +47,12 @@ class CentralLoop(commands.Cog):
         )
         while not self.bot.is_closed():
             try:
-                pretty_log(
+                """pretty_log(
                     "",
                     "🔂 Running background checks...",
                     label="🧭 CENTRAL LOOP",
                     bot=self.bot,
-                )
+                )"""
 
                 # ⏰ Check if any special battle timers are due
                 await special_battle_timer_checker(bot=self.bot)

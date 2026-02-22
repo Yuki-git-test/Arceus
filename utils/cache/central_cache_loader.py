@@ -14,7 +14,7 @@ from .user_alert_cache import load_user_alert_cache
 from .vna_members_cache import load_vna_members_cache
 from .webhook_url_cache import load_webhook_url_cache
 from .weekly_goal_tracker_cache import load_weekly_goal_cache
-
+from utils.db.market_value_db import load_market_cache_from_db
 
 async def load_all_cache(bot: discord.Client):
     """
@@ -25,6 +25,7 @@ async def load_all_cache(bot: discord.Client):
     try:
         # Load VNA Members Cache
         await load_vna_members_cache(bot)
+
         # Load Ping Message ID Cache
         await load_ping_message_id_cache(bot)
 
@@ -54,6 +55,9 @@ async def load_all_cache(bot: discord.Client):
 
         # Load User Alert Cache
         await load_user_alert_cache(bot)
+
+        # Load Market Value Cache from database
+        await load_market_cache_from_db(bot)
 
     except Exception as e:
         pretty_log(

@@ -41,7 +41,7 @@ async def promo_team_listener(bot: discord.Client, message: discord.Message):
         )
         return
 
-    if old_promo_mon and old_promo_mon != promo_mon:
+    if (old_promo_mon and old_promo_mon != promo_mon) or not old_promo_mon:
         debug_log(
             "Existing promo mon found in DB that differs from new promo mon. Deleting old promo team."
         )

@@ -1,12 +1,15 @@
 import discord
 
-from utils.db.promo_team import get_promo_mon, upsert_promo_team, delete_promo_team
+from Constants.vn_allstars_constants import VN_ALLSTARS_ROLES, VN_ALLSTARS_TEXT_CHANNELS
+from utils.AR.promo import build_promo_embed
+from utils.db.promo_team import delete_promo_team, get_promo_mon, upsert_promo_team
+from utils.functions.pokemon_func import get_display_name
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
-from utils.functions.pokemon_func import get_display_name
-from Constants.vn_allstars_constants import VN_ALLSTARS_ROLES
-from utils.AR.promo import build_promo_embed
+
 enable_debug(f"{__name__}.promo_team_listener")
+
+
 async def promo_team_listener(bot: discord.Client, message: discord.Message):
     debug_log(f"Received message in promo_team_listener: {message.id}")
     embed = message.embeds[0] if message.embeds else None
@@ -33,11 +36,15 @@ async def promo_team_listener(bot: discord.Client, message: discord.Message):
     old_promo_mon = await get_promo_mon(bot)
     debug_log(f"Old promo mon: {old_promo_mon}")
     if old_promo_mon == promo_mon and footer_text != "news_post":
-        debug_log("Promo mon in DB matches new promo mon and footer is not news_post. No update needed.")
+        debug_log(
+            "Promo mon in DB matches new promo mon and footer is not news_post. No update needed."
+        )
         return
 
     if old_promo_mon and old_promo_mon != promo_mon:
-        debug_log("Existing promo mon found in DB that differs from new promo mon. Deleting old promo team.")
+        debug_log(
+            "Existing promo mon found in DB that differs from new promo mon. Deleting old promo team."
+        )
         await delete_promo_team(bot)
 
         instructions = embed.description
@@ -52,9 +59,10 @@ async def promo_team_listener(bot: discord.Client, message: discord.Message):
             f"Footer text: {footer_text}",
         )
 
-
         # Upsert the promo team into the database
-        debug_log(f"Upserting promo team: promo_mon={promo_mon}, egg_mon={egg_mon}, instructions={instructions}, image_link={image_link}, thumbnail_link={thumbnail_link}")
+        debug_log(
+            f"Upserting promo team: promo_mon={promo_mon}, egg_mon={egg_mon}, instructions={instructions}, image_link={image_link}, thumbnail_link={thumbnail_link}"
+        )
         await upsert_promo_team(
             bot,
             promo_mon=promo_mon,
@@ -80,16 +88,19 @@ async def promo_team_listener(bot: discord.Client, message: discord.Message):
 
             meow_promo_role = message.guild.get_role(VN_ALLSTARS_ROLES.meow_promo)
             promo_mon_display = get_display_name(promo_mon) if promo_mon else "N/A"
-            annoucement_channel = message.guild.get_channel(VN_ALLSTARS_ROLES.announcments)
+            annoucement_channel = message.guild.get_channel(
+                VN_ALLSTARS_TEXT_CHANNELS.announcement
+            )
             content = f"{meow_promo_role.mention if meow_promo_role else ''} Team for {promo_mon_display}!"
             if annoucement_channel:
                 try:
                     await annoucement_channel.send(content=content, embed=promo_embed)
-                    debug_log(f"Sent promo team announcement in {annoucement_channel.name}")
+                    debug_log(
+                        f"Sent promo team announcement in {annoucement_channel.name}"
+                    )
                 except Exception as e:
                     debug_log(f"Failed to send promo team announcement: {e}")
                     pretty_log(
                         "warn",
                         f"Failed to send promo team announcement: {e}",
                     )
-

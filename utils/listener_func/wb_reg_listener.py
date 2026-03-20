@@ -109,7 +109,8 @@ async def world_boss_waiter(
             if not channel or not user:
                 continue
 
-            content = f"{user.mention}, You can now join the World Boss Battle for **{wb_name}**!"
+            wb_display_name = format_display_boss_name(wb_name)
+            content = f"{user.mention}, You can now join the World Boss Battle for **{wb_display_name}**!"
             try:
                 await channel.send(content=content, embed=embed)
                 pretty_log(

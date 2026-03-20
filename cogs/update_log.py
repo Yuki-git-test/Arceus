@@ -106,7 +106,6 @@ class ArceusUpdateLog(commands.Cog):
         name="update-log",
         description="Send an update log message to the change log channel.",
     )
-    @app_commands.guilds(discord.Object(id=VNA_SERVER_ID))  # VNA Guild ID
     async def arceus_update_log(self, interaction: discord.Interaction):
         try:
             modal = ChangeLogModal(self.bot)

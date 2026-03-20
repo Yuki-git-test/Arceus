@@ -31,13 +31,15 @@ class ToggleRoleButton(Button):
         try:
             if role in member.roles:
                 await member.remove_roles(role)
-                pretty_log(f"Removed role {role.name} from {member.display_name}")
+                pretty_log(
+                    "info", f"Removed role {role.name} from {member.display_name}"
+                )
                 await interaction.response.send_message(
                     f"Removed role **{role.mention}** from you", ephemeral=True
                 )
             else:
                 await member.add_roles(role)
-                pretty_log(f"Added role {role.name} to {member.display_name}")
+                pretty_log("info", f"Added role {role.name} to {member.display_name}")
                 await interaction.response.send_message(
                     f"Added role **{role.mention}** to you", ephemeral=True
                 )

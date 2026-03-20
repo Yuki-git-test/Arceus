@@ -42,6 +42,7 @@ async def setup_scheduler(bot):
 
     # Start the scheduler
     scheduler_manager.start()
+    schedules = []
     # ✨─────────────────────────────────────────────────────────
     # 🤍 DAILY FACTION BALL RESET — Every Midnight (NYC)
     # ✨─────────────────────────────────────────────────────────
@@ -57,11 +58,7 @@ async def setup_scheduler(bot):
         readable_next_run = format_next_run_manila(
             daily_faction_ball_reset_job.next_run_time
         )
-        pretty_log(
-            tag="schedule",
-            message=f"Daily faction ball reset job scheduled at {readable_next_run}",
-            bot=bot,
-        )
+        schedules.append(f"Daily faction ball reset scheduled at {readable_next_run}")
     except Exception as e:
         pretty_log(
             tag="error",
@@ -81,11 +78,7 @@ async def setup_scheduler(bot):
             timezone=NYC,
         )
         readable_next_run = format_next_run_manila(daily_ping_job.next_run_time)
-        pretty_log(
-            tag="schedule",
-            message=f"Daily ping message job scheduled at {readable_next_run}",
-            bot=bot,
-        )
+        schedules.append(f"Daily ping message scheduled at {readable_next_run}")
     except Exception as e:
         pretty_log(
             tag="error",
@@ -105,11 +98,7 @@ async def setup_scheduler(bot):
             timezone=NYC,
         )
         readable_next_run = format_next_run_manila(lotto_reminder_job.next_run_time)
-        pretty_log(
-            tag="schedule",
-            message=f"OS Lotto reminder job scheduled at {readable_next_run}",
-            bot=bot,
-        )
+        schedules.append(f"OS Lotto reminder scheduled at {readable_next_run}")
     except Exception as e:
         pretty_log(
             tag="error",
@@ -130,11 +119,7 @@ async def setup_scheduler(bot):
             timezone=NYC,
         )
         readable_next_run = format_next_run_manila(weekly_goal_reset_job.next_run_time)
-        pretty_log(
-            tag="schedule",
-            message=f"Weekly goal tracker reset job scheduled at {readable_next_run}",
-            bot=bot,
-        )
+        schedules.append(f"Weekly goal tracker reset scheduled at {readable_next_run}")
     except Exception as e:
         pretty_log(
             tag="error",
@@ -155,11 +140,7 @@ async def setup_scheduler(bot):
             timezone=NYC,
         )
         readable_next_run = format_next_run_manila(monthly_goal_reset_job.next_run_time)
-        pretty_log(
-            tag="schedule",
-            message=f"Monthly goal tracker reset job scheduled at {readable_next_run}",
-            bot=bot,
-        )
+        schedules.append(f"Monthly goal tracker reset scheduled at {readable_next_run}")
     except Exception as e:
         pretty_log(
             tag="error",
@@ -193,3 +174,13 @@ async def setup_scheduler(bot):
             message=f"Failed to schedule Clan Wars sub reset ping job: {e}",
             bot=bot,
         )"""
+    schedule_checklist(schedules)
+
+# 🟣────────────────────────────────────────────
+#         ⚡ Startup Checklist ⚡
+# 🟣────────────────────────────────────────────
+def schedule_checklist(schedules):
+    print("\n── · 𖨠 · ───────────────────────────────────────────────── · 𖨠 · ──")
+    for schedule in schedules:
+        print(f"✅ {schedule}")
+    print("── · 𖨠 · ───────────────────────────────────────────────── · 𖨠 · ──\n")

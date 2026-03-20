@@ -33,7 +33,7 @@ async def fetch_all_clan_wars_server_members(
             )
             return members
     except Exception as e:
-        pretty_log(f"Error fetching clan wars server members: {e}")
+        pretty_log("error", f"Error fetching clan wars server members: {e}")
         return {}
 
 
@@ -54,7 +54,9 @@ async def upsert_clan_wars_server_member(
                     clan_name = EXCLUDED.clan_name;
             """
             await conn.execute(query, user_id, user_name, clan_name)
-            pretty_log(f"Upserted clan wars server member: {user_name} ({user_id})")
+            pretty_log(
+                "info", f"Upserted clan wars server member: {user_name} ({user_id})"
+            )
             # Update cache as well
             from utils.cache.clan_wars_cache import upsert_clan_wars_server_member_cache
 
@@ -82,7 +84,7 @@ async def get_member_clan_name(
                 return row["clan_name"]
             return None
     except Exception as e:
-        pretty_log(f"Error retrieving clan name for user_id {user_id}: {e}")
+        pretty_log("error", f"Error retrieving clan name for user_id {user_id}: {e}")
         return None
 
 
@@ -98,7 +100,9 @@ async def delete_clan_wars_server_member(
                 WHERE user_id = $1;
             """
             await conn.execute(query, user_id)
-            pretty_log(f"Deleted clan wars server member with user_id: {user_id}")
+            pretty_log(
+                "info", f"Deleted clan wars server member with user_id: {user_id}"
+            )
             # Remove from cache as well
             from utils.cache.clan_wars_cache import remove_member_from_cache
 

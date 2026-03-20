@@ -6,16 +6,17 @@ import discord
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
+from utils.cache.cache_list import clear_processed_messages_cache
 from utils.cache.central_cache_loader import load_all_cache
 from utils.db.get_pg_pool import get_pg_pool
+from utils.essentials.persist_views import register_persistent_views
 from utils.listener_func.market_feed_listener import (
     processed_market_feed_ids,
     processed_market_feed_message_ids,
 )
 from utils.logs.pretty_log import pretty_log, set_arceus_bot
 from utils.schedule.scheduler import setup_scheduler
-from utils.cache.cache_list import clear_processed_messages_cache
-from utils.essentials.persist_views import register_persistent_views
+
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
@@ -32,12 +33,17 @@ set_arceus_bot(bot=bot)
 # 🟣────────────────────────────────────────────
 #         ⚡ Hourly Cache Refresh Task ⚡
 # 🟣────────────────────────────────────────────
+first_refresh = True
+
+
 @tasks.loop(hours=1)
 async def refresh_all_caches():
-
-    # Removed first-run skip logic so cache loads immediately
+    global first_refresh
+    if first_refresh:
+        first_refresh = False
+        # Skip the first run since cache was already loaded at startup
+        return
     await load_all_cache(bot)
-
     # Clear processed message ID sets to prevent memory bloat
     clear_processed_messages_cache()
 
@@ -76,7 +82,32 @@ async def load_extensions():
     # await bot.load_extension("cogs.application")
     # -----------------------------------------------------------------
 
-#
+
+# ❀───────────────────────────────❀
+#      💖  Startup Checklist 💖
+# ❀───────────────────────────────❀
+async def startup_checklist(bot: commands.Bot):
+    from utils.cache.cache_list import (
+        timer_cache,
+        user_alerts_cache,
+        vna_members_cache,
+        webhook_url_cache,
+    )
+
+    # ❀ This divider stays untouched ❀
+    print("\n── · 𖨠 · ───────────────────────────────────────────────── · 𖨠 · ──")
+    print(f"✅ {len(bot.cogs)} ☁️  Cogs Loaded")
+    print(f"✅ {len(vna_members_cache)} 🐇 VNA Members")
+    print(f"✅ {len(timer_cache)} 🕒 Timer Users")
+    print(f"✅ {len(user_alerts_cache)} 🔔 Alerts")
+    print(f"✅ {len(webhook_url_cache)} 📒 Webhook Urls")
+    pg_status = "Ready" if hasattr(bot, "pg_pool") else "Not Ready"
+    print(f"✅ {pg_status} 💭  PostgreSQL Pool")
+    total_slash_commands = sum(1 for _ in bot.tree.walk_commands())
+    print(f"✅ {total_slash_commands} 🖊️ Slash Commands Synced")
+    print("── · 𖨠 · ───────────────────────────────────────────────── · 𖨠 · ──\n")
+
+
 # 🟣────────────────────────────────────────────
 #              ⚡ On Ready Event ⚡
 # 🟣────────────────────────────────────────────
@@ -91,10 +122,15 @@ async def on_ready():
         message=f"✅ Synced {commands_count} slash commands globally", tag="ready"
     )
 
+    # Load all caches immediately at startup
+    await load_all_cache(bot)
     # Start the hourly cache refresh task
     if not refresh_all_caches.is_running():
         refresh_all_caches.start()
         pretty_log(message="✅ Started hourly cache refresh task", tag="ready")
+
+    # ❀ Run startup checklist ❀
+    await startup_checklist(bot)
 
     try:
         await bot.change_presence(
@@ -102,6 +138,7 @@ async def on_ready():
         )
     except Exception:
         pass
+
 
 # 🟣────────────────────────────────────────────
 #               ⚡ Main Entry Point ⚡

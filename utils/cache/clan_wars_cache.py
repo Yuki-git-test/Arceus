@@ -13,17 +13,17 @@ async def load_clan_wars_server_members_cache(bot: discord.Client):
 
     if clan_wars_server_members_cache:
         # Print 1 to 2 sample entries from the cache for verification
-        pretty_log("info", "Sample clan wars server members in cache:")
+        #pretty_log("info", "Sample clan wars server members in cache:")
         for i, (user_id, member_info) in enumerate(
             clan_wars_server_members_cache.items()
         ):
             if i >= 2:
                 break
-            pretty_log(
+            """pretty_log(
                 "info",
                 f"User ID: {user_id}, User Name: {member_info['user_name']}, Clan Name: {member_info['clan_name']}",
-            )
-    pretty_log(f"Loaded {len(members)} clan wars server members into cache")
+            )"""
+    pretty_log("info", f"Loaded {len(members)} clan wars server members into cache")
     return clan_wars_server_members_cache
 
 

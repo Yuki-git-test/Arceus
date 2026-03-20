@@ -26,7 +26,7 @@ async def load_monthly_goal_cache(bot: discord.Client):
             }
         pretty_log(
             "cache",
-            f"Loaded {len(monthly_goal_cache)} monthly goal records into cache.",
+            f"Loaded {len(monthly_goal_cache)} monthly goal records into cache."
         )
         return monthly_goal_cache
     except Exception as e:

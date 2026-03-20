@@ -24,7 +24,9 @@ async def send_log_to_server_log(
         log_channel_id = VN_ALLSTARS_TEXT_CHANNELS.server_log
         log_channel = guild.get_channel(log_channel_id)
         if not log_channel:
-            pretty_log(f"Server log channel with ID {log_channel_id} not found.")
+            pretty_log(
+                "info", f"Server log channel with ID {log_channel_id} not found."
+            )
             return
 
         await send_webhook(
@@ -34,4 +36,4 @@ async def send_log_to_server_log(
             embed=embed,
         )
     except Exception as e:
-        pretty_log(f"Failed to send log to server log channel: {e}")
+        pretty_log("error", f"Failed to send log to server log channel: {e}")

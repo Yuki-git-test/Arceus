@@ -51,7 +51,7 @@ async def upsert_monthly_goal(
             battles_won,
             monthly_requirement_mark,
         )
-        pretty_log(f"Upserted monthly goal for user: {user_name}")
+        pretty_log("info", f"Upserted monthly goal for user: {user_name}")
         # Upsert in the cache as well
         from utils.cache.monthly_goal_tracker_cache import upsert_monthly_goal_cache
 
@@ -71,7 +71,9 @@ async def fetch_all_monthly_goals(bot: discord.Client) -> list[dict]:
     async with bot.pg_pool.acquire() as conn:
         query = "SELECT * FROM monthly_goal_tracker;"
         records = await conn.fetch(query)
-        pretty_log(f"Fetched {len(records)} monthly goal records from the database.")
+        pretty_log(
+            "info", f"Fetched {len(records)} monthly goal records from the database."
+        )
         return [dict(record) for record in records]
 
 

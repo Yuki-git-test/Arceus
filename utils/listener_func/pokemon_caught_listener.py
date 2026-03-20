@@ -70,7 +70,7 @@ async def goal_checker(
         ):
 
             update_weekly_requirement_mark(user_id, True)
-            pretty_log(f"User {user_name} has met the weekly requirement.")
+            pretty_log("info", f"User {user_name} has met the weekly requirement.")
             if not context or context != "stats_command":
                 await channel.send(
                     f"🎉 Congratulations {user_name}! You have met the weekly requirement of {WEEKLY_REQUIREMENT:,}"
@@ -103,7 +103,7 @@ async def goal_checker(
             top_line_monthly_catches and top_line_monthly_catches >= MONTHLY_REQUIREMENT
         ):
             update_monthly_requirement_mark(user_id, True)
-            pretty_log(f"User {user_name} has met the monthly requirement.")
+            pretty_log("info", f"User {user_name} has met the monthly requirement.")
             if not context or context != "stats_command":
                 await channel.send(
                     f"🏆 Congratulations {user_name}! You have met the monthly requirement of {MONTHLY_REQUIREMENT:,}"

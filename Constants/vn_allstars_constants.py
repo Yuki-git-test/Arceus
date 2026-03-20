@@ -28,6 +28,7 @@ ALLOWED_SERVERS = [
 class VN_ALLSTARS_TEXT_CHANNELS:
 
     # 🌊💙🤍───────────── Clan_Members ─────────────💙🤍🌊
+    change_log = 1480031646408249395
     bumps = 1456083845815205898
     pakirisu = 1388580519943602226
     wanderlust = 1422217155746730086

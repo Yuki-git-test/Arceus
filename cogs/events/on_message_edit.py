@@ -17,6 +17,7 @@ from utils.listener_func.monthly_stats_listener import monthly_stats_listener
 from utils.listener_func.pokemon_caught_listener import pokemon_caught_listener
 from utils.listener_func.weekly_stats_listener import weekly_stats_listener
 from utils.logs.pretty_log import pretty_log
+from utils.listener_func.wb_reg_listener import handle_wb_register_command
 
 # ️────────────────────────────────────────────
 #        ⚔️ Message Triggers
@@ -111,6 +112,24 @@ class OnMessageEditCog(commands.Cog):
                 )
                 await explore_caught_listener(self.bot, before, after)
 
-
+        # ————————————————————————————————
+        # 🩵 VNA WB Battle Reminder Registration Confirmation
+        # ————————————————————————————————
+        if first_embed:
+            if (
+                first_embed_description
+                and "<:checkedbox:752302633141665812> Successfully registered your"
+                in first_embed_description
+                and first_embed.title
+                and "**A World Boss has spawned! Register now!**"
+                in first_embed.title
+            ):
+                pretty_log(
+                    "info",
+                    f"Matched World Boss Battle Reminder Registration Confirmation | Message ID: {after.id} | Channel: {after.channel.name}",
+                )
+                await handle_wb_register_command(
+                    bot=self.bot, before_message=before, message=after
+                )
 async def setup(bot: commands.Bot):
     await bot.add_cog(OnMessageEditCog(bot))

@@ -3,6 +3,7 @@ import time
 
 import discord
 
+from Constants.vn_allstars_constants import VN_ALLSTARS_TEXT_CHANNELS
 from utils.db.berry_reminder import (
     berry_map,
     fetch_user_all_berry_reminder,
@@ -14,7 +15,6 @@ from utils.db.berry_reminder import (
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 from utils.pokemeow.get_pokemeow_reply import get_pokemeow_reply_member
-from Constants.vn_allstars_constants import VN_ALLSTARS_TEXT_CHANNELS
 
 enable_debug(f"{__name__}.handle_berry_water_message")
 enable_debug(f"{__name__}.handle_growth_mulch_message")
@@ -84,10 +84,13 @@ async def handle_berry_water_message(bot: discord.Client, message: discord.Messa
         return
     debug_log(f"Parsed berry water message: {parsed_data}")
 
-
     from utils.cache.vna_members_cache import fetch_vna_member_channel_id_from_cache
 
-    member_channel_id = fetch_vna_member_channel_id_from_cache(user_id) if fetch_vna_member_channel_id_from_cache(user_id) else VN_ALLSTARS_TEXT_CHANNELS.off_topic
+    member_channel_id = (
+        fetch_vna_member_channel_id_from_cache(user_id)
+        if fetch_vna_member_channel_id_from_cache(user_id)
+        else VN_ALLSTARS_TEXT_CHANNELS.off_topic
+    )
 
     member_channel = guild.get_channel(member_channel_id) if member_channel_id else None
     member_channel_name = member_channel.name if member_channel else None
@@ -110,9 +113,7 @@ async def handle_berry_water_message(bot: discord.Client, message: discord.Messa
                 if berry_info:
                     moisture_dries_on_duration = berry_info["moisture_dry_out_duration"]
                     # compute current time + moisture dries on in seconds
-                    moisture_dries_on = (
-                        int(time.time()) + moisture_dries_on_duration * 3600
-                    )
+                    moisture_dries_on = int(time.time()) + moisture_dries_on_duration
 
             await upsert_berry_reminder(
                 bot,
@@ -159,7 +160,6 @@ async def handle_mulch_message(bot, message):
     user_id = member.id
     guild = message.guild
 
-
     send_message = True
     if "growth mulch" in message.content.lower():
 
@@ -189,7 +189,7 @@ async def handle_mulch_message(bot, message):
                     moisture_dries_on_time = berry_data["moisture_dries_on"]
                     if moisture_dries_on_time and moisture_dries_on_duration:
                         new_moisture_dries_on = (
-                            moisture_dries_on_time + moisture_dries_on_duration * 3600
+                            moisture_dries_on_time + moisture_dries_on_duration
                         )
                         await update_moisture_dries_on(
                             bot, user_id, slot_number, new_moisture_dries_on

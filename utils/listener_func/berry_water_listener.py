@@ -183,6 +183,7 @@ async def handle_mulch_message(bot, message):
                     bot, user_id, slot_number
                 )
                 berry_name = berry_data["berry_name"] if berry_data else "unknown berry"
+                berry_name = berry_name.lower() if berry_name else "unknown berry"
                 berry_info = berry_map.get(berry_name)
                 if berry_info:
                     moisture_dries_on_duration = berry_info["moisture_dry_out_duration"]

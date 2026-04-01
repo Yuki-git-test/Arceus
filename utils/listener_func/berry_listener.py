@@ -6,7 +6,7 @@ from utils.db.berry_reminder import fetch_user_all_berry_reminder, upsert_berry_
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 from utils.pokemeow.get_pokemeow_reply import get_pokemeow_reply_member
-from utils.db.watering_can_db import get_watering_can, update_already_asked, check_if_bot_already_asked
+from utils.db.watering_can_db import get_watering_can, update_already_asked, check_if_bot_already_asked, upsert_watering_can
 # enable_debug(f"{__name__}.berry_listener")
 
 
@@ -33,8 +33,8 @@ async def berry_listener(
             return
         content = f"Hi {member.mention}, I noticed you have a berry reminder but no watering can information stored. Kindly do `;items` then go to __Berry Pouch__ to set up your watering can type for accurate watering reminders then do `;berry` again!"
         await message.channel.send(content)
-        await update_already_asked(bot, user_id, True)
-        
+        await upsert_watering_can(bot, user_id, member.name, None)
+
         return
     from utils.cache.vna_members_cache import fetch_vna_member_channel_id_from_cache
 

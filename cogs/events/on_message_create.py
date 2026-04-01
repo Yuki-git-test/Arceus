@@ -13,6 +13,11 @@ from Constants.variables import (
 )
 from Constants.vn_allstars_constants import VN_ALLSTARS_TEXT_CHANNELS
 from utils.clan_wars.stats_listener import stats_command_listener
+from utils.listener_func.berry_listener import berry_listener
+from utils.listener_func.berry_water_listener import (
+    handle_berry_water_message,
+    handle_mulch_message,
+)
 
 # ————————————————————————————————
 # 🩵 Import Listener Functions
@@ -178,7 +183,7 @@ class MessageCreateListener(commands.Cog):
                     label="Promo Team Listener",
                 )
                 await promo_team(bot=self.bot, message=message)
-                
+
             # ————————————————————————————————
             # 🩵 Clan wars server message logic
             # ————————————————————————————————
@@ -207,6 +212,49 @@ class MessageCreateListener(commands.Cog):
                     if first_embed and first_embed.author
                     else ""
                 )
+                # ————————————————————————————————
+                # 🩵 VNA Berry Command Listener
+                # ————————————————————————————————
+                if first_embed:
+                    if (
+                        first_embed_description
+                        and "garden overview" in first_embed_description.lower()
+                    ):
+                        pretty_log(
+                            "info",
+                            "Detected Garden Overview embed, processing berry reminders...",
+                        )
+                        await berry_listener(
+                            bot=self.bot,
+                            before_message=message,
+                            message=message,
+                        )
+                # ————————————————————————————————
+                # 🩵 VNA Berry Water Listener
+                # ————————————————————————————————
+                if message.content:
+                    if "Watered" in message.content and "Next stage" in message.content:
+                        pretty_log(
+                            "info",
+                            "Detected Berry Water message, processing berry water reminders...",
+                        )
+                        await handle_berry_water_message(bot=self.bot, message=message)
+                # ————————————————————————————————
+                # 🩵 VNA Berry Mulch Listener
+                # ————————————————————————————————
+                if message.content:
+                    if (
+                        "Applied" in message.content
+                        and "Mulch" in message.content
+                        and "to Slot" in message.content
+                    ):
+                        pretty_log(
+                            "info",
+                            "Detected Mulch message, processing growth mulch reminders...",
+                        )
+                        await handle_mulch_message(bot=self.bot, message=message)
+
+
                 # ————————————————————————————————
                 # 🩵 VNA Pokemon Spawn
                 # ————————————————————————————————

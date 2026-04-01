@@ -18,6 +18,8 @@ from utils.listener_func.pokemon_caught_listener import pokemon_caught_listener
 from utils.listener_func.weekly_stats_listener import weekly_stats_listener
 from utils.logs.pretty_log import pretty_log
 from utils.listener_func.wb_reg_listener import handle_wb_register_command
+from utils.listener_func.berry_listener import berry_listener
+from utils.listener_func.berry_pouch_listener import handle_berry_pouch_message
 
 # ️────────────────────────────────────────────
 #        ⚔️ Message Triggers
@@ -63,7 +65,40 @@ class OnMessageEditCog(commands.Cog):
         # Only log edits in VNA server
         if not after.guild or after.guild.id != VNA_SERVER_ID:
             return
-
+        # ————————————————————————————————
+        # 🩵 VNA Berry Command Listener
+        # ————————————————————————————————
+        if first_embed:
+            if (
+                first_embed_description
+                and "garden overview" in first_embed_description.lower()
+            ):
+                pretty_log(
+                    "info",
+                    "Detected Garden Overview embed, processing berry reminders...",
+                )
+                await berry_listener(
+                    bot=self.bot,
+                    before_message=before,
+                    message=after,
+                )
+        # ————————————————————————————————
+        # 🩵 VNA Berry Pouch Listener
+        # ————————————————————————————————
+        if first_embed:
+            if (
+                first_embed_footer_text
+                and "berry pouch" in first_embed_footer_text.lower()
+            ):
+                pretty_log(
+                    "info",
+                    "Detected Berry Pouch embed, processing berry pouch listener...",
+                )
+                await handle_berry_pouch_message(
+                    bot=self.bot,
+                    before=before,
+                    message=after,
+                )
         # ————————————————————————————————
         # 🩵 VNA Fish Spawn Listener
         # ————————————————————————————————

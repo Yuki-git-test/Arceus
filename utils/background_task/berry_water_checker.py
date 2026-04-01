@@ -1,0 +1,191 @@
+import time
+
+import discord
+
+from Constants.vn_allstars_constants import VNA_SERVER_ID, VN_ALLSTARS_EMOJIS
+from utils.db.berry_reminder import (
+    berry_map,
+    fetch_all_due_berry_reminders,
+    next_stage_map,
+    remove_berry_reminder,
+    update_growth_stage,
+    fetch_all_due_moisture_dries_on
+)
+from utils.logs.debug_log import debug_log, enable_debug
+from utils.logs.pretty_log import pretty_log
+from utils.pokemeow.get_pokemeow_reply import get_pokemeow_reply_member
+
+enable_debug(f"{__name__}.berry_reminder_checker")
+
+
+async def update_growth_stage_func(
+    bot: discord.Client, user_id: int, slot_number: int, stage: str, berry_name: str
+):
+    """Updates the growth stage and grows_on time for a specific berry reminder."""
+    pretty_log(
+        "debug",
+        f"Updating growth stage for user_id {user_id} in slot {slot_number} to stage {stage} for berry {berry_name}",
+    )
+    try:
+        growth_duration = berry_map.get(berry_name.lower(), {}).get(
+            "growth_duration", 2
+        )
+        # Multiply by 3600 to convert hours to seconds
+        grows_on = int(time.time()) + growth_duration * 3600
+        await update_growth_stage(bot, user_id, slot_number, stage, grows_on)
+    except Exception as e:
+        pretty_log(
+            "warn",
+            f"Failed to update growth stage for user {user_id} in slot {slot_number}: {e}",
+        )
+
+
+# 🍥──────────────────────────────────────────────
+#   Berry Reminder Checker Task
+# 🍥──────────────────────────────────────────────
+async def berry_water_reminder(bot: discord.Client):
+    """Checks for upcoming berry reminders and sends notifications."""
+
+    # debug_log("Fetching all due berry reminders...")
+    due_reminders = await fetch_all_due_moisture_dries_on(bot)
+
+    if not due_reminders:
+        # debug_log("No due berry reminders found. Exiting checker.")
+        return
+    debug_log(f"Found {len(due_reminders)} due reminders. Getting guild...")
+    guild = bot.get_guild(VNA_SERVER_ID)
+
+    # Group reminders by user and channel ONLY
+    from collections import defaultdict
+
+    due_reminders_count = len(due_reminders)
+    debug_log(f"Fetched {due_reminders_count} due berry reminders from the database.")
+    user_channel_reminders = defaultdict(list)
+
+    for reminder in due_reminders:
+        now_epoch = int(time.time())
+        debug_log(
+            f"Processing reminder: {reminder} | grows_on={reminder['grows_on']} | now={now_epoch}"
+        )
+        key = (
+            reminder["user_id"],
+            reminder["user_name"],
+            reminder["channel_id"],
+            reminder["channel_name"],
+        )
+        debug_log(f"Assigning reminder to user/channel key: {key}")
+        user_channel_reminders[key].append(reminder)
+
+    for (
+        user_id,
+        user_name,
+        channel_id,
+        channel_name,
+    ), reminders in user_channel_reminders.items():
+        debug_log(
+            f"Handling reminders for user_id={user_id}, user_name={user_name}, "
+            f"channel_id={channel_id}, channel_name={channel_name}, reminders_count={len(reminders)}"
+        )
+
+        # Sort by slot_number for consistency
+        user = guild.get_member(user_id)
+        debug_log(f"Fetched user: {user} for user_id={user_id}")
+        mention = user.mention if user else user_name
+        reminders.sort(key=lambda r: r["slot_number"])
+
+        to_be_watered_berry_names = []
+        for reminder in reminders:
+            debug_log(
+                f"Processing reminder for slot {reminder['slot_number']}: {reminder}"
+            )
+            water_can_type = reminder.get("water_can_type", "unknown")
+            stage = reminder.get("stage", "unknown")
+            next_stage = next_stage_map.get(reminder["stage"].lower(), "unknown")
+            mulch_type = reminder.get("mulch_type") or "unknown"
+            if isinstance(mulch_type, str) and mulch_type != "unknown":
+                mulch_type = mulch_type.lower()
+            slot_number = reminder["slot_number"]
+            berry_name_raw = (
+                reminder["berry_name"].lower()
+                if reminder.get("berry_name")
+                else "unknown"
+            )
+            slot_number = reminder["slot_number"]
+            #berry_emoji = berry_map[berry_name_raw]["emoji"]
+            debug_log(
+                f"water_can_type={water_can_type}, stage={stage}, next_stage={next_stage}, mulch_type={mulch_type}, slot_number={slot_number}, berry_name_raw={berry_name_raw}"
+            )
+
+            berry_name = (
+                f"- {berry_name_raw.title()} (Slot {slot_number})".strip()
+            )
+            debug_log(
+                f"Prepared berry name: {berry_name} (raw: {berry_name_raw})"
+            )
+
+            to_be_watered_berry_names.append(berry_name)
+            debug_log(
+                f"Added to watering list: {berry_name} for slot {slot_number}"
+            )
+
+
+        to_be_watered_field_name = (
+            "Berries to be watered. Use `;berry water` to water them:"
+        )
+
+        debug_log(f"Composing embed for user {user_name} (ID: {user_id})")
+        embed = discord.Embed(color=0x66CC66)
+        if to_be_watered_berry_names:
+            debug_log(f"Adding watered berries field: {to_be_watered_berry_names}")
+            embed.add_field(
+                name=to_be_watered_field_name,
+                value="\n".join(to_be_watered_berry_names),
+                inline=False,
+            )
+
+        msg = f"{VN_ALLSTARS_EMOJIS.vna_feesh} Hey {mention}, your berries are thirsty!"
+
+        debug_log(f"Composed message: {msg}")
+
+        # Send to the correct channel using bot.get_channel
+        channel = bot.get_channel(channel_id)
+        debug_log(
+            f"Looking up channel by id: {channel_id}, expected name: {channel_name}"
+        )
+        if channel and channel.name == channel_name:
+            debug_log(
+                f"Found channel: {channel} (name: {channel.name}) in guild: {channel.guild.name}"
+            )
+            try:
+                debug_log(
+                    f"Attempting to send message to channel {channel.name} (ID: {channel.id}) for user {user_name} (ID: {user_id})"
+                )
+                await channel.send(content=msg, embed=embed)
+                pretty_log(
+                    "background_task",
+                    f"Sent berry reminder for {user_name} (user_id: {user_id}) in channel {channel.name} (ID: {channel.id})",
+                    bot=bot,
+                )
+                debug_log(
+                    f"Sent message to channel {channel.name} (ID: {channel.id}) for user {user_name} (ID: {user_id})"
+                )
+
+                # Remove each berry reminder after sending — use the actual reminder slot_number
+                for reminder in reminders:
+                    debug_log(
+                        f"Removing berry reminder for user_id={user_id}, slot_number={reminder['slot_number']} after moisture dry out reminder sent."
+                    )
+                    await remove_berry_reminder(
+                        bot, user_id, slot_number=reminder["slot_number"]
+                    )
+
+
+            except Exception as e:
+                pretty_log(
+                    "error",
+                    f"Failed to send berry reminder for {user_name} (user_id: {user_id}): {e}",
+                    bot=bot,
+                )
+                debug_log(
+                    f"Exception occurred while sending/removing berry reminder: {e}"
+                )

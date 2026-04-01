@@ -58,6 +58,14 @@ def upsert_vna_member_cache(
     }
     pretty_log("cache", f"Upserted vna_member {user_name} ({user_id}) into cache.")
 
+def fetch_vna_member_channel_id_from_cache(user_id: int) -> int | None:
+    """
+    Fetch a vna_member's channel_id from the cache by user_id.
+    """
+    member_info = vna_members_cache.get(user_id)
+    if member_info:
+        return member_info.get("channel_id")
+    return None
 
 def update_vna_member_multiple_fields_cache(
     user_id: int,

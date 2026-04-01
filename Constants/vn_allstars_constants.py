@@ -677,7 +677,8 @@ class VN_ALLSTARS_ROLES:
 #       VN_ALLSTARS_EMOJIS
 # 💦☁────────────────────────────────────────────💦☁
 class VN_ALLSTARS_EMOJIS:
-
+    vna_feesh = "<:vna_feesh:1488772256598593637>"
+    vna_harvest = "<:vna_harvest:1488771324066136148>"
     vna_susge = "<:vna_Susge:910194321318375444>"
     vna_worrypat = "<:vna_worryPat:910231775870058556>"
     vna_sad = "<:vna_sad:910231901845987398>"

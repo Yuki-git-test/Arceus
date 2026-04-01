@@ -12,7 +12,8 @@ from utils.background_task.special_battle_timer_checker import (
     special_battle_timer_checker,
 )
 from utils.logs.pretty_log import pretty_log
-
+from utils.background_task.berry_checker import berry_reminder_checker
+from utils.background_task.berry_water_checker import berry_water_reminder
 
 # 🍰──────────────────────────────
 #   🎀 Cog: CentralLoop
@@ -72,6 +73,12 @@ class CentralLoop(commands.Cog):
                 # ⏰ Check and trigger due reminders
                 await check_and_trigger_reminders(bot=self.bot)
 
+                # Check berry water reminders
+                await berry_water_reminder(bot=self.bot)
+
+                # Check berry growth reminders
+                await berry_reminder_checker(bot=self.bot)
+
             except Exception as e:
                 pretty_log(
                     "error",
@@ -103,5 +110,7 @@ async def setup(bot: commands.Bot):
     print("  ✅ 🧼  weekly_goal_tracker_cache_flush")
     print("  ✅ 🧼  monthly_goal_tracker_cache_flush")
     print("  ✅ ⏰  reminders_checker")
+    print("  ✅ ⏰  berry_reminder_checker")
+    print("  ✅ ⏰  berry_water_reminder")
     print("  🧭 CentralLoop ticking every 60 seconds!")
     print("  ─────────────────────────────────────────────\n")

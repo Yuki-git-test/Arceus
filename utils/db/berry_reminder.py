@@ -128,7 +128,7 @@ berry_map = {
         "moisture_dry_out_duration": SIX_H_BERRY_MOISTURE_DRY_OUT_DURATION,
     },
     "rindo berry": {
-        "emoji": Emojis.rindo_berry,
+        #"emoji": Emojis.rindo_berry,
         "growth_duration": 6,
         "moisture_dry_out_duration": SIX_H_BERRY_MOISTURE_DRY_OUT_DURATION,
     },

@@ -122,6 +122,36 @@ berry_map = {
         #  "emoji": Emojis.shuca_berry,
         "growth_duration": FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION,
     },
+    "chople berry": {
+        # "emoji": Emojis.chople_berry,
+        "growth_duration": 6,
+        "moisture_dry_out_duration": SIX_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+    },
+    "rindo berry": {
+        "emoji": Emojis.rindo_berry,
+        "growth_duration": 6,
+        "moisture_dry_out_duration": SIX_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+    },
+    "wacan berry": {
+        # "emoji": Emojis.chople_berry,
+        "growth_duration": 6,
+        "moisture_dry_out_duration": SIX_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+    },
+    "passho berry": {
+        # "emoji": Emojis.chople_berry,
+        "growth_duration": 6,
+        "moisture_dry_out_duration": SIX_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+    },
+    "liechi berry": {
+        # "emoji": Emojis.chople_berry,
+        "growth_duration": 6,
+        "moisture_dry_out_duration": SIX_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+    },
+    "petaya berry": {
+        # "emoji": Emojis.chople_berry,
+        "growth_duration": 6,
+        "moisture_dry_out_duration": SIX_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+    },
 }
 
 next_stage_map = {

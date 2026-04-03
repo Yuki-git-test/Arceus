@@ -112,7 +112,7 @@ async def berry_reminder_checker(bot: discord.Client):
                 else "unknown"
             )
             slot_number = reminder["slot_number"]
-            #berry_emoji = berry_map[berry_name_raw]["emoji"]
+            # berry_emoji = berry_map[berry_name_raw]["emoji"]
             debug_log(
                 f"water_can_type={water_can_type}, stage={stage}, next_stage={next_stage}, mulch_type={mulch_type}, slot_number={slot_number}, berry_name_raw={berry_name_raw}"
             )
@@ -200,7 +200,12 @@ async def berry_reminder_checker(bot: discord.Client):
                 value="\n".join(to_be_harvested_berry_names),
                 inline=False,
             )
-        msg = f"{VN_ALLSTARS_EMOJIS.vna_harvest} Hey {mention}, its time to check your berries!"
+        if to_be_harvested_berry_names and not to_be_watered_berry_names:
+            msg = f"{VN_ALLSTARS_EMOJIS.vna_harvest} Hey {mention}, its time to harvest your berries!"
+        elif to_be_watered_berry_names and not to_be_harvested_berry_names:
+            msg = f"{VN_ALLSTARS_EMOJIS.vna_harvest} Hey {mention}, its time to water your berries!"
+        else:
+            msg = f"{VN_ALLSTARS_EMOJIS.vna_harvest} Hey {mention}, its time to check your berries!"
 
         debug_log(f"Composed message: {msg}")
 

@@ -1,13 +1,65 @@
+import re
+
 import discord
 
 from Constants.vn_allstars_constants import VN_ALLSTARS_TEXT_CHANNELS
+from utils.db.berry_reminder import (
+    fetch_user_all_berry_reminder,
+    remove_berry_reminder,
+    update_moisture_dries_on_func,
+    upsert_berry_reminder,
+    update_moisture_dries_on
+)
+from utils.db.watering_can_db import (
+    check_if_bot_already_asked,
+    get_watering_can,
+    update_already_asked,
+    upsert_watering_can,
 
-from utils.db.berry_reminder import fetch_user_all_berry_reminder, upsert_berry_reminder, remove_berry_reminder
+)
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 from utils.pokemeow.get_pokemeow_reply import get_pokemeow_reply_member
-from utils.db.watering_can_db import get_watering_can, update_already_asked, check_if_bot_already_asked, upsert_watering_can
+
 # enable_debug(f"{__name__}.berry_listener")
+
+
+def extract_mulch_application(line: str):
+    """
+    Extracts the mulch emoji name, mulch label, and slot number from a mulch application line.
+    Example: "### <:damp_mulch:1486261015657185281> Applied **Damp Mulch** to Slot 1 (<:sprouted:1486510462416851014> Aspear Tree)!"
+    Returns a dict with keys: mulch_name, mulch_label, slot_number
+    """
+    pattern = re.compile(
+        r"<:(\w+):\d+>\s+Applied\s+\*\*(.+?)\*\*\s+to Slot (\d+)", re.IGNORECASE
+    )
+    match = pattern.search(line)
+    if match:
+        return {
+            "mulch_name": match.group(1),
+            "mulch_label": match.group(2),
+            "slot_number": int(match.group(3)),
+        }
+    return None
+
+
+def extract_watering_action(line: str):
+    """
+    Extracts the watering can emoji name, berry name, and slot number from a watering action line.
+    Example: "<:wailmer_pail:1486261601622425680> Watered **Aspear Berry** in Slot 3!"
+    Returns a dict with keys: water_can_emoji, berry_name, slot_number
+    """
+    pattern = re.compile(
+        r"<:(\w+):\d+>\s+Watered\s+\*\*(.+?)\*\*\s+in Slot (\d+)!", re.IGNORECASE
+    )
+    match = pattern.search(line)
+    if match:
+        return {
+            "water_can_emoji": match.group(1),
+            "berry_name": match.group(2),
+            "slot_number": int(match.group(3)),
+        }
+    return None
 
 
 async def berry_listener(
@@ -29,7 +81,9 @@ async def berry_listener(
     water_can_type = await get_watering_can(bot, user_id)
     if not water_can_type:
         if await check_if_bot_already_asked(bot, user_id):
-            debug_log(f"Bot has already asked user_id {user_id} for watering can type. Not asking again.")
+            debug_log(
+                f"Bot has already asked user_id {user_id} for watering can type. Not asking again."
+            )
             return
         content = f"Hi {member.mention}, I noticed you have a berry reminder but no watering can information stored. Kindly do `;items` then go to __Berry Pouch__ to set up your watering can type for accurate watering reminders then do `;berry` again!"
         await message.channel.send(content)
@@ -43,7 +97,6 @@ async def berry_listener(
         if fetch_vna_member_channel_id_from_cache(user_id)
         else VN_ALLSTARS_TEXT_CHANNELS.off_topic
     )
-
 
     member_channel = guild.get_channel(member_channel_id) if member_channel_id else None
     member_channel_name = member_channel.name if member_channel else None
@@ -142,6 +195,53 @@ async def berry_listener(
             else:
                 # Remove the reminder from the database if it's ready to harvest
                 await remove_berry_reminder(bot, user_id, slot_number)
+    if (
+        "watered" in embed_description.lower()
+        and "in slot" in embed_description.lower()
+    ):
+        watering_action = extract_watering_action(embed_description)
+        if watering_action:
+            debug_log(
+                f"Extracted watering action from embed description: {watering_action}"
+            )
+            await update_moisture_dries_on_func(
+                bot,
+                user_id,
+                watering_action["slot_number"],
+                watering_action["berry_name"],
+            )
+        else:
+            debug_log("Failed to extract watering action from embed description.")
+    if (
+        "watered" in embed_description.lower()
+        and "eligible berries" in embed_description.lower()
+        and not "sprayduck" in embed_description.lower()
+    ):
+        # This means the user watered all eligible berries with a watering can that waters all berries, so we should update all moisture_dries_on for all berry reminders for this user
+        user_berries = await fetch_user_all_berry_reminder(bot, user_id)
+        for berry in user_berries:
+            await update_moisture_dries_on_func(
+                bot,
+                user_id,
+                berry["slot_number"],
+                berry["berry_name"],
+            )
+            
+    if "applied **damp mulch** to slot" in embed_description.lower():
+        mulch_application = extract_mulch_application(embed_description)
+        if mulch_application:
+            debug_log(
+                f"Extracted mulch application from embed description: {mulch_application}"
+            )
+            # Update the mulch type for this berry reminder in the database , no need for moisture_dries_on update
+            await update_moisture_dries_on(
+                bot=bot,
+                user_id=user_id,
+                slot_number=mulch_application["slot_number"],
+                moisture_dries_on=None,
+            )
+        else:
+            debug_log("Failed to extract mulch application from embed description.")
 
 
 def extract_berry_slots(embed_description: str):

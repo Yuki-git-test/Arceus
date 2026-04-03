@@ -1,7 +1,7 @@
 import discord
 
 from utils.logs.pretty_log import pretty_log
-
+import time
 # SQL TABLE
 """CREATE TABLE berry_reminder (
     user_id BIGINT,
@@ -395,6 +395,24 @@ async def fetch_all_due_berry_reminders(bot: discord.Client):
         pretty_log("warn", f"Failed to fetch due berry reminders: {e}")
         return []
 
+async def update_moisture_dries_on_func(
+        bot: discord.Client, user_id: int, slot_number: int, berry_name: str
+):
+    """Updates the moisture_dries_on time for a specific berry reminder based on the watering time."""
+    try:
+        berry_info = berry_map.get(berry_name.lower())
+        if not berry_info:
+            pretty_log("warn", f"Berry name '{berry_name}' not found in berry_map.")
+            return
+
+        moisture_dry_out_duration = berry_info["moisture_dry_out_duration"]
+        new_moisture_dries_on = int(time.time()) + moisture_dry_out_duration
+        await update_moisture_dries_on(bot, user_id, slot_number, new_moisture_dries_on)
+    except Exception as e:
+        pretty_log(
+            "warn",
+            f"Failed to update moisture_dries_on for user {user_id} in slot {slot_number} with berry '{berry_name}': {e}",
+        )
 
 async def update_moisture_dries_on(
     bot: discord.Client, user_id: int, slot_number: int, moisture_dries_on: int

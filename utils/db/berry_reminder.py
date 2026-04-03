@@ -112,15 +112,18 @@ berry_map = {
     },
     "occa berry": {
         # "emoji": Emojis.occa_berry,
-        "growth_duration": FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+        "growth_duration": 5,
+        "moisture_dry_out_duration": FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION,
     },
     "yache berry": {
         #  "emoji": Emojis.yache_berry,
-        "growth_duration": FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+        "growth_duration": 5,
+        "moisture_dry_out_duration": FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION,
     },
     "shuca berry": {
         #  "emoji": Emojis.shuca_berry,
-        "growth_duration": FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION,
+        "growth_duration": 5,
+        "moisture_dry_out_duration": FIVE_H_BERRY_MOISTURE_DRY_OUT_DURATION,
     },
     "chople berry": {
         # "emoji": Emojis.chople_berry,
@@ -128,7 +131,7 @@ berry_map = {
         "moisture_dry_out_duration": SIX_H_BERRY_MOISTURE_DRY_OUT_DURATION,
     },
     "rindo berry": {
-        #"emoji": Emojis.rindo_berry,
+        # "emoji": Emojis.rindo_berry,
         "growth_duration": 6,
         "moisture_dry_out_duration": SIX_H_BERRY_MOISTURE_DRY_OUT_DURATION,
     },
@@ -153,6 +156,7 @@ berry_map = {
         "moisture_dry_out_duration": SIX_H_BERRY_MOISTURE_DRY_OUT_DURATION,
     },
 }
+
 
 next_stage_map = {
     "planted": "sprouted",

@@ -98,7 +98,7 @@ async def berry_listener(
         else VN_ALLSTARS_TEXT_CHANNELS.off_topic
     )
 
-    member_channel = guild.get_channel(member_channel_id) if member_channel_id else None
+    member_channel = guild.get_channel(member_channel_id) if member_channel_id else VN_ALLSTARS_TEXT_CHANNELS.off_topic
     member_channel_name = member_channel.name if member_channel else None
 
     user_name = member.name
@@ -226,7 +226,7 @@ async def berry_listener(
                 berry["slot_number"],
                 berry["berry_name"],
             )
-            
+
     if "applied **damp mulch** to slot" in embed_description.lower():
         mulch_application = extract_mulch_application(embed_description)
         if mulch_application:

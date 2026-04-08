@@ -6,16 +6,15 @@ from Constants.vn_allstars_constants import VN_ALLSTARS_TEXT_CHANNELS
 from utils.db.berry_reminder import (
     fetch_user_all_berry_reminder,
     remove_berry_reminder,
+    update_moisture_dries_on,
     update_moisture_dries_on_func,
     upsert_berry_reminder,
-    update_moisture_dries_on
 )
 from utils.db.watering_can_db import (
     check_if_bot_already_asked,
     get_watering_can,
     update_already_asked,
     upsert_watering_can,
-
 )
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
@@ -98,7 +97,11 @@ async def berry_listener(
         else VN_ALLSTARS_TEXT_CHANNELS.off_topic
     )
 
-    member_channel = guild.get_channel(member_channel_id) if member_channel_id else VN_ALLSTARS_TEXT_CHANNELS.off_topic
+    member_channel = (
+        guild.get_channel(member_channel_id)
+        if member_channel_id
+        else VN_ALLSTARS_TEXT_CHANNELS.off_topic
+    )
     member_channel_name = member_channel.name if member_channel else None
 
     user_name = member.name
@@ -168,8 +171,8 @@ async def berry_listener(
                         slot_number=slot_number,
                         grows_on=next_stage_time,
                         stage=growth_stage,
-                        channel_id=member_channel.id,
-                        channel_name=member_channel.name,
+                        channel_id=member_channel_id,
+                        channel_name=member_channel_name,
                         berry_name=berry_name,
                         mulch_type=mulch_name,
                         water_can_type=water_can_type,
@@ -186,8 +189,8 @@ async def berry_listener(
                     slot_number=slot_number,
                     grows_on=next_stage_time,
                     stage=growth_stage,
-                    channel_id=member_channel.id,
-                    channel_name=member_channel.name,
+                    channel_id=member_channel_id,
+                    channel_name=member_channel_name,
                     berry_name=berry_name,
                     mulch_type=mulch_name,
                     water_can_type=water_can_type,

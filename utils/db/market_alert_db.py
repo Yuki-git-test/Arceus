@@ -261,6 +261,7 @@ async def remove_all_market_alerts_for_user(bot: discord.Client, user_id: int):
             tag="error",
             include_trace=True,
         )
+ 
 async def remove_recent_market_alerts(bot:discord.Client, user:discord.Member, num_alerts:int):
     """
     Removes the most recent market alerts for a user from the database, then returns what was removed.

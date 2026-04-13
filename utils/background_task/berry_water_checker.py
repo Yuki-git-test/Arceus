@@ -14,7 +14,7 @@ from utils.db.berry_reminder import (
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 from utils.pokemeow.get_pokemeow_reply import get_pokemeow_reply_member
-
+from Constants.aesthetic import *
 enable_debug(f"{__name__}.berry_reminder_checker")
 
 
@@ -133,6 +133,7 @@ async def berry_water_reminder(bot: discord.Client):
             "Berries to be watered. Use `;berry water` to water them:"
         )
 
+
         debug_log(f"Composing embed for user {user_name} (ID: {user_id})")
         embed = discord.Embed(color=0x66CC66)
         if to_be_watered_berry_names:
@@ -144,6 +145,8 @@ async def berry_water_reminder(bot: discord.Client):
             )
 
         msg = f"{VN_ALLSTARS_EMOJIS.vna_feesh} Hey {mention}, your berries are thirsty!"
+        thumbnail_url = Thumbnails.drought
+        embed.set_thumbnail(url=thumbnail_url)
 
         debug_log(f"Composed message: {msg}")
 

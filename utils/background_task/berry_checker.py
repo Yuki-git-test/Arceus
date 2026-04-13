@@ -1,7 +1,7 @@
 import time
 
 import discord
-
+from Constants.aesthetic import *
 from Constants.vn_allstars_constants import VNA_SERVER_ID, VN_ALLSTARS_EMOJIS
 from utils.db.berry_reminder import (
     berry_map,
@@ -211,10 +211,14 @@ async def berry_reminder_checker(bot: discord.Client):
             )
         if to_be_harvested_berry_names and not to_be_watered_berry_names:
             msg = f"{VN_ALLSTARS_EMOJIS.vna_harvest} Hey {mention}, its time to harvest your berries!"
+            thumbnail_url = Thumbnails.harvest
         elif to_be_watered_berry_names and not to_be_harvested_berry_names:
             msg = f"{VN_ALLSTARS_EMOJIS.vna_harvest} Hey {mention}, its time to water your berries!"
+            thumbnail_url = Thumbnails.water
         else:
             msg = f"{VN_ALLSTARS_EMOJIS.vna_harvest} Hey {mention}, its time to check your berries!"
+            thumbnail_url = Thumbnails.plant
+        embed.set_thumbnail(url=thumbnail_url)
 
         debug_log(f"Composed message: {msg}")
 

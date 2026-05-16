@@ -97,6 +97,7 @@ secret_santa_phrases = [
 ]
 
 CC_SHINY_BONUS_CHANNEL_ID = 1457171231445876746
+UNOWN_NPC_NA_LINE = ":x: You can only challenge the **Alph Scientist** once every"
 
 
 # 🐾────────────────────────────────────────────
@@ -254,7 +255,6 @@ class MessageCreateListener(commands.Cog):
                         )
                         await handle_mulch_message(bot=self.bot, message=message)
 
-
                 # ————————————————————————————————
                 # 🩵 VNA Pokemon Spawn
                 # ————————————————————————————————
@@ -285,12 +285,6 @@ class MessageCreateListener(commands.Cog):
                 # ————————————————————————————————
                 if message.channel.id == PublicChannels.Poke_Spawn:
                     await as_spawn_ping(self.bot, message)
-
-                """# ————————————————————————————————
-                # 🩵 VNA Market Snipe
-                # ————————————————————————————————
-                if message.channel.id in MARKET_FEED_CHANNEL_IDS:
-                    await market_feeds_listener(self.bot, message)"""
 
                 # ————————————————————————————————
                 # 🩵 VNA Weekly Stats Listener
@@ -393,19 +387,15 @@ class MessageCreateListener(commands.Cog):
                 if first_embed:
                     if (
                         first_embed.description
-                        and "challenged <:xmas_blue:1451059140955734110> **XMAS Blue** to a battle!"
+                        and "challenged <:alph_scientist:1504637214217470032> **Alph Scientist** to a battle!"
                         in first_embed.description
                     ):
                         pretty_log(
                             "info",
-                            f"🔹 Matched Special Battle NPC Listener for XMAS BLUE | message_id={message.id}",
+                            f"🔹 Matched Special Battle NPC Listener | message_id={message.id}",
                         )
                         await special_battle_npc_listener(bot=self.bot, message=message)
-                if (
-                    content
-                    and ":x: You cannot fight XMAS Blue yet! He will be available for you to re-battle"
-                    in content
-                ):
+                if content and UNOWN_NPC_NA_LINE in content:
                     pretty_log(
                         "info",
                         f"🔹 Matched Special Battle NPC Timer Listener for XMAS BLUE | message_id={message.id}",

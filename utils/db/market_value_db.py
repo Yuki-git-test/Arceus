@@ -3,12 +3,51 @@
 # 🟣────────────────────────────────────────────
 
 from datetime import datetime
+from dis import disco
 
 import discord
 
 from utils.cache.cache_list import market_value_cache
 from utils.logs.pretty_log import pretty_log
 
+async def update_emoji_id(bot:discord.Client, pokemon_name: str, emoji_id: str):
+    """
+    Update the emoji_id for a Pokémon in the market value table.
+    """
+    pokemon_name = pokemon_name.lower()
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            # Only update if row exists
+            row = await conn.fetchrow(
+                "SELECT pokemon_name FROM market_value WHERE pokemon_name = $1",
+                pokemon_name,
+            )
+            if not row:
+                pretty_log(
+                    tag="db",
+                    message=f"No market value row found for {pokemon_name}, skipping emoji_id update.",
+                )
+                return
+            await conn.execute(
+                "UPDATE market_value SET emoji_id = $1, last_updated = $2 WHERE pokemon_name = $3",
+                emoji_id,
+                datetime.utcnow(),
+                pokemon_name,
+            )
+            # Update in cache as well
+            if pokemon_name in market_value_cache:
+                market_value_cache[pokemon_name]["emoji_id"] = emoji_id
+
+        pretty_log(
+            tag="db",
+            message=f"Updated emoji_id for {pokemon_name} to {emoji_id}",
+        )
+
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Failed to update emoji_id for {pokemon_name}: {e}",
+        )
 
 def _format_pokemon_name_for_market_lookup(pokemon_name: str) -> str:
     """Local name formatter to avoid circular imports with pokemon_func."""

@@ -31,6 +31,12 @@
             "editor.selectionHighlightBackground": "#88dfff22",
             "editor.wordHighlightBackground": "#88dfff33",
             "editor.wordHighlightStrongBackground": "#88dfff44",
+            "editorError.foreground": "#ff5f56",
+            "editorWarning.foreground": "#ffbd2e",
+            "editorInfo.foreground": "#4da3ff",
+            "editorOverviewRuler.errorForeground": "#ff5f56ee",
+            "editorOverviewRuler.warningForeground": "#ffbd2eee",
+            "editorOverviewRuler.infoForeground": "#4da3ffee",
             "editorGroupHeader.tabsBackground": "#0f1218",
             "editorGroupHeader.border": "#1f232a",
             "tab.activeBorderTop": "#88dfff",
@@ -57,6 +63,10 @@
         "terminal.integrated.fontFamily": "'Fira Code', monospace",
         "terminal.integrated.fontSize": 14,
         "terminal.integrated.cursorBlinking": true,
+        "editor.renderValidationDecorations": "on",
+        "editor.overviewRulerLanes": 3,
+        "problems.decorations.enabled": true,
+        "editor.minimap.enabled": false,
 
         // ---------------- 🌟 Semantic Highlighting ----------------
         "editor.semanticHighlighting.enabled": true,

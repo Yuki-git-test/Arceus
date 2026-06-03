@@ -61,7 +61,7 @@ from utils.listener_func.special_battle_npc_listener import (
 )
 from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
 from utils.listener_func.weekly_stats_listener import weekly_stats_listener
-
+from utils.listener_func.market_view_listener import market_view_listener
 # ————————————————————————————————
 # 🩵 Import DB Functions
 #  ———————————————————————————————
@@ -534,6 +534,21 @@ class MessageCreateListener(commands.Cog):
                             "error",
                             f"Error in EV Training Listener for message {message.id}: {e}",
                         )
+
+                # ————————————————————————————————
+                # ⚡ MARKET VIEW LISTENER
+                # ————————————————————————————————
+                if (
+                    first_embed
+                    and "PokeMeow Global Market" in first_embed_author
+                    and not "Recent" in first_embed_author
+                    and not "Rarity" in first_embed_author
+                ):
+                    pretty_log(
+                        tag="info",
+                        message=f"Processing market view message with embed author: {first_embed_author}",
+                    )
+                    await market_view_listener(self.bot, message)
         except Exception as e:
             # 🛑────────────────────────────────────────────
             #        Unhandled on_message Error Handler

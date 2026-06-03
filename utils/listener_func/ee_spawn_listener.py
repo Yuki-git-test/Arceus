@@ -9,7 +9,7 @@ from discord.ext import commands
 
 from Constants.variables import CC_BUMP_CHANNEL_ID, CC_GUILD_ID
 from Constants.vn_allstars_constants import (
-    ARCEUS_EMBED_COLOR,
+    DEFAULT_EMBED_COLOR,
     VN_ALLSTARS_EMOJIS,
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
@@ -24,7 +24,7 @@ REG_EE_COLOR = 4077189
 SHINY_EE_COLOR = 16561340
 
 
-enable_debug(f"{__name__}.check_cc_bump_reminder")
+# enable_debug(f"{__name__}.check_cc_bump_reminder")
 # ⏳ Shared cooldowns across commands/listeners
 wb_shared_cooldowns: dict[int, float] = {}  # {guild_id: last_post_time}
 cc_shared_cooldowns: dict[int, float] = {}  # {guild_id: last_post_time}
@@ -33,9 +33,76 @@ CACHE_FILE = "Data/ee_votes_cache.json"
 
 last_seen_votes = {}
 near_spawn_alert_cache = set()
+_processed_ee_events: dict[tuple[str, int], float] = {}
+_recent_ee_alert_sends: dict[tuple[int, str], float] = {}
+_EE_EVENT_DEDUP_TTL_SECONDS = 180
+_EE_SEND_DEDUP_TTL_SECONDS = 30
 
 PLUS_EMOJI = "➕"
 CHECK_EMOJI = "✅"
+
+
+def _is_duplicate_ee_event(event_name: str, message_id: int) -> bool:
+    """Return True if this EE event for message_id was already processed recently."""
+    now_ts = time.time()
+    stale_keys = [
+        k
+        for k, ts in _processed_ee_events.items()
+        if now_ts - ts > _EE_EVENT_DEDUP_TTL_SECONDS
+    ]
+    for k in stale_keys:
+        _processed_ee_events.pop(k, None)
+
+    key = (event_name, message_id)
+    if key in _processed_ee_events:
+        return True
+    _processed_ee_events[key] = now_ts
+    return False
+
+
+async def _send_ee_alert_once(
+    bot: commands.Bot,
+    channel: discord.abc.Messageable,
+    content: str,
+) -> bool:
+    """Send EE alert content once in a short window to avoid accidental duplicates."""
+    channel_id = getattr(channel, "id", None)
+    if channel_id is None:
+        await channel.send(content)
+        return True
+
+    now_ts = time.time()
+    stale_keys = [
+        k
+        for k, ts in _recent_ee_alert_sends.items()
+        if now_ts - ts > _EE_SEND_DEDUP_TTL_SECONDS
+    ]
+    for k in stale_keys:
+        _recent_ee_alert_sends.pop(k, None)
+
+    key = (channel_id, content)
+    last_ts = _recent_ee_alert_sends.get(key, 0)
+    if now_ts - last_ts < _EE_SEND_DEDUP_TTL_SECONDS:
+        return False
+
+    bot_user_id = bot.user.id if bot.user else 0
+    if hasattr(channel, "history"):
+        try:
+            async for recent in channel.history(limit=10):
+                if recent.author.id != bot_user_id:
+                    continue
+                if recent.content != content:
+                    continue
+                if (
+                    discord.utils.utcnow() - recent.created_at
+                ).total_seconds() <= _EE_SEND_DEDUP_TTL_SECONDS:
+                    return False
+        except Exception as e:
+            debug_log(f"EE history dedupe check failed: {e}")
+
+    _recent_ee_alert_sends[key] = now_ts
+    await channel.send(content)
+    return True
 
 
 def extract_battle_begins_time_from_wb_command(description: str):
@@ -96,6 +163,10 @@ def save_vote_cache():
 
 
 async def check_cc_bump_reminder(bot: commands.Bot, message: discord.Message):
+    if _is_duplicate_ee_event("check_cc_bump_reminder", message.id):
+        debug_log(f"Skipped duplicate CC bump EE event for message_id={message.id}")
+        return
+
     debug_log(
         f"Called for message.id: {getattr(message, 'id', None)} | bot: {getattr(bot, 'user', None)}"
     )
@@ -132,9 +203,13 @@ async def check_cc_bump_reminder(bot: commands.Bot, message: discord.Message):
 
             channel = vna_guild.get_channel(channel_id) or Object(id=channel_id)
             debug_log(f"Sending alert to channel: {channel}")
-            await channel.send(
-                f"<@&{ee_ping_role_id}> ⚠️ Only {votes_left} votes left until Eternamax-Eternatus spawns!"
+            sent = await _send_ee_alert_once(
+                bot=bot,
+                channel=channel,
+                content=f"<@&{ee_ping_role_id}> ⚠️ Only {votes_left} votes left until Eternamax-Eternatus spawns!",
             )
+            if not sent:
+                debug_log("Skipped duplicate EE near-spawn alert from CC bump path")
 
             pretty_log(
                 "ready",
@@ -170,7 +245,7 @@ async def send_cc_bump_reminder(
     if context == "votes left" and votes_left:
         title = "Votes left until EE Spawn"
         description = votes_left
-        color = ARCEUS_EMBED_COLOR
+        color = DEFAULT_EMBED_COLOR
 
         bump_embed = discord.Embed(title=title, description=description, color=color)
 
@@ -223,6 +298,10 @@ async def check_ee_near_spawn_alert(bot: commands.Bot, message: discord.Message)
     Resets alert once votes drop (new spawn).
     Also logs current cache every time.
     """
+    if _is_duplicate_ee_event("check_ee_near_spawn_alert", message.id):
+        debug_log(f"Skipped duplicate EE near-spawn event for message_id={message.id}")
+        return
+
     try:
         for embed in message.embeds:
             description = embed.description
@@ -277,9 +356,13 @@ async def check_ee_near_spawn_alert(bot: commands.Bot, message: discord.Message)
                 ee_ping_role_id = VN_ALLSTARS_ROLES.ee_spawn_ping
 
                 channel = bot.get_channel(channel_id) or Object(id=channel_id)
-                await channel.send(
-                    f"<@&{ee_ping_role_id}> ⚠️ Only {votes_left} votes left until Eternamax-Eternatus spawns!"
+                sent = await _send_ee_alert_once(
+                    bot=bot,
+                    channel=channel,
+                    content=f"<@&{ee_ping_role_id}> ⚠️ Only {votes_left} votes left until Eternamax-Eternatus spawns!",
                 )
+                if not sent:
+                    debug_log("Skipped duplicate EE near-spawn alert from VNA path")
 
                 pretty_log(
                     "ready",
@@ -325,6 +408,10 @@ async def extract_boss_from_wb_spawn_command(
     Extracts boss info & spawned_by user from a WB spawn message and triggers auto ping.
     Works for messages with embeds containing emojis, shiny/regular bosses, and usernames with dots/numbers.
     """
+    if _is_duplicate_ee_event("extract_boss_from_wb_spawn_command", message.id):
+        debug_log(f"Skipped duplicate WB spawn parse for message_id={message.id}")
+        return
+
     spawned_by_member = None
     boss_name = None
     variant = "regular"
@@ -396,6 +483,10 @@ async def extract_boss_from_wb_command_embed(
     Extracts boss info from a WB embed message and triggers auto ping.
     Works even if there are emojis or extra text before the boss name.
     """
+    if _is_duplicate_ee_event("extract_boss_from_wb_command_embed", message.id):
+        debug_log(f"Skipped duplicate WB command parse for message_id={message.id}")
+        return
+
     try:
         for embed in message.embeds:
             description = embed.description

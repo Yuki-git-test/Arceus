@@ -22,7 +22,7 @@ PREFIX_EMOJI_MAP = {
 
 FORM_BASE_DEX_OFFSET = 7001
 
-enable_debug(f"{__name__}.parse_special_mega_input")
+#enable_debug(f"{__name__}.parse_special_mega_input")
 
 
 # ─────────────────────────────────────────────

@@ -84,7 +84,7 @@ class Market_Alerts_Paginator(View):
         embed = discord.Embed(
             title=f"📢 Market Alerts",
             description=f"**Alerts Used:** {self.alerts_used}/{self.max_alerts}",
-            color=ARCEUS_EMBED_COLOR,
+            color=DEFAULT_EMBED_COLOR,
         )
         for idx, alert in enumerate(page_alerts, start=1 + self.page * self.per_page):
             role_str = (

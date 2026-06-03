@@ -1,11 +1,11 @@
-
 from datetime import datetime
 
 import discord
 from discord import ButtonStyle
 from discord.ext import commands
 
-from Constants.vn_allstars_constants import ARCEUS_EMBED_COLOR
+from Constants.aesthetic import Emojis
+from Constants.vn_allstars_constants import DEFAULT_EMBED_COLOR
 from utils.db.timers_db import (
     fetch_timer,
     update_battle_setting,
@@ -15,9 +15,9 @@ from utils.db.timers_db import (
 )
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
-from Constants.aesthetic import Emojis
-enable_debug(f"{__name__}.timer_settings_func")
-enable_debug(f"{__name__}.TimerSettingsView")
+
+#enable_debug(f"{__name__}.timer_settings_func")
+#enable_debug(f"{__name__}.TimerSettingsView")
 
 
 # 💗────────────────────────────────────────────

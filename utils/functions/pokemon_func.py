@@ -9,6 +9,41 @@ from utils.db.market_value_db import (
 from utils.logs.debug_log import debug_enabled, debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 
+# ✨───────────────────────────────────────────────
+#            🧹 Name Formatting
+# ✨───────────────────────────────────────────────
+
+
+def format_name_for_pokemons_db_lookup(pokemon_name: str) -> str:
+    """Format Pokémon name for market value lookup."""
+
+    if "-o" in pokemon_name:
+        debug_log(f"SPECIAL: '-o' detected in name: {pokemon_name!r}")
+
+    if pokemon_name.lower().strip() == "type null":
+        debug_log(f"SPECIAL: 'type null' detected: {pokemon_name!r}")
+
+    pokemon_name = pokemon_name.lower().strip()
+
+    # ✨ Strip ID numbers (ex: "#7202")
+    pokemon_name = pokemon_name.split("#")[0].strip()
+
+    if pokemon_name.startswith("sgmax "):
+        base = pokemon_name[6:].strip()
+        return f"shiny gigantamax-{base}"
+
+    if pokemon_name.startswith("gmax "):
+        base = pokemon_name[5:].strip()
+        return f"gigantamax-{base}"
+
+    if "smega" in pokemon_name:
+        return pokemon_name.replace("smega", "shiny mega").replace("-", " ")
+
+    if "mega" in pokemon_name:
+        return pokemon_name.replace("-", " ")
+
+    return pokemon_name
+
 
 def get_dex_number_by_name(name: str) -> int | None:
     """

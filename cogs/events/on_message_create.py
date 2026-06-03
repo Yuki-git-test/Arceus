@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 import discord
 from discord.ext import commands
 
@@ -5,30 +7,33 @@ from Constants.clan_wars_constants import CLAN_WARS_SERVER_ID, CLAN_WARS_TEXT_CH
 from Constants.variables import (
     CC_BUMP_CHANNEL_ID,
     CC_GUILD_ID,
+    CC_PROMO_CHANNEL_ID,
     POKEMEOW_APPLICATION_ID,
     PublicChannels,
     Server,
-    CC_PROMO_CHANNEL_ID
-
 )
 from Constants.vn_allstars_constants import VN_ALLSTARS_TEXT_CHANNELS
+from utils.AR.promo import promo_team
 from utils.clan_wars.stats_listener import stats_command_listener
-from utils.listener_func.berry_listener import berry_listener
-from utils.listener_func.berry_water_listener import (
-    handle_berry_water_message,
-    handle_mulch_message,
-)
 
 # ————————————————————————————————
 # 🩵 Import Listener Functions
 # ————————————————————————————————
 from utils.listener_func.battle_timer import battle_timer_handler
+from utils.listener_func.berry_listener import berry_listener
+from utils.listener_func.berry_water_listener import (
+    handle_berry_water_message,
+    handle_mulch_message,
+)
+from utils.listener_func.bud_ev_listener import handle_pokemeow_embed_sync
+from utils.listener_func.cc_promo_team_listener import promo_team_listener
 from utils.listener_func.ee_spawn_listener import (
     check_cc_bump_reminder,
     check_ee_near_spawn_alert,
     extract_boss_from_wb_command_embed,
     extract_boss_from_wb_spawn_command,
 )
+from utils.listener_func.ev_tracker_listener import handle_pokemeow_battle_message
 from utils.listener_func.faction_ball_listener import extract_faction_ball_from_fa
 from utils.listener_func.fish_timer import fish_timer_handler
 from utils.listener_func.incense_listener import (
@@ -37,7 +42,6 @@ from utils.listener_func.incense_listener import (
     incense_use_handler,
     server_has_incense_handler,
 )
-from utils.listener_func.cc_promo_team_listener import promo_team_listener
 from utils.listener_func.market_feed_listener import market_feeds_listener
 from utils.listener_func.monthly_stats_listener import monthly_stats_listener
 from utils.listener_func.pokemon_spawn_listener import pokemon_spawn_listener
@@ -57,7 +61,7 @@ from utils.listener_func.special_battle_npc_listener import (
 )
 from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
 from utils.listener_func.weekly_stats_listener import weekly_stats_listener
-from utils.AR.promo import promo_team
+
 # ————————————————————————————————
 # 🩵 Import DB Functions
 #  ———————————————————————————————
@@ -78,6 +82,8 @@ MARKET_FEED_CHANNEL_IDS = {
 #        ⚔️ Message Triggers
 # ️────────────────────────────────────────────
 triggers = {
+    "bud_info_trigger": "**Level**:",
+    "ev_training": "won the battle",
     "wb_spawn": "spawned a world boss using 1x <:boss_coin:1249165805095092356>",
     "wb_command": "a world boss has spawned! register now!",
     "ee_vote_checker": "there is no active world boss",
@@ -99,6 +105,10 @@ secret_santa_phrases = [
 CC_SHINY_BONUS_CHANNEL_ID = 1457171231445876746
 UNOWN_NPC_NA_LINE = ":x: You can only challenge the **Alph Scientist** once every"
 
+# Guard against duplicate on_message dispatch for the same Discord message ID.
+_recent_processed_message_ids: dict[int, datetime] = {}
+_MESSAGE_DEDUP_TTL_SECONDS = 180
+
 
 # 🐾────────────────────────────────────────────
 #        🌸 Message Create Listener Cog
@@ -112,6 +122,26 @@ class MessageCreateListener(commands.Cog):
     # 🦋────────────────────────────────────────────
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
+        now_utc = datetime.now(timezone.utc)
+        # Opportunistically prune stale IDs to avoid unbounded growth.
+        stale_ids = [
+            msg_id
+            for msg_id, seen_at in _recent_processed_message_ids.items()
+            if (now_utc - seen_at).total_seconds() > _MESSAGE_DEDUP_TTL_SECONDS
+        ]
+        for msg_id in stale_ids:
+            _recent_processed_message_ids.pop(msg_id, None)
+
+        if message.id in _recent_processed_message_ids:
+            pretty_log(
+                "debug",
+                f"Skipped duplicate on_message processing for message_id={message.id}",
+                label="MESSAGE",
+                bot=self.bot,
+            )
+            return
+        _recent_processed_message_ids[message.id] = now_utc
+
         # ————————————————————————————————
         # 🏰 Guild Check — Route by server
         # ————————————————————————————————
@@ -424,48 +454,86 @@ class MessageCreateListener(commands.Cog):
                             f"🎅 Matched Secret Santa Timer Listener | Message ID: {message.id} | Channel: {message.channel.name}",
                         )
                         await secret_santa_timer_listener(bot=self.bot, message=message)
-            # ————————————————————————————————
-            # 🩵 Shiny Bonus Listener
-            # ————————————————————————————————
-            if first_embed:
-                if triggers["global_bonus"] in first_embed_title:
+                # ————————————————————————————————
+                # 🩵 Shiny Bonus Listener
+                # ————————————————————————————————
+                if first_embed:
+                    if triggers["global_bonus"] in first_embed_title:
+                        pretty_log(
+                            "info",
+                            f"Detected global bonus embed from PokéMeow bot: Message ID {message.id}",
+                            label="Shiny Bonus Listener",
+                        )
+                        await handle_pokemeow_global_bonus(
+                            bot=self.bot, message=message
+                        )
+                # ————————————————————————————————
+                # 🩵 Incense Listeners
+                # ————————————————————————————————
+                if first_embed:
+                    # Incense Command Handler
+                    if triggers["incense_command"] in first_embed_footer:
+                        pretty_log(
+                            "info",
+                            f"Detected incense command embed from PokéMeow bot: Message ID {message.id}",
+                            label="Incense Command Handler",
+                        )
+                        await incense_command_handler(bot=self.bot, message=message)
+                if message.content and triggers["incense_use"] in message.content:
                     pretty_log(
                         "info",
-                        f"Detected global bonus embed from PokéMeow bot: Message ID {message.id}",
-                        label="Shiny Bonus Listener",
+                        f"Detected incense use message from PokéMeow bot: Message ID {message.id}",
+                        label="Incense Use Handler",
                     )
-                    await handle_pokemeow_global_bonus(bot=self.bot, message=message)
-            # ————————————————————————————————
-            # 🩵 Incense Listeners
-            # ————————————————————————————————
-            if first_embed:
-                # Incense Command Handler
-                if triggers["incense_command"] in first_embed_footer:
+                    await incense_use_handler(bot=self.bot, message=message)
+
+                if message.content and triggers["has_incense"] in message.content:
+                    await server_has_incense_handler(bot=self.bot, message=message)
+
+                if message.content and triggers["incense_depleted"] in message.content:
                     pretty_log(
                         "info",
-                        f"Detected incense command embed from PokéMeow bot: Message ID {message.id}",
-                        label="Incense Command Handler",
+                        f"Detected incense depleted message from PokéMeow bot: Message ID {message.id}",
+                        label="Incense Depleted Handler",
                     )
-                    await incense_command_handler(bot=self.bot, message=message)
-            if message.content and triggers["incense_use"] in message.content:
-                pretty_log(
-                    "info",
-                    f"Detected incense use message from PokéMeow bot: Message ID {message.id}",
-                    label="Incense Use Handler",
-                )
-                await incense_use_handler(bot=self.bot, message=message)
+                    await incense_depleted_handler(bot=self.bot, message=message)
 
-            if message.content and triggers["has_incense"] in message.content:
-                await server_has_incense_handler(bot=self.bot, message=message)
+                # ————————————————————————————————
+                # ⚡ EV Tracker Bud Info
+                # ————————————————————————————————
+                if (
+                    first_embed_description
+                    and triggers["bud_info_trigger"] in first_embed_description
+                ):
+                    pretty_log(
+                        "info",
+                        f"Matched EV Tracker Bud Info Listener | Message ID: {message.id} | Channel: {message.channel.name}",
+                    )
+                    try:
+                        await handle_pokemeow_embed_sync(bot=self.bot, message=message)
+                    except Exception as e:
+                        pretty_log(
+                            "error",
+                            f"Error in EV Tracker Bud Info Listener for message {message.id}: {e}",
+                        )
 
-            if message.content and triggers["incense_depleted"] in message.content:
-                pretty_log(
-                    "info",
-                    f"Detected incense depleted message from PokéMeow bot: Message ID {message.id}",
-                    label="Incense Depleted Handler",
-                )
-                await incense_depleted_handler(bot=self.bot, message=message)
-
+                # ————————————————————————————————
+                # ⚡ EV Training Listener
+                # ————————————————————————————————
+                if content and triggers["ev_training"] in content:
+                    pretty_log(
+                        "info",
+                        f"Matched EV Training Listener | Message ID: {message.id} | Channel: {message.channel.name}",
+                    )
+                    try:
+                        await handle_pokemeow_battle_message(
+                            bot=self.bot, message=message
+                        )
+                    except Exception as e:
+                        pretty_log(
+                            "error",
+                            f"Error in EV Training Listener for message {message.id}: {e}",
+                        )
         except Exception as e:
             # 🛑────────────────────────────────────────────
             #        Unhandled on_message Error Handler

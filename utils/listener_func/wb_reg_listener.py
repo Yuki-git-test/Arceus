@@ -5,17 +5,17 @@ import time
 import discord
 
 from Constants.vn_allstars_constants import (
-    ARCEUS_EMBED_COLOR,
+    DEFAULT_EMBED_COLOR,
     VN_ALLSTARS_EMOJIS,
     VN_ALLSTARS_TEXT_CHANNELS,
 )
 from utils.cache.cache_list import user_alerts_cache, vna_members_cache
+from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 from utils.pokemeow.get_pokemeow_reply import (
     get_message_interaction_member,
     get_pokemeow_reply_member,
 )
-from utils.logs.debug_log import debug_log, enable_debug
 
 # Structure: {boss_name: {"time": unix_seconds, "users": set(user_ids), "task": asyncio.Task, "channels": {user_id: channel}}}
 wb_tasks = {}
@@ -41,7 +41,9 @@ def format_display_boss_name(boss_name: str) -> str:
     elif "Gigantamax" in boss_name:
         boss_name = boss_name.replace("Gigantamax-", f"{VN_ALLSTARS_EMOJIS.vna_gmax} ")
     elif "Shiny Eternamax" in boss_name:
-        boss_name = boss_name.replace("Shiny Eternamax-", f"{VN_ALLSTARS_EMOJIS.vna_shinygmax} ")
+        boss_name = boss_name.replace(
+            "Shiny Eternamax-", f"{VN_ALLSTARS_EMOJIS.vna_shinygmax} "
+        )
     elif "Eternamax" in boss_name:
         boss_name = boss_name.replace("Eternamax-", f"{VN_ALLSTARS_EMOJIS.vna_gmax} ")
 
@@ -100,7 +102,7 @@ async def world_boss_waiter(
 
         embed = discord.Embed(
             description=";wb f",
-            color=ARCEUS_EMBED_COLOR,
+            color=DEFAULT_EMBED_COLOR,
         )
         embed.add_field(name="Iphone Copy:", value="`;wb f`", inline=False)
         for user_id in list(task_info["users"]):

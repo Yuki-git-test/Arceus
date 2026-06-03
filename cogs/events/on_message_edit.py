@@ -1,4 +1,5 @@
 import re
+from datetime import datetime, timezone
 
 import discord
 from discord.ext import commands
@@ -11,15 +12,15 @@ from Constants.variables import (
     PublicChannels,
     Server,
 )
+from utils.listener_func.berry_listener import berry_listener
+from utils.listener_func.berry_pouch_listener import handle_berry_pouch_message
 from utils.listener_func.explore_caught_listener import explore_caught_listener
 from utils.listener_func.fish_spawn_listener import fish_spawn_listener
 from utils.listener_func.monthly_stats_listener import monthly_stats_listener
 from utils.listener_func.pokemon_caught_listener import pokemon_caught_listener
+from utils.listener_func.wb_reg_listener import handle_wb_register_command
 from utils.listener_func.weekly_stats_listener import weekly_stats_listener
 from utils.logs.pretty_log import pretty_log
-from utils.listener_func.wb_reg_listener import handle_wb_register_command
-from utils.listener_func.berry_listener import berry_listener
-from utils.listener_func.berry_pouch_listener import handle_berry_pouch_message
 
 # ️────────────────────────────────────────────
 #        ⚔️ Message Triggers
@@ -30,6 +31,24 @@ triggers = {
     "explore_listener": ":stopwatch: Your explore session has ended!",
     "caught_listener": "You caught a",
 }
+
+# Guard against duplicate edit dispatches for the same message payload.
+_recent_edit_signatures: dict[tuple[int, str], datetime] = {}
+_EDIT_DEDUP_TTL_SECONDS = 180
+
+
+def _build_edit_signature(message: discord.Message) -> str:
+    """Build a stable signature from content + first embed fields used by listeners."""
+    content = message.content or ""
+    first_embed = message.embeds[0] if message.embeds else None
+    if not first_embed:
+        return content
+
+    author = first_embed.author.name if first_embed.author else ""
+    title = first_embed.title or ""
+    description = first_embed.description or ""
+    footer = first_embed.footer.text if first_embed.footer else ""
+    return "|".join([content, author, title, description, footer])
 
 
 # 🍭──────────────────────────────
@@ -43,6 +62,31 @@ class OnMessageEditCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
+
+        before_sig = _build_edit_signature(before)
+        after_sig = _build_edit_signature(after)
+        if before_sig == after_sig:
+            return
+
+        now_utc = datetime.now(timezone.utc)
+        stale_keys = [
+            k
+            for k, seen_at in _recent_edit_signatures.items()
+            if (now_utc - seen_at).total_seconds() > _EDIT_DEDUP_TTL_SECONDS
+        ]
+        for k in stale_keys:
+            _recent_edit_signatures.pop(k, None)
+
+        dedup_key = (after.id, after_sig)
+        if dedup_key in _recent_edit_signatures:
+            pretty_log(
+                "debug",
+                f"Skipped duplicate on_message_edit processing for message_id={after.id}",
+                label="MESSAGE",
+                bot=self.bot,
+            )
+            return
+        _recent_edit_signatures[dedup_key] = now_utc
 
         # Ignore edits made by bots except PokéMeow
         if after.author.bot and after.author.id != POKEMEOW_APPLICATION_ID:
@@ -156,8 +200,7 @@ class OnMessageEditCog(commands.Cog):
                 and "<:checkedbox:752302633141665812> Successfully registered your"
                 in first_embed_description
                 and first_embed.title
-                and "**A World Boss has spawned! Register now!**"
-                in first_embed.title
+                and "**A World Boss has spawned! Register now!**" in first_embed.title
             ):
                 pretty_log(
                     "info",
@@ -166,5 +209,7 @@ class OnMessageEditCog(commands.Cog):
                 await handle_wb_register_command(
                     bot=self.bot, before_message=before, message=after
                 )
+
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(OnMessageEditCog(bot))

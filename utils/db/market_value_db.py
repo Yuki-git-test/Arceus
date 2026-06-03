@@ -1,12 +1,108 @@
 # 🟣────────────────────────────────────────────
 #        Market Value DB Functions for Mew (bot.pg_pool)
 # 🟣────────────────────────────────────────────
+
 from datetime import datetime
 
 import discord
 
 from utils.cache.cache_list import market_value_cache
 from utils.logs.pretty_log import pretty_log
+
+
+def _format_pokemon_name_for_market_lookup(pokemon_name: str) -> str:
+    """Local name formatter to avoid circular imports with pokemon_func."""
+    pokemon_name = pokemon_name.lower().strip()
+    pokemon_name = pokemon_name.split("#")[0].strip()
+
+    if pokemon_name.startswith("sgmax "):
+        base = pokemon_name[6:].strip()
+        return f"shiny gigantamax-{base}"
+
+    if pokemon_name.startswith("gmax "):
+        base = pokemon_name[5:].strip()
+        return f"gigantamax-{base}"
+
+    if "smega" in pokemon_name:
+        return pokemon_name.replace("smega", "shiny mega").replace("-", " ")
+
+    if "mega" in pokemon_name:
+        return pokemon_name.replace("-", " ")
+
+    return pokemon_name
+
+
+def check_pokemon_in_cache(pokemon_name: str) -> bool:
+    pokemon_name = _format_pokemon_name_for_market_lookup(pokemon_name)
+    if pokemon_name in market_value_cache:
+        return True
+    key = pokemon_name.lower()
+    return key in market_value_cache
+
+
+async def fetch_emoji_id_db(bot, pokemon_name: str):
+    """
+    Get emoji_id for a Pokémon from database.
+    Returns None if not found or no data.
+    """
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT emoji_id FROM market_value WHERE pokemon_name = $1",
+                pokemon_name.lower(),
+            )
+            return row["emoji_id"] if row and row["emoji_id"] else None
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Failed to fetch emoji_id for {pokemon_name} from database: {e}",
+        )
+        return None
+
+
+def update_emoji_id_cache(pokemon_name: str, emoji_id: str):
+    """
+    Update the emoji_id for a Pokémon in the market value cache.
+    """
+    pokemon_name = pokemon_name.lower()
+    if pokemon_name in market_value_cache:
+        market_value_cache[pokemon_name]["emoji_id"] = emoji_id
+        pretty_log(
+            tag="cache",
+            message=f"Updated emoji_id for {pokemon_name} in cache to {emoji_id}",
+        )
+    else:
+        market_value_cache[pokemon_name] = {
+            "pokemon": pokemon_name,
+            "emoji_id": emoji_id,
+        }
+        pretty_log(
+            tag="cache",
+            message=f"Added {pokemon_name} to cache with emoji_id {emoji_id}",
+        )
+
+
+def update_dex_number_cache(pokemon_name: str, dex_number: int):
+    """
+    Update the dex_number for a Pokémon in the market value cache.
+    """
+    pokemon_name = pokemon_name.lower()
+    if pokemon_name in market_value_cache:
+        market_value_cache[pokemon_name]["dex_number"] = dex_number
+        pretty_log(
+            tag="cache",
+            message=f"Updated dex_number for {pokemon_name} in cache to {dex_number}",
+        )
+    else:
+        market_value_cache[pokemon_name] = {
+            "pokemon": pokemon_name,
+            "dex_number": dex_number,
+        }
+        pretty_log(
+            tag="cache",
+            message=f"Added {pokemon_name} to cache with dex_number {dex_number}",
+        )
+
 
 async def update_rarity(bot, pokemon_name: str, rarity: str):
     """
@@ -47,6 +143,7 @@ async def update_rarity(bot, pokemon_name: str, rarity: str):
             message=f"Failed to update rarity for {pokemon_name}: {e}",
         )
 
+
 def fetch_rarity_cache(pokemon_name: str):
     """
     Get rarity for a Pokémon from cache.
@@ -56,6 +153,7 @@ def fetch_rarity_cache(pokemon_name: str):
     if pokemon_data:
         return pokemon_data.get("rarity", "unknown")
     return "unknown"
+
 
 def fetch_dex_number_cache(pokemon_name: str):
     """
@@ -821,6 +919,18 @@ async def check_and_load_market_cache(bot) -> dict:
     return market_value_cache
 
 
+def fetch_emoji_id_cache(pokemon_name: str):
+    """
+    Get emoji ID for a Pokémon from cache.
+    Returns None if not found or no data.
+    """
+    formatted_name = _format_pokemon_name_for_market_lookup(pokemon_name)
+    pokemon_data = market_value_cache.get(formatted_name.lower())
+    if pokemon_data:
+        return pokemon_data.get("emoji_id", None)
+    return None
+
+
 # --------------------
 #  Load database into cache
 # --------------------
@@ -844,6 +954,7 @@ async def load_market_cache_from_db(bot) -> dict:
                     "listing_seen": row["listing_seen"],
                     "image_link": row.get("image_link", None),
                     "rarity": row.get("rarity", "unknown"),
+                    "emoji_id": row.get("emoji_id", None),
                 }
 
         """pretty_log(

@@ -9,9 +9,30 @@ from utils.cache.cache_list import timer_cache  # 💜 import your cache
 from utils.logs.pretty_log import pretty_log
 from utils.pokemeow.get_pokemeow_reply import get_pokemeow_reply_member
 
-
 # 🗂 Track scheduled "command ready" tasks to avoid duplicates
 fish_ready_tasks = {}
+fish_ready_last_sent = {}
+FISH_DEDUP_WINDOW_SECONDS = 5
+
+
+async def _recent_duplicate_fish_ready_exists(
+    channel: discord.abc.Messageable,
+    bot_user_id: int,
+    content: str,
+) -> bool:
+    """Check recent channel messages for identical fish-ready notifications."""
+    now = discord.utils.utcnow()
+    try:
+        async for recent in channel.history(limit=10):
+            if recent.author.id != bot_user_id:
+                continue
+            if recent.content != content:
+                continue
+            if (now - recent.created_at).total_seconds() <= 30:
+                return True
+    except Exception:
+        return False
+    return False
 
 
 def extract_fishing_trainer_name(description: str) -> str | None:
@@ -86,13 +107,43 @@ async def fish_timer_handler(message: discord.Message):
                 await asyncio.sleep(FISH_TIMER)
 
                 if setting == "on":
-                    await message.channel.send(
-                        f"{FISH_SPAWN_EMOJI} {member.mention}, your </fish spawn:1015311084812501026> command is ready! "
-                    )
-                elif setting == "on_no_pings":
-                    await message.channel.send(
-                        f"{FISH_SPAWN_EMOJI} **{member.name}**, your </fish spawn:1015311084812501026> command is ready!"
-                    )
+                    content = f"{FISH_SPAWN_EMOJI} {member.mention}, your </fish spawn:1015311084812501026> command is ready!"
+                    dedup_key = (member.id, content)
+                    now_ts = datetime.utcnow().timestamp()
+                    last_sent_ts = fish_ready_last_sent.get(dedup_key, 0)
+                    if now_ts - last_sent_ts < FISH_DEDUP_WINDOW_SECONDS:
+                        return
+                    if await _recent_duplicate_fish_ready_exists(
+                        channel=message.channel,
+                        bot_user_id=(
+                            message.guild.me.id
+                            if message.guild and message.guild.me
+                            else 0
+                        ),
+                        content=content,
+                    ):
+                        return
+                    fish_ready_last_sent[dedup_key] = now_ts
+                    await message.channel.send(content)
+                elif setting == "on_no_pings" or setting == "on w/o pings":
+                    content = f"{FISH_SPAWN_EMOJI} **{member.name}**, your </fish spawn:1015311084812501026> command is ready!"
+                    dedup_key = (member.id, content)
+                    now_ts = datetime.utcnow().timestamp()
+                    last_sent_ts = fish_ready_last_sent.get(dedup_key, 0)
+                    if now_ts - last_sent_ts < FISH_DEDUP_WINDOW_SECONDS:
+                        return
+                    if await _recent_duplicate_fish_ready_exists(
+                        channel=message.channel,
+                        bot_user_id=(
+                            message.guild.me.id
+                            if message.guild and message.guild.me
+                            else 0
+                        ),
+                        content=content,
+                    ):
+                        return
+                    fish_ready_last_sent[dedup_key] = now_ts
+                    await message.channel.send(content)
 
             except asyncio.CancelledError:
                 # 💙 [CANCELLED] Scheduled ready notification cancelled

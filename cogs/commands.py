@@ -3,12 +3,9 @@ from discord import app_commands
 from discord.ext import commands
 
 from Constants.aesthetic import *
-from Constants.vn_allstars_constants import (
-    VN_ALLSTARS_ROLES,
-    VN_ALLSTARS_TEXT_CHANNELS,
-)
-from utils.logs.pretty_log import pretty_log
+from Constants.vn_allstars_constants import VN_ALLSTARS_ROLES, VN_ALLSTARS_TEXT_CHANNELS
 from utils.essentials.role_checks import is_staff_member
+from utils.logs.pretty_log import pretty_log
 
 STAFF_THUMBNAIL = Thumbnails.star
 START_THUMBNAIL = Thumbnails.cloud
@@ -30,7 +27,7 @@ CATEGORY_CONFIG = {
     "Staff": {
         "emoji": STAFF_EMOJI,
         "label": "Staff",
-        "color": 0xFFFF8F,  
+        "color": 0xFFFF8F,
         "thumbnail": STAFF_THUMBNAIL,
     },
 }
@@ -107,11 +104,12 @@ class PaginatedCategoryView(discord.ui.View):
                 text=f"📄 Page {self.page + 1} of {self.max_page + 1} • 🗝️ {len(self.commands)} commands"
             )
 
-
             self.add_navigation_buttons()
             await self.message.edit(embed=embed, view=self)
         except Exception as e:
             pretty_log("error", f"[PaginatedCategoryView] send_page failed: {e}")
+
+
 # 💠───────────────────────────────────────────────────────────────
 # [🔘 BUTTONS] Navigation
 # ────────────────────────────────────────────────────────────────
@@ -153,7 +151,7 @@ class BackHomeButton(discord.ui.Button):
             embed = discord.Embed(
                 title=f"{TITLE_EMOJI} Command Categories",
                 description=description,
-                color=ARCEUS_EMBED_COLOR,
+                color=DEFAULT_EMBED_COLOR,
             )
             embed.set_image(url=MAIN_DIVIDER)
             embed.set_thumbnail(url=START_THUMBNAIL)
@@ -248,7 +246,7 @@ class CommandsView(commands.Cog):
             embed = discord.Embed(
                 title=f"{TITLE_EMOJI} Command Categories",
                 description=description,
-                color=ARCEUS_EMBED_COLOR,
+                color=DEFAULT_EMBED_COLOR,
             )
             embed.set_image(url=MAIN_DIVIDER)
             embed.set_author(name=user.display_name, icon_url=user.display_avatar.url)

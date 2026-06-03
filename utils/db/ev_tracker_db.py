@@ -1,0 +1,207 @@
+# 🟣────────────────────────────────────────────
+#           💜 EV Tracker DB Helpers (Current/Goal) 💜
+# 🟣────────────────────────────────────────────
+from utils.logs.pretty_log import pretty_log
+
+
+# -------------------- Fetch All Tracked EVs --------------------
+async def fetch_all_tracked_evs(bot):
+    """
+    Fetch all tracked EVs from DB.
+    Returns list of rows with user_id, user_name, pokemon, dex_number,
+    current EVs, and goal EVs.
+    """
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            rows = await conn.fetch("""
+                SELECT user_id, user_name, pokemon, dex_number,
+                       hp, atk, spa, def, spd, spe,
+                       hp_goal, atk_goal, spa_goal, def_goal, spd_goal, spe_goal,
+                       emoji_id
+                FROM ev_tracker
+                """)
+        return rows
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Failed to fetch all tracked EVs: {e}",
+        )
+        return []
+
+
+# -------------------- Add or Update EV --------------------
+async def add_or_update_ev(
+    bot,
+    user_id: int,
+    user_name: str,
+    pokemon: str,
+    evs: dict,  # current EVs: {"hp": 0, "atk": 0, ...}
+    goals: dict = None,  # goal EVs: {"hp": 252, "atk": 252, ...}
+    dex_number: int = None,
+    emoji_id: str = None,
+):
+    """
+    Add or update a tracked Pokemon with current and goal EVs.
+    """
+    goals = goals or {}
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO ev_tracker(
+                    user_id, user_name, pokemon, dex_number,
+                    hp, atk, spa, def, spd, spe,
+                    hp_goal, atk_goal, spa_goal, def_goal, spd_goal, spe_goal,
+                    emoji_id,
+                    updated_at
+                )
+                VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,CURRENT_TIMESTAMP)
+                ON CONFLICT (user_id)
+                DO UPDATE SET
+                    user_name = EXCLUDED.user_name,
+                    pokemon = EXCLUDED.pokemon,
+                    dex_number = COALESCE(EXCLUDED.dex_number, ev_tracker.dex_number),
+                    hp = EXCLUDED.hp,
+                    atk = EXCLUDED.atk,
+                    spa = EXCLUDED.spa,
+                    def = EXCLUDED.def,
+                    spd = EXCLUDED.spd,
+                    spe = EXCLUDED.spe,
+                    hp_goal = EXCLUDED.hp_goal,
+                    atk_goal = EXCLUDED.atk_goal,
+                    spa_goal = EXCLUDED.spa_goal,
+                    def_goal = EXCLUDED.def_goal,
+                    spd_goal = EXCLUDED.spd_goal,
+                    spe_goal = EXCLUDED.spe_goal,
+                    emoji_id = COALESCE(EXCLUDED.emoji_id, ev_tracker.emoji_id),
+                    updated_at = CURRENT_TIMESTAMP
+                """,
+                user_id,
+                user_name,
+                pokemon,
+                dex_number,
+                evs.get("hp"),
+                evs.get("atk"),
+                evs.get("spa"),
+                evs.get("def"),
+                evs.get("spd"),
+                evs.get("spe"),
+                goals.get("hp"),
+                goals.get("atk"),
+                goals.get("spa"),
+                goals.get("def"),
+                goals.get("spd"),
+                goals.get("spe"),
+                emoji_id,
+            )
+        pretty_log(
+            tag="db",
+            message=f"Set EVs for {user_id} ({user_name}) -> {pokemon} | Current: {evs} | Goal: {goals}",
+        )
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Failed to set EVs for {user_id} ({user_name}): {e}",
+        )
+
+
+async def update_emoji_id(bot, user_id: int, emoji_id: str):
+    """Update the emoji_id for a user's tracked Pokemon."""
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            await conn.execute(
+                """
+                UPDATE ev_tracker
+                SET emoji_id = $1, updated_at = CURRENT_TIMESTAMP
+                WHERE user_id = $2
+                """,
+                emoji_id,
+                user_id,
+            )
+        pretty_log(
+            tag="db",
+            message=f"Updated emoji_id for user {user_id} to {emoji_id}",
+        )
+        # Update cache as well
+        from utils.cache.ev_tracker_cache import update_emoji_id_cache
+
+        update_emoji_id_cache(user_id, emoji_id)
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Failed to update emoji_id for user {user_id}: {e}",
+        )
+
+
+# -------------------- Get Tracked EV --------------------
+async def get_tracked_ev(bot, user_id: int):
+    """
+    Get the tracked Pokemon, dex_number, user_name, current EVs, and goal EVs.
+    Returns {"user_name": str, "pokemon": str, "dex_number": int, "evs": {...}, "goals": {...}} or None
+    """
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT user_name, pokemon, dex_number,
+                       hp, atk, spa, def, spd, spe,
+                       hp_goal, atk_goal, spa_goal, def_goal, spd_goal, spe_goal,
+                       emoji_id
+                FROM ev_tracker
+                WHERE user_id = $1
+                """,
+                user_id,
+            )
+        if not row:
+            return None
+
+        evs = {
+            stat: row[stat]
+            for stat in ["hp", "atk", "spa", "def", "spd", "spe"]
+            if row[stat] is not None
+        }
+        goals = {
+            stat: row[f"{stat}_goal"]
+            for stat in ["hp", "atk", "spa", "def", "spd", "spe"]
+            if row[f"{stat}_goal"] is not None
+        }
+
+        return {
+            "user_name": row["user_name"],
+            "pokemon": row["pokemon"],
+            "dex_number": row["dex_number"],
+            "evs": evs,
+            "goals": goals,
+            "emoji_id": row["emoji_id"],
+        }
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Failed to get EVs for user {user_id}: {e}",
+        )
+        return None
+
+
+# -------------------- Delete Tracked EV --------------------
+async def delete_tracked_ev(bot, user_id: int):
+    """
+    Delete the tracked Pokemon for a user.
+    Returns True if deleted, False otherwise.
+    """
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            result = await conn.execute(
+                "DELETE FROM ev_tracker WHERE user_id = $1", user_id
+            )
+        deleted = result.endswith("DELETE 1")
+        pretty_log(
+            tag="db",
+            message=f"Deleted EVs for user {user_id}: {deleted}",
+        )
+        return deleted
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Failed to delete EVs for user {user_id}: {e}",
+        )
+        return False

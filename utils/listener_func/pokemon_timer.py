@@ -10,6 +10,28 @@ from utils.logs.pretty_log import pretty_log
 
 # 🗂 Track scheduled "command ready" tasks to avoid duplicates
 ready_tasks = {}
+pokemon_ready_last_sent = {}
+POKEMON_DEDUP_WINDOW_SECONDS = 5
+
+
+async def _recent_duplicate_pokemon_ready_exists(
+    channel: discord.abc.Messageable,
+    bot_user_id: int,
+    content: str,
+) -> bool:
+    """Check recent channel messages for identical pokemon-ready notifications."""
+    now = discord.utils.utcnow()
+    try:
+        async for recent in channel.history(limit=10):
+            if recent.author.id != bot_user_id:
+                continue
+            if recent.content != content:
+                continue
+            if (now - recent.created_at).total_seconds() <= 30:
+                return True
+    except Exception:
+        return False
+    return False
 
 
 # 💜────────────────────────────────────────────
@@ -72,13 +94,43 @@ async def pokemon_timer_handler(message: discord.Message):
                     message=f"Sending Pokemon timer ready notification to {member} (setting: {setting})",
                 )
                 if setting == "on":
-                    await message.channel.send(
-                        f"{POKESPAWN_EMOJI} {member.mention}, your </pokemon:1015311085441654824> command is ready!"
-                    )
+                    content = f"{POKESPAWN_EMOJI} {member.mention}, your </pokemon:1015311085441654824> command is ready!"
+                    dedup_key = (member.id, content)
+                    now_ts = datetime.utcnow().timestamp()
+                    last_sent_ts = pokemon_ready_last_sent.get(dedup_key, 0)
+                    if now_ts - last_sent_ts < POKEMON_DEDUP_WINDOW_SECONDS:
+                        return
+                    if await _recent_duplicate_pokemon_ready_exists(
+                        channel=message.channel,
+                        bot_user_id=(
+                            message.guild.me.id
+                            if message.guild and message.guild.me
+                            else 0
+                        ),
+                        content=content,
+                    ):
+                        return
+                    pokemon_ready_last_sent[dedup_key] = now_ts
+                    await message.channel.send(content)
                 elif setting == "on w/o pings" or setting == "on_no_pings":
-                    await message.channel.send(
-                        f"{POKESPAWN_EMOJI} **{member.name}**, your </pokemon:1015311085441654824> command is ready!"
-                    )
+                    content = f"{POKESPAWN_EMOJI} **{member.name}**, your </pokemon:1015311085441654824> command is ready!"
+                    dedup_key = (member.id, content)
+                    now_ts = datetime.utcnow().timestamp()
+                    last_sent_ts = pokemon_ready_last_sent.get(dedup_key, 0)
+                    if now_ts - last_sent_ts < POKEMON_DEDUP_WINDOW_SECONDS:
+                        return
+                    if await _recent_duplicate_pokemon_ready_exists(
+                        channel=message.channel,
+                        bot_user_id=(
+                            message.guild.me.id
+                            if message.guild and message.guild.me
+                            else 0
+                        ),
+                        content=content,
+                    ):
+                        return
+                    pokemon_ready_last_sent[dedup_key] = now_ts
+                    await message.channel.send(content)
                 elif setting == "react":
                     await message.add_reaction(REACT_EMOJI)
 

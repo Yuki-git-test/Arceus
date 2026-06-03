@@ -9,7 +9,7 @@ from discord.ext import commands, tasks
 
 import utils.cache.global_variables as globals
 from Constants.aesthetic import Thumbnails as Decor_Thumbnails
-from Constants.vn_allstars_constants import ARCEUS_EMBED_COLOR, VN_ALLSTARS_ROLES
+from Constants.vn_allstars_constants import DEFAULT_EMBED_COLOR, VN_ALLSTARS_ROLES
 from utils.logs.pretty_log import pretty_log
 from utils.visuals.pretty_defer import pretty_defer
 
@@ -33,7 +33,7 @@ def build_snipe_ga_embed(
 ):
     """Builds the embed for the snipe giveaway."""
     ends_text = f"<t:{int(ends_at.timestamp())}:R>" if ends_at else "Unknown"
-    color = ARCEUS_EMBED_COLOR
+    color = DEFAULT_EMBED_COLOR
     desc = f"""## SNIPE GIVEAWAY
 - Hosted By: {host.mention}
 - Prize: {prize}

@@ -4,8 +4,13 @@ from discord import app_commands
 from discord.ext import commands
 
 from Constants.aesthetic import Emojis
-from Constants.vn_allstars_constants import ARCEUS_EMBED_COLOR, VNA_SERVER_ID, VN_ALLSTARS_TEXT_CHANNELS, YUKI_USER_ID, KHY_USER_ID
-
+from Constants.vn_allstars_constants import (
+    DEFAULT_EMBED_COLOR,
+    KHY_USER_ID,
+    VN_ALLSTARS_TEXT_CHANNELS,
+    VNA_SERVER_ID,
+    YUKI_USER_ID,
+)
 from utils.functions.webhook_func import send_webhook
 from utils.logs.debug_log import debug_enabled, debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
@@ -45,7 +50,6 @@ class ChangeLogModal(discord.ui.Modal, title="Arceus Update Log"):
             )
             return
 
-
         log_message = self.log_content.value
         debug_log(f"[ArceusUpdateLog] Log message: {log_message}")
         pretty_log(
@@ -58,7 +62,7 @@ class ChangeLogModal(discord.ui.Modal, title="Arceus Update Log"):
         embed = discord.Embed(
             title=f"Changelog Update",
             description=log_message,
-            color=ARCEUS_EMBED_COLOR,
+            color=DEFAULT_EMBED_COLOR,
         )
 
         # Send the embed to the change log channel
@@ -97,6 +101,7 @@ class ChangeLogModal(discord.ui.Modal, title="Arceus Update Log"):
             await loader.error(
                 content="Failed to send update log. Please try again later.",
             )
+
 
 class ArceusUpdateLog(commands.Cog):
     def __init__(self, bot):

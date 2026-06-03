@@ -3,7 +3,7 @@ from discord.ui import Button, View
 
 from Constants.clan_wars import PARTICIPATING_CLANS
 from Constants.clan_wars_constants import CLAN_WARS_ROLES
-from Constants.vn_allstars_constants import ARCEUS_EMBED_COLOR
+from Constants.vn_allstars_constants import DEFAULT_EMBED_COLOR
 from utils.db.clan_wars_server_members import get_member_clan_name
 from utils.logs.pretty_log import pretty_log
 
@@ -86,7 +86,7 @@ def build_clan_wars_roles_embed(clan_name: str, guild: discord.Guild) -> discord
             description = "No roles available for this clan at the moment."
         title = f"{ROLES_EMOJI} {clan_name} Roles"
         embed = discord.Embed(
-            title=title, description=description, color=ARCEUS_EMBED_COLOR
+            title=title, description=description, color=DEFAULT_EMBED_COLOR
         )
         return embed, view
 

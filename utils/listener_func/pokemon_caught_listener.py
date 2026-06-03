@@ -3,7 +3,7 @@ import re
 import discord
 
 from Constants.vn_allstars_constants import (
-    ARCEUS_EMBED_COLOR,
+    DEFAULT_EMBED_COLOR,
     MONTHLY_REQUIREMENT,
     VN_ALLSTARS_TEXT_CHANNELS,
     WEEKLY_REQUIREMENT,
@@ -85,7 +85,7 @@ async def goal_checker(
                 avatar_url = user.display_avatar.url if user else None
                 embed = discord.Embed(
                     description=f"🎉 {user_line} has met the weekly requirement of __{WEEKLY_REQUIREMENT:,}__ catches!",
-                    color=ARCEUS_EMBED_COLOR,
+                    color=DEFAULT_EMBED_COLOR,
                 )
                 embed.set_author(name=user.display_name, icon_url=avatar_url)
                 await send_webhook(

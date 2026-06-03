@@ -127,7 +127,7 @@ timer_cache: dict[int, dict[str, str]] = {}
 ping_message_id_cache: dict[str, int] = {}
 # Structure:
 # {
-#   type: message_id,
+# type: message_id,
 #   ...
 # }
 
@@ -162,3 +162,45 @@ clan_wars_server_members_cache: dict[int, dict[str, str | None]] = {}
 
 snipe_ga_active = False
 market_value_cache: dict[str, dict] = {}
+# Structure:
+# {
+#   pokemon_name: {
+#     "dex_number": int,
+#     "rarity": str,
+# 🧩────────────────────────────────────────────
+#        ⚡ Pokémon List Cache
+# 🧩────────────────────────────────────────────
+pokemon_list_cache: dict[str, int] = {}
+# Structure:
+# pokemon_list_cache = {
+#     "pokemon_name": "dex_number",
+#     }
+# 🔮────────────────────────────────────────────
+#        ⚡ EV Tracker Cache
+# 👻────────────────────────────────────────────
+ev_tracker_cache: dict[int, dict] = {}
+# user_id -> {"user_name": str, "pokemon": str, "dex_number": int, "evs": dict, "goals": dict}
+# Structure
+# {
+#   user_id: {
+#       "user_name": str,
+#       "pokemon": str,
+#       "dex_number": int,
+#        "emoji_id": str,
+#       "evs": {
+#           "hp": int,
+#           "atk": int,
+#           "def": int,
+#           "spa": int,
+#           "spd": int,
+#           "spe": int,
+#       },
+#       "goals": {
+#           "hp": int,
+#           "atk": int,
+#           "def": int,
+#           "spa": int,
+#           "spd": int,
+#           "spe": int,
+#       },
+#   }

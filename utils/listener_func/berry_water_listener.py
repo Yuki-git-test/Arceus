@@ -1,5 +1,6 @@
 import re
 import time
+from datetime import datetime
 
 import discord
 
@@ -17,8 +18,57 @@ from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 from utils.pokemeow.get_pokemeow_reply import get_pokemeow_reply_member
 
-enable_debug(f"{__name__}.handle_berry_water_message")
-enable_debug(f"{__name__}.handle_growth_mulch_message")
+# enable_debug(f"{__name__}.handle_berry_water_message")
+# enable_debug(f"{__name__}.handle_growth_mulch_message")
+
+_recent_mulch_prompt_sends: dict[tuple[int, int, str], float] = {}
+_MULCH_PROMPT_DEDUP_SECONDS = 30
+
+
+async def _send_mulch_prompt_once(
+    bot: discord.Client,
+    message: discord.Message,
+    user_id: int,
+    content: str,
+) -> None:
+    """Send mulch helper prompt once per short window to avoid accidental duplicates."""
+    dedup_key = (message.channel.id, user_id, content)
+    now_ts = datetime.utcnow().timestamp()
+
+    # Prune stale dedupe entries to keep memory bounded.
+    stale_keys = [
+        k
+        for k, ts in _recent_mulch_prompt_sends.items()
+        if now_ts - ts > _MULCH_PROMPT_DEDUP_SECONDS
+    ]
+    for k in stale_keys:
+        _recent_mulch_prompt_sends.pop(k, None)
+
+    last_ts = _recent_mulch_prompt_sends.get(dedup_key, 0)
+    if now_ts - last_ts < _MULCH_PROMPT_DEDUP_SECONDS:
+        debug_log(f"Skipped duplicate mulch prompt for user_id={user_id}")
+        return
+
+    # Secondary guard: if an identical recent message already exists in channel history, skip.
+    bot_user_id = bot.user.id if bot.user else 0
+    try:
+        async for recent in message.channel.history(limit=10):
+            if recent.author.id != bot_user_id:
+                continue
+            if recent.content != content:
+                continue
+            if (
+                discord.utils.utcnow() - recent.created_at
+            ).total_seconds() <= _MULCH_PROMPT_DEDUP_SECONDS:
+                debug_log(
+                    f"Skipped history duplicate mulch prompt for user_id={user_id}"
+                )
+                return
+    except Exception as e:
+        debug_log(f"Mulch prompt history dedupe check failed: {e}")
+
+    _recent_mulch_prompt_sends[dedup_key] = now_ts
+    await message.channel.send(content)
 
 
 def parse_berry_water_message(message: str):
@@ -251,7 +301,12 @@ async def handle_mulch_message(bot, message):
             content = f"{member.mention} I noticed you applied {mulch_type} to slot {slot_number}, but I couldn't find that slot in my database. Please use `;berry` so I can update your reminders!"
 
     if send_message:
-        await message.channel.send(content)
+        await _send_mulch_prompt_once(
+            bot=bot,
+            message=message,
+            user_id=user_id,
+            content=content,
+        )
 
 
 def extract_mulch_info_message(message: str):

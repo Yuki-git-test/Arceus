@@ -6,7 +6,7 @@ import discord
 from discord.ext import commands
 
 from Constants.timer_settings import *
-from Constants.vn_allstars_constants import ARCEUS_EMBED_COLOR
+from Constants.vn_allstars_constants import DEFAULT_EMBED_COLOR
 from utils.cache.cache_list import timer_cache
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
@@ -15,6 +15,36 @@ from utils.logs.pretty_log import pretty_log
 # enable_debug(f"{__name__}.grab_enemy_id")
 # 🗂 Track scheduled "command ready" tasks to avoid duplicates
 battle_ready_tasks = {}
+# 🗂 Short dedupe window to prevent accidental double sends.
+battle_ready_last_sent = {}
+# Monotonic schedule token per user; only newest scheduled task may send.
+battle_ready_schedule_tokens = {}
+DEDUP_WINDOW_SECONDS = 5
+
+
+async def _recent_duplicate_battle_message_exists(
+    channel: discord.abc.Messageable,
+    bot_user_id: int,
+    content: str,
+    embed_description: str,
+) -> bool:
+    """Check recent channel history for an identical battle-ready reminder."""
+    now = discord.utils.utcnow()
+    try:
+        async for recent in channel.history(limit=10):
+            if recent.author.id != bot_user_id:
+                continue
+            if recent.content != content:
+                continue
+            if not recent.embeds:
+                continue
+            if (recent.embeds[0].description or "") != embed_description:
+                continue
+            if (now - recent.created_at).total_seconds() <= 30:
+                return True
+    except Exception as e:
+        debug_log(f"History dedupe check failed: {e}")
+    return False
 
 
 def find_key_by_npc_id(npc_id: int):
@@ -92,6 +122,9 @@ async def battle_timer_handler(bot: commands.Bot, message: discord.Message):
             debug_log("Cancelling existing timer task")
             battle_ready_tasks[challenger.id].cancel()
 
+        schedule_token = battle_ready_schedule_tokens.get(challenger.id, 0) + 1
+        battle_ready_schedule_tokens[challenger.id] = schedule_token
+
         # ✅ Storage for enemy_id (filled later)
         enemy_id_holder = {"id": None}
 
@@ -148,16 +181,24 @@ async def battle_timer_handler(bot: commands.Bot, message: discord.Message):
             try:
                 debug_log("Timer started (60s)")
                 await asyncio.sleep(60)
+
+                # If a newer timer was scheduled for this user, abort this stale one.
+                if battle_ready_schedule_tokens.get(challenger.id) != schedule_token:
+                    debug_log(
+                        f"Skipping stale battle timer for {challenger.id} (token={schedule_token})"
+                    )
+                    return
+
                 enemy_id = enemy_id_holder["id"]
 
                 debug_log(f"Timer finished. Enemy ID={enemy_id}")
 
-                battle_embed = discord.Embed(color=ARCEUS_EMBED_COLOR)
+                battle_embed = discord.Embed(color=DEFAULT_EMBED_COLOR)
                 # Battle Tower NPC
                 if enemy_id and int(enemy_id) in BATTLE_TOWER_NPC_IDS:
                     battle_embed.description = ";b npc bt"
                 # Mega Chamber NPC
-                elif 600 <= int(enemy_id) <= 743:
+                elif enemy_id and 600 <= int(enemy_id) <= 743:
                     mc_npc_id = find_key_by_npc_id(int(enemy_id))
                     battle_embed.description = f";b npc {mc_npc_id}"
 
@@ -168,22 +209,54 @@ async def battle_timer_handler(bot: commands.Bot, message: discord.Message):
                 # Regular NPC
                 elif enemy_id:
                     battle_embed.description = f";b npc {enemy_id}"
-                    
+
                 else:
                     battle_embed.description = (
                         "Your </battle:1015311084422434819> command is ready!"
                     )
 
+                dedup_key = (challenger.id, battle_embed.description or "")
+                now_ts = datetime.utcnow().timestamp()
+                last_sent_ts = battle_ready_last_sent.get(dedup_key, 0)
+                if now_ts - last_sent_ts < DEDUP_WINDOW_SECONDS:
+                    debug_log(
+                        f"Skipped duplicate battle ready send for {challenger.id} within {DEDUP_WINDOW_SECONDS}s"
+                    )
+                    return
+                battle_ready_last_sent[dedup_key] = now_ts
+
                 if setting == "on":
+                    content = f"{BATTLE_EMOJI} {challenger.mention}, your </battle:1015311084422434819> command is ready!"
+                    if await _recent_duplicate_battle_message_exists(
+                        channel=message.channel,
+                        bot_user_id=bot.user.id,
+                        content=content,
+                        embed_description=battle_embed.description or "",
+                    ):
+                        debug_log(
+                            f"Skipped history duplicate battle reminder for {challenger.id}"
+                        )
+                        return
                     debug_log("Sending notification (ping)")
                     await message.channel.send(
-                        content=f"{BATTLE_EMOJI} {challenger.mention}, your </battle:1015311084422434819> command is ready!",
+                        content=content,
                         embed=battle_embed,
                     )
                 elif setting == "on w/o pings" or setting == "on_no_pings":
+                    content = f"{BATTLE_EMOJI} **{challenger.name}**, your </battle:1015311084422434819> command is ready!"
+                    if await _recent_duplicate_battle_message_exists(
+                        channel=message.channel,
+                        bot_user_id=bot.user.id,
+                        content=content,
+                        embed_description=battle_embed.description or "",
+                    ):
+                        debug_log(
+                            f"Skipped history duplicate battle reminder for {challenger.id}"
+                        )
+                        return
                     debug_log("Sending notification (no ping)")
                     await message.channel.send(
-                        content=f"{BATTLE_EMOJI} **{challenger.name}**, your </battle:1015311084422434819> command is ready!",
+                        content=content,
                         embed=battle_embed,
                     )
 

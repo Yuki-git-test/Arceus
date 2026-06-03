@@ -37,7 +37,10 @@
             "terminal.background": "#0c0e16",
             "terminal.foreground": "#e0e8f8",
             "terminalCursor.foreground": "#caced2",
-            "terminal.selectionBackground": "#88dfff44"
+            "terminal.selectionBackground": "#88dfff44",
+            "scrollbarSlider.activeBackground": "#f9ffff29",
+            "scrollbarSlider.background": "#ffffff7b",
+            "scrollbar.background": "#000000"
         },
 
         // ---------------- 💻 Editor & Terminal ----------------

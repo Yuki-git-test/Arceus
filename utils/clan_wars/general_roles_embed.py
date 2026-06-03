@@ -2,7 +2,7 @@ import discord
 from discord.ui import Button, View
 
 from Constants.clan_wars_constants import CLAN_WARS_ROLES
-from Constants.vn_allstars_constants import ARCEUS_EMBED_COLOR
+from Constants.vn_allstars_constants import DEFAULT_EMBED_COLOR
 from utils.logs.pretty_log import pretty_log
 
 ROLES_EMOJI = "⚜️"
@@ -125,7 +125,7 @@ def build_general_roles_embed(guild: discord.Guild, user: discord.Member):
 
         title = f"{ROLES_EMOJI} General Roles"
         embed = discord.Embed(
-            title=title, description=description, color=ARCEUS_EMBED_COLOR
+            title=title, description=description, color=DEFAULT_EMBED_COLOR
         )
         return view, embed
 

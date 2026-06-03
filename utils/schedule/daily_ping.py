@@ -5,7 +5,7 @@ import discord
 from Constants.aesthetic import Thumbnails
 from Constants.clan_wars_constants import CLAN_WARS_SERVER_ID, CLAN_WARS_TEXT_CHANNELS
 from Constants.vn_allstars_constants import (
-    ARCEUS_EMBED_COLOR,
+    DEFAULT_EMBED_COLOR,
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
     VNA_SERVER_ID,
@@ -43,7 +43,7 @@ async def send_daily_ping(bot):
     embed = discord.Embed(
         title="Daily Checklist Reminder",
         description=desc,
-        color=ARCEUS_EMBED_COLOR,
+        color=DEFAULT_EMBED_COLOR,
         timestamp=datetime.now(),
     )
     embed.set_thumbnail(url=Thumbnails.daily_ping)

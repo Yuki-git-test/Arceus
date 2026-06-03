@@ -4,7 +4,7 @@ from discord.ext import commands
 
 from Constants.aesthetic import Dividers
 from Constants.clan_wars_constants import CLAN_WARS_SERVER_ID, CLAN_WARS_TEXT_CHANNELS
-from Constants.vn_allstars_constants import ARCEUS_EMBED_COLOR
+from Constants.vn_allstars_constants import DEFAULT_EMBED_COLOR
 from utils.clan_wars.clan_wars_roles_embed import Clan_Wars_Roles_Button
 from utils.clan_wars.general_roles_embed import General_Roles_Button
 from utils.logs.pretty_log import pretty_log
@@ -60,7 +60,7 @@ class Ping_Me_Roles(commands.Cog):
                     pass
         title = "Clan Wars Roles"
         desc = "Role Categories:\n\n" "🏰 Clan Wars Roles\n" "⚜️ General Roles\n"
-        embed = discord.Embed(title=title, description=desc, color=ARCEUS_EMBED_COLOR)
+        embed = discord.Embed(title=title, description=desc, color=DEFAULT_EMBED_COLOR)
         embed.set_thumbnail(url=guild.icon.url if guild.icon else None)
         embed.set_image(url=Dividers.clan_wars_ping_roles)
         try:

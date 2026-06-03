@@ -8,7 +8,7 @@ import discord
 from Constants.aesthetic import Thumbnails
 from Constants.pokemon_gif import GOLDEN_POKEMON_URL
 from Constants.vn_allstars_constants import (
-    ARCEUS_EMBED_COLOR,
+    DEFAULT_EMBED_COLOR,
     VN_ALLSTARS_EMOJIS,
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
@@ -106,7 +106,7 @@ async def send_lotto_reminder(bot: discord.Client):
             f"- **1st Prize:** {VN_ALLSTARS_EMOJIS.vna_golden} **{prize_info['name']}**\n"
             f"- **Command:** `;lot buy <amount>`"
         ),
-        color=ARCEUS_EMBED_COLOR,
+        color=DEFAULT_EMBED_COLOR,
     )
     embed.set_thumbnail(url=prize_info["thumbnail"])
     view = LottoReminderView(bot)

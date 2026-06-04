@@ -52,15 +52,16 @@ def get_dex_number_by_name(name: str) -> int | None:
     Returns None if not found.
     """
 
-    for num, poke_name in dex.items():
-        if poke_name == name:
-            return num
-
-    # Fallback: try formatted name
+    # Prefer cache lookup first for speed and consistency with market formatting.
     formatted_name = format_names_for_market_value_lookup(name)
     dex_number = fetch_dex_number_cache(formatted_name)
     if dex_number is not None:
         return dex_number
+
+    # Fallback: check static dex mapping.
+    for num, poke_name in dex.items():
+        if poke_name == name:
+            return num
 
     return None
 

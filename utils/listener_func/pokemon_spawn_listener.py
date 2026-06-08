@@ -1,3 +1,4 @@
+import asyncio
 import re
 
 import discord
@@ -72,6 +73,38 @@ def get_faction_member_via_trainer_name(bot, guild: discord.Guild, trainer_name:
     return member
 
 
+async def _send_with_retry(
+    channel: discord.abc.Messageable, content: str, retries: int = 3, delay: float = 2.0
+):
+    for attempt in range(1, retries + 1):
+        try:
+            await channel.send(content)
+            return
+        except discord.errors.DiscordServerError as e:
+            if attempt == retries:
+                pretty_log(
+                    "error", f"Failed to send message after {retries} attempts: {e}"
+                )
+                raise
+            await asyncio.sleep(delay * attempt)
+
+
+async def _react_with_retry(
+    message: discord.Message, emoji: str, retries: int = 3, delay: float = 2.0
+):
+    for attempt in range(1, retries + 1):
+        try:
+            await message.add_reaction(emoji)
+            return
+        except discord.errors.DiscordServerError as e:
+            if attempt == retries:
+                pretty_log(
+                    "error", f"Failed to add reaction after {retries} attempts: {e}"
+                )
+                raise
+            await asyncio.sleep(delay * attempt)
+
+
 # 🛡️────────────────────────────────────────────
 #      🛡️ Faction Ball Alert Listener
 # 🛡️────────────────────────────────────────────
@@ -133,8 +166,9 @@ async def faction_ball_alert(
 
     if not user_faction:
         debug_log(f" User {member.id} has no faction set.")
-        await after.channel.send(
-            f"{user_mention}, I don't know your faction yet, Can you do `;fa`? Thank you!"
+        await _send_with_retry(
+            after.channel,
+            f"{user_mention}, I don't know your faction yet, Can you do `;fa`? Thank you!",
         )
         return
 
@@ -151,7 +185,7 @@ async def faction_ball_alert(
     if not faction_ball:
         debug_log(f" No daily ball for faction {user_faction}.")
         content = f"{user_mention} I don't know your faction's daily ball yet, can you do `;fa`? Thanks!."
-        await after.channel.send(content)
+        await _send_with_retry(after.channel, content)
         return
 
     ball_emoji = getattr(Emojis_Balls, faction_ball.lower())
@@ -163,15 +197,15 @@ async def faction_ball_alert(
     if user_faction_ball_notify == "on":
         debug_log(f" Sending notification with ping to {user_mention}.")
         content = f"{user_mention}, This Pokemon is a daily {display_embed_faction_emoji} hunt! Use {ball_emoji}!"
-        await after.channel.send(content)
+        await _send_with_retry(after.channel, content)
     elif user_faction_ball_notify == "on_no_pings":
         debug_log(f" Sending notification without ping to {user_name}.")
         content = f"{user_name}, This Pokemon is a daily {display_embed_faction_emoji} hunt! Use {ball_emoji}!"
-        await after.channel.send(content)
+        await _send_with_retry(after.channel, content)
 
     else:
         debug_log(f" Reacting with ball emoji: {ball_emoji}")
-        await after.add_reaction(ball_emoji)
+        await _react_with_retry(after, ball_emoji)
 
 
 async def pokemon_spawn_listener(bot, message: discord.Message):

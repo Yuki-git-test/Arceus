@@ -1,8 +1,9 @@
 import time
 
 import discord
+
 from Constants.aesthetic import *
-from Constants.vn_allstars_constants import VNA_SERVER_ID, VN_ALLSTARS_EMOJIS
+from Constants.vn_allstars_constants import VN_ALLSTARS_EMOJIS, VNA_SERVER_ID
 from utils.db.berry_reminder import (
     berry_map,
     fetch_all_due_berry_reminders,
@@ -14,7 +15,7 @@ from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 from utils.pokemeow.get_pokemeow_reply import get_pokemeow_reply_member
 
-#enable_debug(f"{__name__}.berry_reminder_checker")
+# enable_debug(f"{__name__}.berry_reminder_checker")
 
 
 async def update_growth_stage_func(
@@ -158,9 +159,7 @@ async def berry_reminder_checker(bot: discord.Client):
                             f"Growth paused for slot {slot_number}, removing reminder."
                         )
 
-            berry_name = (
-                f"- {berry_name_raw.title()} (Slot {slot_number})".strip()
-            )
+            berry_name = f"- {berry_name_raw.title()} (Slot {slot_number})".strip()
             debug_log(
                 f"Prepared berry name: {berry_name} (raw: {berry_name_raw}) for context: {context}"
             )
@@ -272,14 +271,18 @@ async def berry_reminder_checker(bot: discord.Client):
                             mulch_type=mulch_type,
                         )
 
+            except discord.errors.DiscordServerError as e:
+                pretty_log(
+                    "info",
+                    f"Discord server error while sending berry reminder for {user_name} (user_id: {user_id}), will retry next cycle: {e}",
+                    bot=bot,
+                )
+                debug_log(f"DiscordServerError while sending berry reminder: {e}")
             except Exception as e:
                 pretty_log(
                     "error",
                     f"Failed to send berry reminder for {user_name} (user_id: {user_id}): {e}",
                     bot=bot,
-                )
-                debug_log(
-                    f"Exception occurred while sending/removing berry reminder: {e}"
                 )
                 debug_log(
                     f"Exception occurred while sending/removing berry reminder: {e}"

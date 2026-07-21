@@ -5,7 +5,7 @@ from datetime import datetime
 import discord
 
 from Constants.timer_settings import *
-from utils.cache.cache_list import timer_cache  # 💜 import your cache
+from utils.cache.cache_list import timer_cache, timer_users  # 💜 import your cache
 from utils.logs.pretty_log import pretty_log
 
 # 🗂 Track scheduled "command ready" tasks to avoid duplicates
@@ -58,12 +58,19 @@ async def pokemon_timer_handler(message: discord.Message):
         username = match.group(1).strip()
         guild = message.guild
 
-        # Match member case-insensitive
-        member = discord.utils.find(
-            lambda m: m.name.lower() == username.lower()
-            or m.display_name.lower() == username.lower(),
-            guild.members,
-        )
+        # Check timer_users cache first
+        if username in timer_users:
+            member = guild.get_member(timer_users[username])
+        else:
+            # Match member case-insensitive and cache the result
+            member = discord.utils.find(
+                lambda m: m.name.lower() == username.lower()
+                or m.display_name.lower() == username.lower(),
+                guild.members,
+            )
+            if member:
+                timer_users[username] = member.id
+
         if not member:
             return
 

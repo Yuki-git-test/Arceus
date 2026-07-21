@@ -204,3 +204,9 @@ ev_tracker_cache: dict[int, dict] = {}
 #           "spe": int,
 #       },
 #   }
+
+# 🧩────────────────────────────────────────────
+#        ⚡ Username List Cache
+# 🧩────────────────────────────────────────────
+timer_users: dict[str, int] = {}
+# user_name : user_id

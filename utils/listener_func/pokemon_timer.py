@@ -5,8 +5,12 @@ from datetime import datetime
 import discord
 
 from Constants.timer_settings import *
-from utils.cache.cache_list import timer_cache, timer_users  # 💜 import your cache
+from utils.cache.cache_list import (timer_cache,  # 💜 import your cache
+                                    timer_users)
+from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
+
+enable_debug(f"{__name__}.pokemon_timer_handler")
 
 # 🗂 Track scheduled "command ready" tasks to avoid duplicates
 ready_tasks = {}
@@ -48,19 +52,25 @@ async def pokemon_timer_handler(message: discord.Message):
       - react → ✅ react to PokeMeow's message
     """
     try:
+        #debug_log(f"Received message from {message.author} (ID: {message.author.id}) | content: {message.content!r}")
+
         if message.author.id != POKEMEOW_APPLICATION_ID:
+            debug_log(f"Skipping — author ID {message.author.id} != POKEMEOW_APPLICATION_ID {POKEMEOW_APPLICATION_ID}")
             return
 
         match = re.search(r"\*\*(.+?)\*\* found a wild", message.content)
         if not match:
+            debug_log(f"No regex match in content: {message.content!r}")
             return
 
         username = match.group(1).strip()
+        debug_log(f"Regex matched username: {username!r}")
         guild = message.guild
 
         # Check timer_users cache first
         if username in timer_users:
             member = guild.get_member(timer_users[username])
+            debug_log(f"Found member via cache: {member} (ID: {timer_users[username]})")
         else:
             # Match member case-insensitive and cache the result
             member = discord.utils.find(
@@ -70,6 +80,9 @@ async def pokemon_timer_handler(message: discord.Message):
             )
             if member:
                 timer_users[username] = member.id
+                debug_log(f"Found member via guild search: {member} (ID: {member.id})")
+            else:
+                debug_log(f"No member found for username {username!r} in guild {guild}")
 
         if not member:
             return
@@ -78,11 +91,15 @@ async def pokemon_timer_handler(message: discord.Message):
         # 💜 Check timer_cache settings
         # -------------------------------
         user_settings = timer_cache.get(member.id)
+        debug_log(f"timer_cache for {member} (ID: {member.id}): {user_settings}")
         if not user_settings:
+            debug_log(f"No timer_cache entry for {member} — skipping")
             return
 
         setting = (user_settings.get("pokemon_setting") or "off").lower()
+        debug_log(f"pokemon_setting for {member}: {setting!r}")
         if setting == "off":
+            debug_log(f"Setting is 'off' — skipping")
             return
 
         # Cancel previous ready task if any
@@ -158,6 +175,7 @@ async def pokemon_timer_handler(message: discord.Message):
                     ),
                 )
 
+        debug_log(f"Scheduling notify_ready task for {member} (ID: {member.id}) | setting: {setting!r}")
         ready_tasks[member.id] = asyncio.create_task(notify_ready())
 
     except Exception as e:

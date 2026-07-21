@@ -5,12 +5,13 @@ from datetime import datetime
 import discord
 
 from Constants.timer_settings import *
-from utils.cache.cache_list import (timer_cache,  # 💜 import your cache
-                                    timer_users)
+from utils.cache.cache_list import timer_cache  # 💜 import your cache
+from utils.cache.cache_list import timer_users
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 
-enable_debug(f"{__name__}.pokemon_timer_handler")
+#enable_debug(f"{__name__}.pokemon_timer_handler")
+#enable_debug(f"{__name__}.notify_ready")
 
 # 🗂 Track scheduled "command ready" tasks to avoid duplicates
 ready_tasks = {}
@@ -31,7 +32,9 @@ async def _recent_duplicate_pokemon_ready_exists(
                 continue
             if recent.content != content:
                 continue
-            if (now - recent.created_at).total_seconds() <= 30:
+            if (
+                now - recent.created_at
+            ).total_seconds() <= POKEMON_DEDUP_WINDOW_SECONDS:
                 return True
     except Exception:
         return False
@@ -52,10 +55,12 @@ async def pokemon_timer_handler(message: discord.Message):
       - react → ✅ react to PokeMeow's message
     """
     try:
-        #debug_log(f"Received message from {message.author} (ID: {message.author.id}) | content: {message.content!r}")
+        # debug_log(f"Received message from {message.author} (ID: {message.author.id}) | content: {message.content!r}")
 
         if message.author.id != POKEMEOW_APPLICATION_ID:
-            debug_log(f"Skipping — author ID {message.author.id} != POKEMEOW_APPLICATION_ID {POKEMEOW_APPLICATION_ID}")
+            debug_log(
+                f"Skipping — author ID {message.author.id} != POKEMEOW_APPLICATION_ID {POKEMEOW_APPLICATION_ID}"
+            )
             return
 
         match = re.search(r"\*\*(.+?)\*\* found a wild", message.content)
@@ -112,7 +117,13 @@ async def pokemon_timer_handler(message: discord.Message):
             #   Pokemon Timer Notification Task
             # 💜────────────────────────────────────────────
             try:
+                debug_log(
+                    f"[notify_ready] Timer started for {member} (ID: {member.id}) | sleeping {POKEMON_TIMER}s"
+                )
                 await asyncio.sleep(POKEMON_TIMER)
+                debug_log(
+                    f"[notify_ready] Timer expired for {member} (ID: {member.id}) | setting: {setting!r}"
+                )
                 pretty_log(
                     tag="info",
                     message=f"Sending Pokemon timer ready notification to {member} (setting: {setting})",
@@ -122,7 +133,13 @@ async def pokemon_timer_handler(message: discord.Message):
                     dedup_key = (member.id, content)
                     now_ts = datetime.utcnow().timestamp()
                     last_sent_ts = pokemon_ready_last_sent.get(dedup_key, 0)
+                    debug_log(
+                        f"[notify_ready] Dedup check (on): now={now_ts:.1f} last_sent={last_sent_ts:.1f} diff={now_ts - last_sent_ts:.1f}s window={POKEMON_DEDUP_WINDOW_SECONDS}s"
+                    )
                     if now_ts - last_sent_ts < POKEMON_DEDUP_WINDOW_SECONDS:
+                        debug_log(
+                            f"[notify_ready] Dedup blocked (in-memory) — skipping send for {member}"
+                        )
                         return
                     if await _recent_duplicate_pokemon_ready_exists(
                         channel=message.channel,
@@ -133,15 +150,36 @@ async def pokemon_timer_handler(message: discord.Message):
                         ),
                         content=content,
                     ):
+                        debug_log(
+                            f"[notify_ready] Dedup blocked (channel history) — skipping send for {member}"
+                        )
                         return
+                    debug_log(
+                        f"[notify_ready] Sending 'on' message to channel {message.channel} (ID: {message.channel.id}) for {member}"
+                    )
                     pokemon_ready_last_sent[dedup_key] = now_ts
-                    await message.channel.send(content)
+                    try:
+                        await message.channel.send(content)
+                        debug_log(
+                            f"[notify_ready] Sent 'on' message successfully for {member}"
+                        )
+                    except Exception as send_err:
+                        debug_log(
+                            f"[notify_ready] FAILED to send 'on' message for {member}: {send_err!r}",
+                            highlight=True,
+                        )
                 elif setting == "on w/o pings" or setting == "on_no_pings":
                     content = f"{POKESPAWN_EMOJI} **{member.name}**, your </pokemon:1015311085441654824> command is ready!"
                     dedup_key = (member.id, content)
                     now_ts = datetime.utcnow().timestamp()
                     last_sent_ts = pokemon_ready_last_sent.get(dedup_key, 0)
+                    debug_log(
+                        f"[notify_ready] Dedup check (on_no_pings): now={now_ts:.1f} last_sent={last_sent_ts:.1f} diff={now_ts - last_sent_ts:.1f}s window={POKEMON_DEDUP_WINDOW_SECONDS}s"
+                    )
                     if now_ts - last_sent_ts < POKEMON_DEDUP_WINDOW_SECONDS:
+                        debug_log(
+                            f"[notify_ready] Dedup blocked (in-memory) — skipping send for {member}"
+                        )
                         return
                     if await _recent_duplicate_pokemon_ready_exists(
                         channel=message.channel,
@@ -152,11 +190,30 @@ async def pokemon_timer_handler(message: discord.Message):
                         ),
                         content=content,
                     ):
+                        debug_log(
+                            f"[notify_ready] Dedup blocked (channel history) — skipping send for {member}"
+                        )
                         return
+                    debug_log(
+                        f"[notify_ready] Sending 'on_no_pings' message to channel {message.channel} (ID: {message.channel.id}) for {member}"
+                    )
                     pokemon_ready_last_sent[dedup_key] = now_ts
-                    await message.channel.send(content)
+                    try:
+                        await message.channel.send(content)
+                        debug_log(
+                            f"[notify_ready] Sent 'on_no_pings' message successfully for {member}"
+                        )
+                    except Exception as send_err:
+                        debug_log(
+                            f"[notify_ready] FAILED to send 'on_no_pings' message for {member}: {send_err!r}",
+                            highlight=True,
+                        )
                 elif setting == "react":
+                    debug_log(
+                        f"[notify_ready] Adding react to message {message.id} for {member}"
+                    )
                     await message.add_reaction(REACT_EMOJI)
+                    debug_log(f"[notify_ready] React added successfully for {member}")
 
             except asyncio.CancelledError:
                 # 💙 [CANCELLED] Scheduled ready notification cancelled
@@ -175,7 +232,9 @@ async def pokemon_timer_handler(message: discord.Message):
                     ),
                 )
 
-        debug_log(f"Scheduling notify_ready task for {member} (ID: {member.id}) | setting: {setting!r}")
+        debug_log(
+            f"Scheduling notify_ready task for {member} (ID: {member.id}) | setting: {setting!r}"
+        )
         ready_tasks[member.id] = asyncio.create_task(notify_ready())
 
     except Exception as e:

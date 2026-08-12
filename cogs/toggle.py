@@ -1,4 +1,3 @@
-from typing import Literal, Optional
 
 import discord
 from discord import app_commands
@@ -6,7 +5,6 @@ from discord.ext import commands
 
 from utils.essentials.command_safe import run_command_safe
 from utils.group_command_func.toggle import *
-from utils.logs.pretty_log import pretty_log
 
 
 # 🍭──────────────────────────────

@@ -1,4 +1,3 @@
-import discord
 
 from utils.cache.cache_list import timer_cache
 from utils.db.timers_db import fetch_all_timers

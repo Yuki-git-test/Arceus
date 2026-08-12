@@ -3,7 +3,6 @@ from discord import app_commands
 from discord.ext import commands
 
 from Constants.aesthetic import *
-from Constants.vn_allstars_constants import VN_ALLSTARS_ROLES, VN_ALLSTARS_TEXT_CHANNELS
 from utils.essentials.role_checks import is_staff_member
 from utils.logs.pretty_log import pretty_log
 

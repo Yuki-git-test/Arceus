@@ -1,16 +1,11 @@
-import re
 from datetime import datetime, timezone
 
 import discord
 from discord.ext import commands
 
 from Constants.variables import (
-    CC_BUMP_CHANNEL_ID,
-    CC_GUILD_ID,
     POKEMEOW_APPLICATION_ID,
     VNA_SERVER_ID,
-    PublicChannels,
-    Server,
 )
 from utils.listener_func.berry_listener import berry_listener
 from utils.listener_func.berry_pouch_listener import handle_berry_pouch_message

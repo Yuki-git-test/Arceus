@@ -42,7 +42,6 @@ from utils.listener_func.incense_listener import (
     incense_use_handler,
     server_has_incense_handler,
 )
-from utils.listener_func.market_feed_listener import market_feeds_listener
 from utils.listener_func.monthly_stats_listener import monthly_stats_listener
 from utils.listener_func.pokemon_spawn_listener import pokemon_spawn_listener
 from utils.listener_func.pokemon_timer import pokemon_timer_handler

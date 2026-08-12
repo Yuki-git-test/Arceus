@@ -1,4 +1,3 @@
-import discord
 
 from utils.cache.cache_list import ping_message_id_cache
 from utils.db.ping_message_ids_db import fetch_all_ping_message_ids

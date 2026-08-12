@@ -3,16 +3,14 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from Constants.aesthetic import Emojis
 from Constants.vn_allstars_constants import (
     DEFAULT_EMBED_COLOR,
     KHY_USER_ID,
     VN_ALLSTARS_TEXT_CHANNELS,
-    VNA_SERVER_ID,
     YUKI_USER_ID,
 )
 from utils.functions.webhook_func import send_webhook
-from utils.logs.debug_log import debug_enabled, debug_log, enable_debug
+from utils.logs.debug_log import debug_log
 from utils.logs.pretty_log import pretty_log
 from utils.visuals.pretty_defer import pretty_defer
 

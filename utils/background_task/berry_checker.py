@@ -11,9 +11,8 @@ from utils.db.berry_reminder import (
     remove_berry_reminder,
     update_growth_stage,
 )
-from utils.logs.debug_log import debug_log, enable_debug
+from utils.logs.debug_log import debug_log
 from utils.logs.pretty_log import pretty_log
-from utils.pokemeow.get_pokemeow_reply import get_pokemeow_reply_member
 
 # enable_debug(f"{__name__}.berry_reminder_checker")
 

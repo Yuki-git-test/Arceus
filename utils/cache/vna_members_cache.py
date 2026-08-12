@@ -1,4 +1,3 @@
-import discord
 
 from utils.cache.cache_list import vna_members_cache
 from utils.db.vna_members_db_func import fetch_all_members

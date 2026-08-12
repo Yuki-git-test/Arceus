@@ -1,15 +1,11 @@
-from datetime import datetime
 
 import discord
 from discord.ext import commands
 
 from Constants.vn_allstars_constants import (
-    VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
-    VNA_EMBED_COLOR,
     VNA_SERVER_ID,
 )
-from utils.cache.cache_list import vna_members_cache
 from utils.db.faction_members import remove_faction_member
 from utils.db.market_alert_db import remove_all_market_alerts_for_user
 from utils.db.market_alert_user import remove_market_alert_user
@@ -18,7 +14,6 @@ from utils.db.special_npc_timer_db_func import remove_special_battle_timer
 from utils.db.timers_db import delete_timer
 from utils.db.user_alerts_db import remove_user_alerts_for_user
 from utils.db.vna_members_db_func import remove_member
-from utils.functions.webhook_func import send_webhook
 from utils.logs.pretty_log import pretty_log
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.member_logs

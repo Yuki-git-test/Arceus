@@ -1,6 +1,5 @@
 import time
 
-import discord
 
 from Constants.vn_allstars_constants import (
     VN_ALLSTARS_ROLES,

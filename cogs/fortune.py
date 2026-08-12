@@ -4,7 +4,6 @@ import random
 import asyncio
 import pytz
 from datetime import datetime
-from typing import Optional
 
 OWNER_ID = 705447976658665552  # Replace with your Discord user ID
 
@@ -150,7 +149,7 @@ class Fortune(commands.Cog):
 
         if user_id != OWNER_ID:
             self.used_fortunes[user_id] = today
-            
+
     fortune.extras = {"category": "Public"}
 
 # Extension loader

@@ -10,10 +10,6 @@ from utils.cache.cache_list import clear_processed_messages_cache
 from utils.cache.central_cache_loader import load_all_cache
 from utils.db.get_pg_pool import get_pg_pool
 from utils.essentials.persist_views import register_persistent_views
-from utils.listener_func.market_feed_listener import (
-    processed_market_feed_ids,
-    processed_market_feed_message_ids,
-)
 from utils.logs.pretty_log import pretty_log, set_arceus_bot
 from utils.schedule.scheduler import setup_scheduler
 

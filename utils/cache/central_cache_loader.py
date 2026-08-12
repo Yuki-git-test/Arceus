@@ -2,7 +2,6 @@ import discord
 
 from utils.logs.pretty_log import pretty_log
 
-from .cache_list import market_alert_cache
 from .clan_wars_cache import load_clan_wars_server_members_cache
 from .daily_fa_ball_cache import load_daily_faction_ball_cache
 from .faction_members_cache import load_faction_members_cache

@@ -447,7 +447,7 @@ class MessageCreateListener(commands.Cog):
                         await secret_santa_listener(bot=self.bot, message=message)
                 # Secret Santa Timer Listener
                 if message.content:
-                    if ":x: You may send out another gift on" in message.content:
+                    if "❌ You may send out another gift on" in message.content:
                         pretty_log(
                             "info",
                             f"🎅 Matched Secret Santa Timer Listener | Message ID: {message.id} | Channel: {message.channel.name}",

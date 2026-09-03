@@ -137,8 +137,12 @@ def should_parse(embed_title: Optional[str]) -> bool:
 
 
 def clean_username(username: str) -> str:
-    # Strip any leading/trailing ** from username cleanly
-    return re.sub(r"^\*+|\*+$", "", username).strip()
+    """Convert a markdown-formatted stats entry into a lookupable username."""
+    cleaned = re.sub(r"^\*+|\*+$", "", username).strip()
+    cleaned = re.sub(r"^<a?:[^>]+>\s*", "", cleaned)
+    cleaned = re.sub(r"\\([\\_*~`|>.])", r"\1", cleaned)
+    cleaned = re.sub(r"[\u200b-\u200f\u2060\ufeff]", "", cleaned)
+    return cleaned.strip()
 
 
 def parse_clan_stats_message(message: str) -> Optional[List[Tuple[str, int, int]]]:
@@ -298,9 +302,8 @@ async def split_known_and_unknown_members(
             known.append((match, username, catches, fishes))
         else:
             # try to match the pokemeow name from cache
-            from utils.cache.vna_members_cache import (
-                fetch_vna_member_id_by_pokemeow_name,
-            )
+            from utils.cache.vna_members_cache import \
+                fetch_vna_member_id_by_pokemeow_name
 
             user_id = fetch_vna_member_id_by_pokemeow_name(username)
             if user_id:

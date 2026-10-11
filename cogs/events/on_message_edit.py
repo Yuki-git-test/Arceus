@@ -1,18 +1,20 @@
+import re
 from datetime import datetime, timezone
 
 import discord
 from discord.ext import commands
 
-from Constants.variables import (
-    POKEMEOW_APPLICATION_ID,
-    VNA_SERVER_ID,
-)
+from Constants.variables import POKEMEOW_APPLICATION_ID
 from utils.listener_func.berry_listener import berry_listener
 from utils.listener_func.berry_pouch_listener import handle_berry_pouch_message
 from utils.listener_func.explore_caught_listener import explore_caught_listener
 from utils.listener_func.fish_spawn_listener import fish_spawn_listener
 from utils.listener_func.monthly_stats_listener import monthly_stats_listener
+from utils.listener_func.pin_timer_listener import pin_timer_listener
 from utils.listener_func.pokemon_caught_listener import pokemon_caught_listener
+from utils.listener_func.pokemon_pin_numbers_listener import \
+    pokemon_pin_numbers_listener
+from utils.listener_func.slime_button_listener import slime_button_listener
 from utils.listener_func.wb_reg_listener import handle_wb_register_command
 from utils.listener_func.weekly_stats_listener import weekly_stats_listener
 from utils.logs.pretty_log import pretty_log
@@ -23,7 +25,7 @@ from utils.logs.pretty_log import pretty_log
 triggers = {
     "weekly_stats_command": "**Clan Weekly Stats — VN Allstar**",
     "monthly_stats_command": "**Clan Monthly Stats — VN Allstar**",
-    "explore_listener": ":stopwatch: Your explore session has ended!",
+    "explore_listener": "⏱️ Your explore session has ended!",
     "caught_listener": "You caught a",
 }
 
@@ -31,6 +33,21 @@ triggers = {
 _recent_edit_signatures: dict[tuple[int, str], datetime] = {}
 _EDIT_DEDUP_TTL_SECONDS = 180
 
+def has_slime_button(message: discord.Message) -> bool:
+    """Returns True if the message has a button with 'slime' in its label."""
+    for row in message.components:
+        for component in row.children:
+            if (
+                component.type is discord.ComponentType.button
+                and component.label
+                and "slime" in component.label.lower()
+            ):
+                return True
+    return False
+
+def get_number_after_exclamation(text):
+    match = re.search(r'!\s*(\d+)', text)
+    return match.group(1) if match else None
 
 def _build_edit_signature(message: discord.Message) -> str:
     """Build a stable signature from content + first embed fields used by listeners."""
@@ -99,13 +116,12 @@ class OnMessageEditCog(commands.Cog):
         first_embed_title = first_embed.title if first_embed else ""
 
         # ————————————————————————————————
-        # 🩵 VNA Edit Listener
+        # 🩵 Guild Check — Skip DMs (runs in all guilds)
         # ————————————————————————————————
-        # Only log edits in VNA server
-        if not after.guild or after.guild.id != VNA_SERVER_ID:
+        if not after.guild:
             return
         # ————————————————————————————————
-        # 🩵 VNA Berry Command Listener
+        # 🩵 Berry Command Listener
         # ————————————————————————————————
         if first_embed:
             if (
@@ -147,11 +163,45 @@ class OnMessageEditCog(commands.Cog):
         ):
             await fish_spawn_listener(self.bot, before, after)
         # ————————————————————————————————
+        # ⚡ Fish Pin Alert
+        # ————————————————————————————————
+        if after.embeds:
+           if first_embed_author_text and "a wild pokemon appeared" in first_embed_author_text.lower():
+               pin_number = get_number_after_exclamation(first_embed_author_text)
+               if pin_number:
+                   await pokemon_pin_numbers_listener(
+                       bot=self.bot,
+                       message=after,
+                       pin_number=pin_number,
+                       source="fish",
+                   )
+
+        # ————————————————————————————————
+        # ⚡ Pokemon Caught Listener
+        # ————————————————————————————————
+        # Process Pokemon or fish caught for Weekly Goal Tracker
+        if after.embeds:
+            embed_description = after.embeds[0].description or ""
+            if embed_description and "You caught a" in embed_description:
+                await pokemon_caught_listener(
+                    bot=self.bot, before_message=before, message=after
+                )
+
+        # ————————————————————————————————
         # 🩵 VNA Pokemon Caught Listener
         # ————————————————————————————————
         if first_embed:
             if triggers["caught_listener"] in first_embed_description:
+                slime_button = False
+                if has_slime_button(after):
+                    slime_button = True
                 await pokemon_caught_listener(self.bot, before, after)
+                if slime_button:
+                    pretty_log(
+                        "info",
+                        f"Detected slime button in Pokemon Caught embed for message ID: {after.id}",
+                    )
+                    await slime_button_listener(self.bot, after)
 
         # ————————————————————————————————
         # 🩵 VNA Weekly Stats Listener
@@ -205,6 +255,31 @@ class OnMessageEditCog(commands.Cog):
                     bot=self.bot, before_message=before, message=after
                 )
 
+        # ————————————————————————————————
+        # ⚡ Safari Zone Pin Alert Listener
+        # ————————————————————————————————
+        if first_embed:
+            if first_embed_footer_text and "use a safari ball to catch it" in first_embed_footer_text.lower():
+                if first_embed_author_text:
+                    pin_number = get_number_after_exclamation(first_embed_author_text)
+                    if pin_number:
+                        await pokemon_pin_numbers_listener(
+                            bot=self.bot,
+                            message=after,
+                            pin_number=pin_number,
+                            source="safari",
+                        )
+        # ————————————————————————————————
+        # ⚡ Missing Number Quest Timer
+        # ————————————————————————————————
+        if first_embed:
+            if first_embed_title and "the missing numbers" in first_embed_title.lower():
+                if first_embed_description and "you can submit another pin" in first_embed_description.lower():
+                    pretty_log(tag="info", message=f"Missing Number Quest Timer triggered in {after.channel.name}")
+                    await pin_timer_listener(
+                        bot=self.bot,
+                        message=after,
+                    )
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(OnMessageEditCog(bot))

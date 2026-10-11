@@ -1,10 +1,11 @@
+import time
+from datetime import datetime
+
 import discord
 
 from Constants.timer_settings import BATTLE_EMOJI
 from utils.db.special_npc_timer_db_func import (
-    fetch_due_special_battle_timers,
-    remove_special_battle_timer,
-)
+    fetch_due_special_battle_timers, remove_special_battle_timer)
 from utils.functions.retry_function import _retry_discord_call
 from utils.logs.pretty_log import pretty_log
 
@@ -12,16 +13,24 @@ from utils.logs.pretty_log import pretty_log
 # 🍭 Helper function to fetch spooky_hour row
 async def fetch_spooky_hour(bot: discord.Client):
     """
-    Fetches the spooky_hour row.
-    Returns a dict with ends_on and message_id, or None if not found.
+    Fetches the spooky_hour row if it is still active.
+    Returns a dict with ends_on and message_id, or None if not found or already expired.
     """
     query = "SELECT ends_on, message_id FROM spooky_hour LIMIT 1"
     try:
         async with bot.pg_pool.acquire() as conn:
             row = await conn.fetchrow(query)
-        if row:
-            return {"ends_on": row["ends_on"], "message_id": row["message_id"]}
-        return None
+        if not row:
+            return None
+
+        ends_on = row["ends_on"]
+        if isinstance(ends_on, datetime):
+            ends_on = int(ends_on.timestamp())
+
+        if ends_on <= int(time.time()):
+            return None  # Spooky hour already ended; save Lusamine timers for next one
+
+        return {"ends_on": ends_on, "message_id": row["message_id"]}
     except Exception as e:
         pretty_log(
             "error",
@@ -30,7 +39,7 @@ async def fetch_spooky_hour(bot: discord.Client):
         return None
 
 
-NPC_ID_MAP = {"alph_scientist": 970}
+NPC_ID_MAP = {"alph_scientist": 970, "lusamine": 963}
 
 
 # 🍭 Background task to check special battle timers
@@ -42,10 +51,16 @@ async def special_battle_timer_checker(bot: discord.Client):
     if not due_timers:
         return  # No due timers
 
+    # Check if spooky hour
+    spooky_hour = await fetch_spooky_hour(bot)
+
     for timer in due_timers:
         user_id = timer["user_id"]
         npc_name = timer["npc_name"]
         channel_id = timer["channel_id"]
+
+        if npc_name == "lusamine" and not spooky_hour:
+            continue
 
         # Notify the user in the specified channel
         channel = bot.get_channel(channel_id)

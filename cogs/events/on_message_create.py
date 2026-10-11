@@ -1,66 +1,55 @@
+import re
 from datetime import datetime, timezone
 
 import discord
 from discord.ext import commands
 
-from Constants.clan_wars_constants import CLAN_WARS_SERVER_ID, CLAN_WARS_TEXT_CHANNELS
-from Constants.variables import (
-    CC_BUMP_CHANNEL_ID,
-    CC_GUILD_ID,
-    CC_PROMO_CHANNEL_ID,
-    POKEMEOW_APPLICATION_ID,
-    PublicChannels,
-    Server,
-)
+from Constants.clan_wars_constants import (CLAN_WARS_SERVER_ID,
+                                           CLAN_WARS_TEXT_CHANNELS)
+from Constants.variables import (CC_BUMP_CHANNEL_ID, CC_GUILD_ID,
+                                 CC_PROMO_CHANNEL_ID, POKEMEOW_APPLICATION_ID,
+                                 PublicChannels, Server)
 from Constants.vn_allstars_constants import VN_ALLSTARS_TEXT_CHANNELS
 from utils.AR.promo import promo_team
 from utils.clan_wars.stats_listener import stats_command_listener
-
 # ————————————————————————————————
 # 🩵 Import Listener Functions
 # ————————————————————————————————
 from utils.listener_func.battle_timer import battle_timer_handler
 from utils.listener_func.berry_listener import berry_listener
 from utils.listener_func.berry_water_listener import (
-    handle_berry_water_message,
-    handle_mulch_message,
-)
+    handle_berry_water_message, handle_mulch_message)
 from utils.listener_func.bud_ev_listener import handle_pokemeow_embed_sync
 from utils.listener_func.cc_promo_team_listener import promo_team_listener
 from utils.listener_func.ee_spawn_listener import (
-    check_cc_bump_reminder,
-    check_ee_near_spawn_alert,
-    extract_boss_from_wb_command_embed,
-    extract_boss_from_wb_spawn_command,
-)
-from utils.listener_func.ev_tracker_listener import handle_pokemeow_battle_message
-from utils.listener_func.faction_ball_listener import extract_faction_ball_from_fa
+    check_cc_bump_reminder, check_ee_near_spawn_alert,
+    extract_boss_from_wb_command_embed, extract_boss_from_wb_spawn_command)
+from utils.listener_func.ev_tracker_listener import \
+    handle_pokemeow_battle_message
+from utils.listener_func.faction_ball_listener import \
+    extract_faction_ball_from_fa
 from utils.listener_func.fish_timer import fish_timer_handler
-from utils.listener_func.incense_listener import (
-    incense_command_handler,
-    incense_depleted_handler,
-    incense_use_handler,
-    server_has_incense_handler,
-)
+from utils.listener_func.incense_listener import (incense_command_handler,
+                                                  incense_depleted_handler,
+                                                  incense_use_handler,
+                                                  server_has_incense_handler)
+from utils.listener_func.market_view_listener import market_view_listener
 from utils.listener_func.monthly_stats_listener import monthly_stats_listener
+from utils.listener_func.pin_command_listener import pin_command_listener
+from utils.listener_func.pokemon_pin_numbers_listener import \
+    pokemon_pin_numbers_listener
 from utils.listener_func.pokemon_spawn_listener import pokemon_spawn_listener
 from utils.listener_func.pokemon_timer import pokemon_timer_handler
 from utils.listener_func.pokespawn_listener import as_spawn_ping
 from utils.listener_func.secret_santa_listener import (
-    secret_santa_listener,
-    secret_santa_timer_listener,
-)
+    secret_santa_listener, secret_santa_timer_listener)
 from utils.listener_func.shiny_bonus_listener import (
-    handle_pokemeow_global_bonus,
-    read_shiny_bonus_timestamp_from_cc_channel,
-)
+    handle_pokemeow_global_bonus, read_shiny_bonus_timestamp_from_cc_channel)
 from utils.listener_func.special_battle_npc_listener import (
-    special_battle_npc_listener,
-    special_battle_npc_timer_listener,
-)
+    challenge_unavailable_listener, special_battle_npc_listener,
+    special_battle_npc_timer_listener)
 from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
 from utils.listener_func.weekly_stats_listener import weekly_stats_listener
-from utils.listener_func.market_view_listener import market_view_listener
 # ————————————————————————————————
 # 🩵 Import DB Functions
 #  ———————————————————————————————
@@ -109,6 +98,12 @@ _recent_processed_message_ids: dict[int, datetime] = {}
 _MESSAGE_DEDUP_TTL_SECONDS = 180
 
 
+
+
+def get_number_after_exclamation(text):
+    match = re.search(r'!\s*(\d+)', text)
+    return match.group(1) if match else None
+
 # 🐾────────────────────────────────────────────
 #        🌸 Message Create Listener Cog
 # 🐾────────────────────────────────────────────
@@ -149,6 +144,7 @@ class MessageCreateListener(commands.Cog):
             return  # Skip DMs
 
         try:
+            content = message.content
             # ————————————————————————————————
             # 🩵 CC Bump Reminder Listener
             # ————————————————————————————————
@@ -176,6 +172,17 @@ class MessageCreateListener(commands.Cog):
                         label="CC Promo Team Listener",
                     )
                     await promo_team_listener(bot=self.bot, message=message)
+
+            # ————————————————————————————————
+            # 🩵 Pin Command Listener
+            # ————————————————————————————————
+            if content and content.lower().startswith("!pins"):
+                pretty_log(
+                    "info",
+                    f"Detected !pins command message: Message ID {message.id}",
+                    label="Pin Command Listener",
+                )
+                await pin_command_listener(bot=self.bot, message=message)
             # ————————————————————————————————
             # 🏰 Ignore non-PokéMeow bot messages
             # ————————————————————————————————
@@ -187,7 +194,6 @@ class MessageCreateListener(commands.Cog):
             ):
                 return
 
-            content = message.content
             first_embed = message.embeds[0] if message.embeds else None
             first_embed_author = (
                 first_embed.author.name if first_embed and first_embed.author else ""
@@ -203,17 +209,35 @@ class MessageCreateListener(commands.Cog):
             first_embed_title = (
                 first_embed.title if first_embed and first_embed.title else ""
             )
-            # ————————————————————————————————
-            # 🩵 Promo Team
-            # ————————————————————————————————
-            if content and "!promo" in content.lower():
-                pretty_log(
-                    "info",
-                    f"Detected !promo command message: Message ID {message.id}",
-                    label="Promo Team Listener",
-                )
-                await promo_team(bot=self.bot, message=message)
 
+            # ————————————————————————————————
+            # 🩵 Special Battle NPC Listeners (Lusamine)
+            # ————————————————————————————————
+            if first_embed:
+                if (
+                    first_embed.description
+                    and "challenged <:lusamine:1557568454867943484> **Lusamine** to a battle!"
+                    in first_embed.description
+                ):
+                    pretty_log(
+                        "info",
+                        f"🔹 Matched Special Battle NPC Listener | message_id={message.id}",
+                    )
+                    await special_battle_npc_listener(bot=self.bot, message=message, npc_name="lusamine")
+            if first_embed:
+                if first_embed.title and "Lusamine challenge unavailable" in first_embed.title:
+                    if (
+                        first_embed.description
+                        and "You can challenge Lusamine again"
+                        in first_embed.description
+                    ):
+                        pretty_log(
+                            "info",
+                            f"🔹 Matched Special Battle NPC Timer Listener for Lusamine | message_id={message.id}",
+                        )
+                        await challenge_unavailable_listener(
+                            bot=self.bot, message=message, npc_name="lusamine"
+                        )
             # ————————————————————————————————
             # 🩵 Clan wars server message logic
             # ————————————————————————————————
@@ -232,115 +256,257 @@ class MessageCreateListener(commands.Cog):
                     await as_spawn_ping(self.bot, message)
 
             # ————————————————————————————————
-            # 🩵 VNA message logic
+            # 🩵 General message logic (all guilds)
+            # ————————————————————————————————
+            # ————————————————————————————————
+            # 🩵 Berry Command Listener
+            # ————————————————————————————————
+            if first_embed:
+                if (
+                    first_embed_description
+                    and "garden overview" in first_embed_description.lower()
+                ):
+                    pretty_log(
+                        "info",
+                        "Detected Garden Overview embed, processing berry reminders...",
+                    )
+                    await berry_listener(
+                        bot=self.bot,
+                        before_message=message,
+                        message=message,
+                    )
+            # ————————————————————————————————
+            # 🩵 Berry Water Listener
+            # ————————————————————————————————
+            if message.content:
+                if "Watered" in message.content and "Next stage" in message.content:
+                    pretty_log(
+                        "info",
+                        "Detected Berry Water message, processing berry water reminders...",
+                    )
+                    await handle_berry_water_message(bot=self.bot, message=message)
+            # ————————————————————————————————
+            # 🩵 Berry Mulch Listener
+            # ————————————————————————————————
+            if message.content:
+                if (
+                    "Applied" in message.content
+                    and "Mulch" in message.content
+                    and "to Slot" in message.content
+                ):
+                    pretty_log(
+                        "info",
+                        "Detected Mulch message, processing growth mulch reminders...",
+                    )
+                    await handle_mulch_message(bot=self.bot, message=message)
+
+            # ————————————————————————————————
+            # 🩵 Pokemon Spawn
+            # ————————————————————————————————
+            if content and "found a wild" in content.lower():
+                await pokemon_timer_handler(message)
+                await pokemon_spawn_listener(self.bot, message)
+
+                # ————————————————————————————————
+                # ⚡ Pin Number Alerts
+                # ————————————————————————————————
+                pin_number = get_number_after_exclamation(first_embed_author)
+                if pin_number:
+                    pretty_log(
+                        "info",
+                        f"Detected pin number: {pin_number} for message ID: {message.id}"
+                    )
+                    await pokemon_pin_numbers_listener(
+                        bot=self.bot,
+                        message=message,
+                        pin_number=pin_number,
+                        source="pokemon",
+                    )
+
+
+            # ————————————————————————————————
+            # 🩵 Fish Timer
+            # ————————————————————————————————
+            if message.embeds and message.embeds[0]:
+                embed = message.embeds[0]
+                embed_description = embed.description if embed else None
+                if (
+                    embed_description
+                    and "cast a" in embed_description
+                    and "into the water" in embed_description
+                ):
+                    await fish_timer_handler(message)
+            # ————————————————————————————————
+            # 🩵 Battle Timer
+            # ————————————————————————————————
+            if first_embed_author and "PokeMeow Battles" in first_embed_author:
+                await battle_timer_handler(bot=self.bot, message=message)
+
+            # ————————————————————————————————
+            # 🩵 Autospawn
+            # ————————————————————————————————
+            if message.channel.id == PublicChannels.Poke_Spawn:
+                await as_spawn_ping(self.bot, message)
+
+            # ————————————————————————————————
+            # 🩵 Weekly Stats Listener
+            # ————————————————————————————————
+            if first_embed:
+                if triggers["weekly_stats_command"] in first_embed_title:
+                    pretty_log(
+                        "info",
+                        f"Detected weekly stats embed from PokéMeow bot: Message ID {message.id}",
+                        label="Weekly Stats Listener",
+                    )
+                    await weekly_stats_listener(
+                        bot=self.bot, before_message=message, after_message=message
+                    )
+            # ————————————————————————————————
+            # 🩵 Monthly Stats Listener
+            # ————————————————————————————————
+            if first_embed:
+                if triggers["monthly_stats_command"] in first_embed_title:
+                    pretty_log(
+                        "info",
+                        f"Detected monthly stats embed from PokéMeow bot: Message ID {message.id}",
+                        label="Monthly Stats Listener",
+                    )
+                    await monthly_stats_listener(
+                        bot=self.bot, before_message=message, after_message=message
+                    )
+            # 🔧───────────────────────────────────────────────🔧
+            # 🔧 🩵 Faction Ball Listener from ;fa
+            # 🔧───────────────────────────────────────────────🔧
+            if first_embed:
+                if first_embed.author and any(
+                    f in first_embed.author.name.lower() for f in FACTIONS
+                ):
+                    await extract_faction_ball_from_fa(
+                        bot=self.bot, message=message
+                    )
+            # 🔧───────────────────────────────────────────────🔧
+            # 🔧    🩵 WB Battle Reminder Registration Listener
+            # 🔧───────────────────────────────────────────────🔧
+            if first_embed:
+                if first_embed_description:
+                    if (
+                        "<:checkedbox:752302633141665812> You are registered for this fight"
+                        in first_embed_description
+                        and ";wb fight" in first_embed_description
+                    ):
+                        await register_wb_battle_reminder(
+                            bot=self.bot, message=message
+                        )
+            # ————————————————————————————————
+            # 🩵 Special Battle NPC Listeners (ALph Scientist)
+            # ————————————————————————————————
+            if first_embed:
+                if (
+                    first_embed.description
+                    and "challenged <:alph_scientist:1504637214217470032> **Alph Scientist** to a battle!"
+                    in first_embed.description
+                ):
+                    pretty_log(
+                        "info",
+                        f"🔹 Matched Special Battle NPC Listener | message_id={message.id}",
+                    )
+                    await special_battle_npc_listener(bot=self.bot, message=message, npc_name="alph_scientist")
+            if content and UNOWN_NPC_NA_LINE in content:
+                pretty_log(
+                    "info",
+                    f"🔹 Matched Special Battle NPC Timer Listener for Alph Scientist | message_id={message.id}",
+                )
+                await special_battle_npc_timer_listener(
+                    bot=self.bot, message=message, npc_name="alph_scientist"
+                )
+
+            # ————————————————————————————————
+            # ⚡ EV Tracker Bud Info
+            # ————————————————————————————————
+            if (
+                first_embed_description
+                and triggers["bud_info_trigger"] in first_embed_description
+            ):
+                pretty_log(
+                    "info",
+                    f"Matched EV Tracker Bud Info Listener | Message ID: {message.id} | Channel: {message.channel.name}",
+                )
+                try:
+                    await handle_pokemeow_embed_sync(bot=self.bot, message=message)
+                except Exception as e:
+                    pretty_log(
+                        "error",
+                        f"Error in EV Tracker Bud Info Listener for message {message.id}: {e}",
+                    )
+
+            # ————————————————————————————————
+            # ⚡ EV Training Listener
+            # ————————————————————————————————
+            if content and triggers["ev_training"] in content:
+                pretty_log(
+                    "info",
+                    f"Matched EV Training Listener | Message ID: {message.id} | Channel: {message.channel.name}",
+                )
+                try:
+                    await handle_pokemeow_battle_message(
+                        bot=self.bot, message=message
+                    )
+                except Exception as e:
+                    pretty_log(
+                        "error",
+                        f"Error in EV Training Listener for message {message.id}: {e}",
+                    )
+
+            # ————————————————————————————————
+            # ⚡ MARKET VIEW LISTENER
+            # ————————————————————————————————
+            if (
+                first_embed
+                and "PokeMeow Global Market" in first_embed_author
+                and not "Recent" in first_embed_author
+                and not "Rarity" in first_embed_author
+            ):
+                pretty_log(
+                    tag="info",
+                    message=f"Processing market view message with embed author: {first_embed_author}",
+                )
+                await market_view_listener(self.bot, message)
+
+            # ————————————————————————————————
+            # 🩵 VNA-only Listeners
             # ————————————————————————————————
             if guild.id == Server.VNA_ID:
-                first_embed = message.embeds[0] if message.embeds else None
-                first_embed_description = first_embed.description if first_embed else ""
-                first_embed_author = (
-                    first_embed.author.name
-                    if first_embed and first_embed.author
-                    else ""
-                )
                 # ————————————————————————————————
-                # 🩵 VNA Berry Command Listener
+                # 🩵 Incense Listeners
                 # ————————————————————————————————
                 if first_embed:
-                    if (
-                        first_embed_description
-                        and "garden overview" in first_embed_description.lower()
-                    ):
+                    # Incense Command Handler
+                    if triggers["incense_command"] in first_embed_footer:
                         pretty_log(
                             "info",
-                            "Detected Garden Overview embed, processing berry reminders...",
+                            f"Detected incense command embed from PokéMeow bot: Message ID {message.id}",
+                            label="Incense Command Handler",
                         )
-                        await berry_listener(
-                            bot=self.bot,
-                            before_message=message,
-                            message=message,
-                        )
-                # ————————————————————————————————
-                # 🩵 VNA Berry Water Listener
-                # ————————————————————————————————
-                if message.content:
-                    if "Watered" in message.content and "Next stage" in message.content:
-                        pretty_log(
-                            "info",
-                            "Detected Berry Water message, processing berry water reminders...",
-                        )
-                        await handle_berry_water_message(bot=self.bot, message=message)
-                # ————————————————————————————————
-                # 🩵 VNA Berry Mulch Listener
-                # ————————————————————————————————
-                if message.content:
-                    if (
-                        "Applied" in message.content
-                        and "Mulch" in message.content
-                        and "to Slot" in message.content
-                    ):
-                        pretty_log(
-                            "info",
-                            "Detected Mulch message, processing growth mulch reminders...",
-                        )
-                        await handle_mulch_message(bot=self.bot, message=message)
+                        await incense_command_handler(bot=self.bot, message=message)
+                if message.content and triggers["incense_use"] in message.content:
+                    pretty_log(
+                        "info",
+                        f"Detected incense use message from PokéMeow bot: Message ID {message.id}",
+                        label="Incense Use Handler",
+                    )
+                    await incense_use_handler(bot=self.bot, message=message)
 
-                # ————————————————————————————————
-                # 🩵 VNA Pokemon Spawn
-                # ————————————————————————————————
-                if content and "found a wild" in content.lower():
-                    await pokemon_timer_handler(message)
-                    await pokemon_spawn_listener(self.bot, message)
+                if message.content and triggers["has_incense"] in message.content:
+                    await server_has_incense_handler(bot=self.bot, message=message)
 
-                # ————————————————————————————————
-                # 🩵 VNA Fish Timer
-                # ————————————————————————————————
-                if message.embeds and message.embeds[0]:
-                    embed = message.embeds[0]
-                    embed_description = embed.description if embed else None
-                    if (
-                        embed_description
-                        and "cast a" in embed_description
-                        and "into the water" in embed_description
-                    ):
-                        await fish_timer_handler(message)
-                # ————————————————————————————————
-                # 🩵 VNA Battle Timer
-                # ————————————————————————————————
-                if first_embed_author and "PokeMeow Battles" in first_embed_author:
-                    await battle_timer_handler(bot=self.bot, message=message)
+                if message.content and triggers["incense_depleted"] in message.content:
+                    pretty_log(
+                        "info",
+                        f"Detected incense depleted message from PokéMeow bot: Message ID {message.id}",
+                        label="Incense Depleted Handler",
+                    )
+                    await incense_depleted_handler(bot=self.bot, message=message)
 
-                # ————————————————————————————————
-                # 🩵 VNA Autospawn
-                # ————————————————————————————————
-                if message.channel.id == PublicChannels.Poke_Spawn:
-                    await as_spawn_ping(self.bot, message)
-
-                # ————————————————————————————————
-                # 🩵 VNA Weekly Stats Listener
-                # ————————————————————————————————
-                if first_embed:
-                    if triggers["weekly_stats_command"] in first_embed_title:
-                        pretty_log(
-                            "info",
-                            f"Detected weekly stats embed from PokéMeow bot: Message ID {message.id}",
-                            label="Weekly Stats Listener",
-                        )
-                        await weekly_stats_listener(
-                            bot=self.bot, before_message=message, after_message=message
-                        )
-                # ————————————————————————————————
-                # 🩵 VNA Monthly Stats Listener
-                # ————————————————————————————————
-                if first_embed:
-                    if triggers["monthly_stats_command"] in first_embed_title:
-                        pretty_log(
-                            "info",
-                            f"Detected monthly stats embed from PokéMeow bot: Message ID {message.id}",
-                            label="Monthly Stats Listener",
-                        )
-                        await monthly_stats_listener(
-                            bot=self.bot, before_message=message, after_message=message
-                        )
                 # 🔧───────────────────────────────────────────────🔧
                 # 🔧    🩵 World Boss Spawn Listener
                 # 🔧───────────────────────────────────────────────🔧
@@ -387,51 +553,6 @@ class MessageCreateListener(commands.Cog):
                         )
                         await check_ee_near_spawn_alert(bot=self.bot, message=message)
 
-                # 🔧───────────────────────────────────────────────🔧
-                # 🔧 🩵 Faction Ball Listener from ;fa
-                # 🔧───────────────────────────────────────────────🔧
-                if first_embed:
-                    if first_embed.author and any(
-                        f in first_embed.author.name.lower() for f in FACTIONS
-                    ):
-                        await extract_faction_ball_from_fa(
-                            bot=self.bot, message=message
-                        )
-                # 🔧───────────────────────────────────────────────🔧
-                # 🔧    🩵 WB Battle Reminder Registration Listener
-                # 🔧───────────────────────────────────────────────🔧
-                if first_embed:
-                    if first_embed_description:
-                        if (
-                            "<:checkedbox:752302633141665812> You are registered for this fight"
-                            in first_embed_description
-                            and ";wb fight" in first_embed_description
-                        ):
-                            await register_wb_battle_reminder(
-                                bot=self.bot, message=message
-                            )
-                # ————————————————————————————————
-                # 🩵 Special Battle NPC Listeners
-                # ————————————————————————————————
-                if first_embed:
-                    if (
-                        first_embed.description
-                        and "challenged <:alph_scientist:1504637214217470032> **Alph Scientist** to a battle!"
-                        in first_embed.description
-                    ):
-                        pretty_log(
-                            "info",
-                            f"🔹 Matched Special Battle NPC Listener | message_id={message.id}",
-                        )
-                        await special_battle_npc_listener(bot=self.bot, message=message)
-                if content and UNOWN_NPC_NA_LINE in content:
-                    pretty_log(
-                        "info",
-                        f"🔹 Matched Special Battle NPC Timer Listener for XMAS BLUE | message_id={message.id}",
-                    )
-                    await special_battle_npc_timer_listener(
-                        bot=self.bot, message=message
-                    )
                 # ————————————————————————————————
                 # 🩵 Secret Santa Listeners
                 # ————————————————————————————————
@@ -466,88 +587,6 @@ class MessageCreateListener(commands.Cog):
                         await handle_pokemeow_global_bonus(
                             bot=self.bot, message=message
                         )
-                # ————————————————————————————————
-                # 🩵 Incense Listeners
-                # ————————————————————————————————
-                if first_embed:
-                    # Incense Command Handler
-                    if triggers["incense_command"] in first_embed_footer:
-                        pretty_log(
-                            "info",
-                            f"Detected incense command embed from PokéMeow bot: Message ID {message.id}",
-                            label="Incense Command Handler",
-                        )
-                        await incense_command_handler(bot=self.bot, message=message)
-                if message.content and triggers["incense_use"] in message.content:
-                    pretty_log(
-                        "info",
-                        f"Detected incense use message from PokéMeow bot: Message ID {message.id}",
-                        label="Incense Use Handler",
-                    )
-                    await incense_use_handler(bot=self.bot, message=message)
-
-                if message.content and triggers["has_incense"] in message.content:
-                    await server_has_incense_handler(bot=self.bot, message=message)
-
-                if message.content and triggers["incense_depleted"] in message.content:
-                    pretty_log(
-                        "info",
-                        f"Detected incense depleted message from PokéMeow bot: Message ID {message.id}",
-                        label="Incense Depleted Handler",
-                    )
-                    await incense_depleted_handler(bot=self.bot, message=message)
-
-                # ————————————————————————————————
-                # ⚡ EV Tracker Bud Info
-                # ————————————————————————————————
-                if (
-                    first_embed_description
-                    and triggers["bud_info_trigger"] in first_embed_description
-                ):
-                    pretty_log(
-                        "info",
-                        f"Matched EV Tracker Bud Info Listener | Message ID: {message.id} | Channel: {message.channel.name}",
-                    )
-                    try:
-                        await handle_pokemeow_embed_sync(bot=self.bot, message=message)
-                    except Exception as e:
-                        pretty_log(
-                            "error",
-                            f"Error in EV Tracker Bud Info Listener for message {message.id}: {e}",
-                        )
-
-                # ————————————————————————————————
-                # ⚡ EV Training Listener
-                # ————————————————————————————————
-                if content and triggers["ev_training"] in content:
-                    pretty_log(
-                        "info",
-                        f"Matched EV Training Listener | Message ID: {message.id} | Channel: {message.channel.name}",
-                    )
-                    try:
-                        await handle_pokemeow_battle_message(
-                            bot=self.bot, message=message
-                        )
-                    except Exception as e:
-                        pretty_log(
-                            "error",
-                            f"Error in EV Training Listener for message {message.id}: {e}",
-                        )
-
-                # ————————————————————————————————
-                # ⚡ MARKET VIEW LISTENER
-                # ————————————————————————————————
-                if (
-                    first_embed
-                    and "PokeMeow Global Market" in first_embed_author
-                    and not "Recent" in first_embed_author
-                    and not "Rarity" in first_embed_author
-                ):
-                    pretty_log(
-                        tag="info",
-                        message=f"Processing market view message with embed author: {first_embed_author}",
-                    )
-                    await market_view_listener(self.bot, message)
         except Exception as e:
             # 🛑────────────────────────────────────────────
             #        Unhandled on_message Error Handler

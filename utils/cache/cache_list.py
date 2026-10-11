@@ -9,6 +9,8 @@ processed_explore_messages = set()
 processed_caught_messages = set()
 processed_weekly_stats_messages = set()
 processed_monthly_stats_messages = set()
+processed_pin_numbers_messages = set()
+processed_slime_button_messages = set()
 
 
 def clear_processed_messages_cache():
@@ -22,6 +24,8 @@ def clear_processed_messages_cache():
     processed_caught_messages.clear()
     processed_weekly_stats_messages.clear()
     processed_monthly_stats_messages.clear()
+    processed_pin_numbers_messages.clear()
+    processed_slime_button_messages.clear()
 
     pretty_log(message="✅ Cleared all processed message ID caches", tag="cache")
 

@@ -4,17 +4,14 @@ from datetime import datetime
 import discord
 
 from Constants.aesthetic import Emojis, Thumbnails
-from Constants.vn_allstars_constants import (
-    VN_ALLSTARS_EMOJIS,
-    VN_ALLSTARS_ROLES,
-    VN_ALLSTARS_TEXT_CHANNELS,
-)
+from Constants.vn_allstars_constants import (VN_ALLSTARS_EMOJIS,
+                                             VN_ALLSTARS_ROLES,
+                                             VN_ALLSTARS_TEXT_CHANNELS,
+                                             VNA_SERVER_ID)
 from utils.cache.cache_list import ping_message_id_cache
-from utils.db.ping_message_ids_db import (
-    delete_ping_message_id,
-    get_ping_message_id,
-    upsert_ping_message_id,
-)
+from utils.db.ping_message_ids_db import (delete_ping_message_id,
+                                          get_ping_message_id,
+                                          upsert_ping_message_id)
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 from utils.pokemeow.get_pokemeow_reply import get_pokemeow_reply_member
@@ -105,6 +102,17 @@ async def incense_use_handler(
     bot: discord.Client,
     message: discord.Message,
 ):
+    guild = message.guild
+    # Incense tracking is VNA-only; skip all other guilds
+    if not guild or guild.id != VNA_SERVER_ID:
+        return
+    incense_ping_role = guild.get_role(VN_ALLSTARS_ROLES.incense_ping)
+    if not incense_ping_role:
+        pretty_log(
+            "warning",
+            f"Incense Ping role (id={VN_ALLSTARS_ROLES.incense_ping}) not found in guild {guild.name} ({guild.id})",
+        )
+        return
 
     # Check if there is already a message id stored
     from utils.cache.ping_message_id_cache import get_ping_message_id_incense
@@ -125,15 +133,7 @@ async def incense_use_handler(
     if total_charges is None or amount is None:
         return
 
-    guild = message.guild
     bump_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.bumps)
-    incense_ping_role = guild.get_role(VN_ALLSTARS_ROLES.incense_ping)
-    if not incense_ping_role:
-        pretty_log(
-            "warning",
-            f"Incense Ping role (id={VN_ALLSTARS_ROLES.incense_ping}) not found in guild {guild.name} ({guild.id})",
-        )
-        return
     content = (
         f"{incense_ping_role.mention} The server has {total_charges} incense charges!"
     )
@@ -159,6 +159,17 @@ async def server_has_incense_handler(
     bot: discord.Client,
     message: discord.Message,
 ):
+    guild = message.guild
+    # Incense tracking is VNA-only; skip all other guilds
+    if not guild or guild.id != VNA_SERVER_ID:
+        return
+    incense_ping_role = guild.get_role(VN_ALLSTARS_ROLES.incense_ping)
+    if not incense_ping_role:
+        pretty_log(
+            "warning",
+            f"Incense Ping role (id={VN_ALLSTARS_ROLES.incense_ping}) not found in guild {guild.name} ({guild.id})",
+        )
+        return
 
     # Check if there is already a message id stored
     from utils.cache.ping_message_id_cache import get_ping_message_id_incense
@@ -172,15 +183,7 @@ async def server_has_incense_handler(
         if db_message_id:
             return
 
-    guild = message.guild
     bump_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.bumps)
-    incense_ping_role = guild.get_role(VN_ALLSTARS_ROLES.incense_ping)
-    if not incense_ping_role:
-        pretty_log(
-            "warning",
-            f"Incense Ping role (id={VN_ALLSTARS_ROLES.incense_ping}) not found in guild {guild.name} ({guild.id})",
-        )
-        return
     content = f"{incense_ping_role.mention} The server has incense charges!"
     desc = f"""### {guild.name} has {INCENSE} incense charges.
 > - 1 charge is consumed per `;pokemon` or `;fish` encounter,
@@ -216,6 +219,18 @@ async def incense_command_handler(
     bot: discord.Client,
     message: discord.Message,
 ):
+    guild = message.guild
+    # Incense tracking is VNA-only; skip all other guilds
+    if not guild or guild.id != VNA_SERVER_ID:
+        return
+    incense_ping_role = guild.get_role(VN_ALLSTARS_ROLES.incense_ping)
+    if not incense_ping_role:
+        pretty_log(
+            "warning",
+            f"Incense Ping role (id={VN_ALLSTARS_ROLES.incense_ping}) not found in guild {guild.name} ({guild.id})",
+        )
+        return
+
     new_incense_msg = False
     # Check if there is already a message id stored
     from utils.cache.ping_message_id_cache import get_ping_message_id_incense
@@ -301,14 +316,7 @@ async def incense_command_handler(
         amount=amount,
         member_name=username,
     )
-    bump_channel = message.guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.bumps)
-    incense_ping_role = message.guild.get_role(VN_ALLSTARS_ROLES.incense_ping)
-    if not incense_ping_role:
-        pretty_log(
-            "warning",
-            f"Incense Ping role (id={VN_ALLSTARS_ROLES.incense_ping}) not found in guild {message.guild.name} ({message.guild.id})",
-        )
-        return
+    bump_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.bumps)
     if new_incense_msg:
         debug_log("incense_command_handler: Creating new incense message.")
         content = f"{incense_ping_role.mention} The server has {remaining_charges} incense charges!"
@@ -348,6 +356,18 @@ async def incense_depleted_handler(
     bot: discord.Client,
     message: discord.Message,
 ):
+    guild = message.guild
+    # Incense tracking is VNA-only; skip all other guilds
+    if not guild or guild.id != VNA_SERVER_ID:
+        return
+    incense_ping_role = guild.get_role(VN_ALLSTARS_ROLES.incense_ping)
+    if not incense_ping_role:
+        pretty_log(
+            "warning",
+            f"Incense Ping role (id={VN_ALLSTARS_ROLES.incense_ping}) not found in guild {guild.name} ({guild.id})",
+        )
+        return
+
     # Check if there is already a message id stored
     from utils.cache.ping_message_id_cache import get_ping_message_id_incense
 
@@ -367,15 +387,7 @@ async def incense_depleted_handler(
         type="incense",
     )
 
-    guild = message.guild
     bump_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.bumps)
-    incense_ping_role = guild.get_role(VN_ALLSTARS_ROLES.incense_ping)
-    if not incense_ping_role:
-        pretty_log(
-            "warning",
-            f"Incense Ping role (id={VN_ALLSTARS_ROLES.incense_ping}) not found in guild {guild.name} ({guild.id})",
-        )
-        return
     content = f"{incense_ping_role.mention} There are no more incense charges."
     await bump_channel.send(content=content)
     # Remove view

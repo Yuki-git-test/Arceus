@@ -16,7 +16,7 @@ desc = "Reminder commands"
 
 
 # 🐾────────────────────────────────────────────
-#     🎐 Coll Command Group Cog
+#     🎐 Reminder Command Group Cog
 # 🐾────────────────────────────────────────────
 class ReminderCommandGroup(commands.Cog):
     def __init__(self, bot: commands.Bot):

@@ -1,5 +1,4 @@
 import discord
-from regex import F
 
 from utils.logs.pretty_log import pretty_log
 

@@ -33,17 +33,25 @@ triggers = {
 _recent_edit_signatures: dict[tuple[int, str], datetime] = {}
 _EDIT_DEDUP_TTL_SECONDS = 180
 
-def has_slime_button(message: discord.Message) -> bool:
-    """Returns True if the message has a button with 'slime' in its label or emoji."""
-    for row in message.components:
-        for component in row.children:
-            if component.type is not discord.ComponentType.button:
+def _iter_message_buttons(message: discord.Message):
+    """Yield all button components, guarding against partial edit payloads
+    where the components slot was never set (AttributeError risk)."""
+    for row in getattr(message, "components", None) or []:
+        for component in getattr(row, "children", None) or []:
+            if component.type != discord.ComponentType.button:
                 continue
-            label = (component.label or "").lower()
-            emoji = getattr(component, "emoji", None)
-            emoji_name = (getattr(emoji, "name", "") or "").lower()
-            if "slime" in label or "slime" in emoji_name:
-                return True
+            yield component
+
+
+def has_slime_button(message: discord.Message) -> bool:
+    """Returns True if the message has a button with 'slime' in its label, emoji, or custom ID."""
+    for button in _iter_message_buttons(message):
+        label = (button.label or "").lower()
+        emoji = getattr(button, "emoji", None)
+        emoji_name = (getattr(emoji, "name", "") or "").lower()
+        custom_id = (getattr(button, "custom_id", "") or "").lower()
+        if "slime" in label or "slime" in emoji_name or "slime" in custom_id:
+            return True
     return False
 
 def get_number_after_exclamation(text):
@@ -53,12 +61,13 @@ def get_number_after_exclamation(text):
 def _build_component_signature(message: discord.Message) -> str:
     """Build a signature from message components so component-only edits are detected."""
     parts = []
-    for row in message.components:
-        for component in row.children:
+    for row in getattr(message, "components", None) or []:
+        for component in getattr(row, "children", None) or []:
             label = getattr(component, "label", None) or ""
             emoji = getattr(component, "emoji", None)
             emoji_name = (getattr(emoji, "name", "") or "") if emoji else ""
-            parts.append(f"{component.type.value}:{label}:{emoji_name}")
+            custom_id = getattr(component, "custom_id", None) or ""
+            parts.append(f"{component.type.value}:{label}:{emoji_name}:{custom_id}")
     return ",".join(parts)
 
 
@@ -118,8 +127,15 @@ class OnMessageEditCog(commands.Cog):
         if after.author.bot and after.author.id != POKEMEOW_APPLICATION_ID:
             return
 
-        content = after.content if after.content else ""
-        first_embed = after.embeds[0] if after.embeds else None
+        # Partial edit payloads (e.g. PokéMeow adding the slime button via a
+        # component-only update) omit embeds/content, so fall back to the
+        # cached before message for those fields.
+        content = after.content or before.content or ""
+        first_embed = (
+            after.embeds[0]
+            if after.embeds
+            else (before.embeds[0] if before.embeds else None)
+        )
         first_embed_author_text = (
             first_embed.author.name if first_embed and first_embed.author else ""
         )
@@ -191,31 +207,30 @@ class OnMessageEditCog(commands.Cog):
                    )
 
         # ————————————————————————————————
-        # ⚡ Pokemon Caught Listener
-        # ————————————————————————————————
-        # Process Pokemon or fish caught for Weekly Goal Tracker
-        if after.embeds:
-            embed_description = after.embeds[0].description or ""
-            if embed_description and triggers["caught_listener"] in embed_description:
-                await pokemon_caught_listener(
-                    bot=self.bot, before_message=before, message=after
-                )
-
-        # ————————————————————————————————
-        # 🩵 VNA Pokemon Caught Listener
+        # 🩵 Pokemon Caught Listener (Weekly/Monthly Goal Tracker + Slime Button)
         # ————————————————————————————————
         if first_embed:
             if triggers["caught_listener"] in first_embed_description:
-                slime_button = False
-                if has_slime_button(after):
-                    slime_button = True
+                slime_button = has_slime_button(after) or has_slime_button(before)
                 await pokemon_caught_listener(self.bot, before, after)
                 if slime_button:
                     pretty_log(
                         "info",
                         f"Detected slime button in Pokemon Caught embed for message ID: {after.id}",
                     )
-                    await slime_button_listener(self.bot, after)
+                    # Component-only partial edits lack reference/interaction data
+                    # needed for member resolution, so use the cached before message.
+                    slime_message = after if after.embeds else before
+                    await slime_button_listener(self.bot, slime_message)
+                else:
+                    pretty_log(
+                        "debug",
+                        f"Pokemon Caught edit without slime button | message_id={after.id} | "
+                        f"after_components=[{_build_component_signature(after)}] | "
+                        f"before_components=[{_build_component_signature(before)}]",
+                        label="MESSAGE",
+                        bot=self.bot,
+                    )
 
         # ————————————————————————————————
         # 🩵 VNA Weekly Stats Listener

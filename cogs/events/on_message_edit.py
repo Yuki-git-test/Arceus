@@ -34,14 +34,15 @@ _recent_edit_signatures: dict[tuple[int, str], datetime] = {}
 _EDIT_DEDUP_TTL_SECONDS = 180
 
 def has_slime_button(message: discord.Message) -> bool:
-    """Returns True if the message has a button with 'slime' in its label."""
+    """Returns True if the message has a button with 'slime' in its label or emoji."""
     for row in message.components:
         for component in row.children:
-            if (
-                component.type is discord.ComponentType.button
-                and component.label
-                and "slime" in component.label.lower()
-            ):
+            if component.type is not discord.ComponentType.button:
+                continue
+            label = (component.label or "").lower()
+            emoji = getattr(component, "emoji", None)
+            emoji_name = (getattr(emoji, "name", "") or "").lower()
+            if "slime" in label or "slime" in emoji_name:
                 return True
     return False
 
@@ -49,18 +50,31 @@ def get_number_after_exclamation(text):
     match = re.search(r'!\s*(\d+)', text)
     return match.group(1) if match else None
 
+def _build_component_signature(message: discord.Message) -> str:
+    """Build a signature from message components so component-only edits are detected."""
+    parts = []
+    for row in message.components:
+        for component in row.children:
+            label = getattr(component, "label", None) or ""
+            emoji = getattr(component, "emoji", None)
+            emoji_name = (getattr(emoji, "name", "") or "") if emoji else ""
+            parts.append(f"{component.type.value}:{label}:{emoji_name}")
+    return ",".join(parts)
+
+
 def _build_edit_signature(message: discord.Message) -> str:
     """Build a stable signature from content + first embed fields used by listeners."""
     content = message.content or ""
+    components = _build_component_signature(message)
     first_embed = message.embeds[0] if message.embeds else None
     if not first_embed:
-        return content
+        return "|".join([content, components])
 
     author = first_embed.author.name if first_embed.author else ""
     title = first_embed.title or ""
     description = first_embed.description or ""
     footer = first_embed.footer.text if first_embed.footer else ""
-    return "|".join([content, author, title, description, footer])
+    return "|".join([content, author, title, description, footer, components])
 
 
 # 🍭──────────────────────────────

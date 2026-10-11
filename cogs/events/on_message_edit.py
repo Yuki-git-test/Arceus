@@ -26,7 +26,7 @@ triggers = {
     "weekly_stats_command": "**Clan Weekly Stats — VN Allstar**",
     "monthly_stats_command": "**Clan Monthly Stats — VN Allstar**",
     "explore_listener": "⏱️ Your explore session has ended!",
-    "caught_listener": "You caught a",
+    "caught_listener": "You caught",
 }
 
 # Guard against duplicate edit dispatches for the same message payload.
@@ -182,7 +182,7 @@ class OnMessageEditCog(commands.Cog):
         # Process Pokemon or fish caught for Weekly Goal Tracker
         if after.embeds:
             embed_description = after.embeds[0].description or ""
-            if embed_description and "You caught a" in embed_description:
+            if embed_description and triggers["caught_listener"] in embed_description:
                 await pokemon_caught_listener(
                     bot=self.bot, before_message=before, message=after
                 )

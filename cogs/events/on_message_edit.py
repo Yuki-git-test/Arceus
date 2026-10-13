@@ -85,7 +85,24 @@ def _build_edit_signature(message: discord.Message) -> str:
     footer = first_embed.footer.text if first_embed.footer else ""
     return "|".join([content, author, title, description, footer, components])
 
+def get_number_after_exclamation_sz(text, embed=None):
+    texts = [text] if isinstance(text, str) else []
 
+    if embed is not None:
+        embeds = embed if isinstance(embed, (list, tuple)) else [embed]
+
+        for e in embeds:
+            texts.extend([
+                getattr(e, "title", "") or "",
+                getattr(e, "description", "") or "",
+            ])
+
+    for candidate in texts:
+        match = re.search(r'!(?!\s*-)\s*(\d+)\b', candidate)
+        if match:
+            return match.group(1)
+
+    return None
 # 🍭──────────────────────────────
 #   🎀 Event: On Message Edit
 # 🍭──────────────────────────────
@@ -289,15 +306,15 @@ class OnMessageEditCog(commands.Cog):
         # ————————————————————————————————
         if first_embed:
             if first_embed_footer_text and "use a safari ball to catch it" in first_embed_footer_text.lower():
-                if first_embed_author_text:
-                    pin_number = get_number_after_exclamation(first_embed_author_text)
-                    if pin_number:
-                        await pokemon_pin_numbers_listener(
-                            bot=self.bot,
-                            message=after,
-                            pin_number=pin_number,
-                            source="safari",
-                        )
+
+                pin_number = get_number_after_exclamation_sz(first_embed_author_text or "", first_embed)
+                if pin_number:
+                    await pokemon_pin_numbers_listener(
+                        bot=self.bot,
+                        message=after,
+                        pin_number=pin_number,
+                        source="safari",
+                    )
         # ————————————————————————————————
         # ⚡ Missing Number Quest Timer
         # ————————————————————————————————

@@ -307,7 +307,7 @@ class OnMessageEditCog(commands.Cog):
         if first_embed:
             if first_embed_footer_text and "use a safari ball to catch it" in first_embed_footer_text.lower():
 
-                pin_number = get_number_after_exclamation_sz(first_embed_author_text or "", first_embed)
+                pin_number = get_number_after_exclamation(first_embed_author_text)
                 if pin_number:
                     await pokemon_pin_numbers_listener(
                         bot=self.bot,

@@ -239,15 +239,7 @@ class OnMessageEditCog(commands.Cog):
                     # needed for member resolution, so use the cached before message.
                     slime_message = after if after.embeds else before
                     await slime_button_listener(self.bot, slime_message)
-                else:
-                    pretty_log(
-                        "debug",
-                        f"Pokemon Caught edit without slime button | message_id={after.id} | "
-                        f"after_components=[{_build_component_signature(after)}] | "
-                        f"before_components=[{_build_component_signature(before)}]",
-                        label="MESSAGE",
-                        bot=self.bot,
-                    )
+
 
         # ————————————————————————————————
         # 🩵 VNA Weekly Stats Listener
@@ -306,9 +298,16 @@ class OnMessageEditCog(commands.Cog):
         # ————————————————————————————————
         if first_embed:
             if first_embed_footer_text and "use a safari ball to catch it" in first_embed_footer_text.lower():
-
+                pretty_log(
+                    "info",
+                    f"Detected Safari Zone Pin Alert in {after.channel.name}",
+                )
                 pin_number = get_number_after_exclamation(first_embed_author_text)
                 if pin_number:
+                    pretty_log(
+                        "info",
+                        f"Detected Safari Zone Pin Number: {pin_number} in {after.channel.name}",
+                    )
                     await pokemon_pin_numbers_listener(
                         bot=self.bot,
                         message=after,

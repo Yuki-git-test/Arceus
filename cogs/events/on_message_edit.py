@@ -153,6 +153,8 @@ class OnMessageEditCog(commands.Cog):
             if after.embeds
             else (before.embeds[0] if before.embeds else None)
         )
+
+        first_embed_after = after.embeds[0] if after.embeds else None
         first_embed_author_text = (
             first_embed.author.name if first_embed and first_embed.author else ""
         )
@@ -161,6 +163,15 @@ class OnMessageEditCog(commands.Cog):
             first_embed.footer.text if first_embed and first_embed.footer else ""
         )
         first_embed_title = first_embed.title if first_embed else ""
+
+        # After embed parts
+        first_embed_after_author_text = (
+            first_embed_after.author.name if first_embed_after and first_embed_after.author else ""
+        )
+
+        first_embed_after_footer_text = (
+            first_embed_after.footer.text if first_embed_after and first_embed_after.footer else ""
+        )
 
         # ————————————————————————————————
         # 🩵 Guild Check — Skip DMs (runs in all guilds)
@@ -296,13 +307,13 @@ class OnMessageEditCog(commands.Cog):
         # ————————————————————————————————
         # ⚡ Safari Zone Pin Alert Listener
         # ————————————————————————————————
-        if first_embed:
-            if first_embed_footer_text and "use a safari ball to catch it" in first_embed_footer_text.lower():
+        if first_embed_after:
+            if first_embed_after_footer_text and "use a safari ball to catch it" in first_embed_after_footer_text.lower():
                 pretty_log(
                     "info",
                     f"Detected Safari Zone Pin Alert in {after.channel.name}",
                 )
-                pin_number = get_number_after_exclamation(first_embed_author_text)
+                pin_number = get_number_after_exclamation(first_embed_after_author_text)
                 if pin_number:
                     pretty_log(
                         "info",

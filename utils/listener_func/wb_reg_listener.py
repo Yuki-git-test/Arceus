@@ -240,6 +240,9 @@ async def register_wb_battle_reminder(
         if not notify_channel:
             notify_channel = public_channel
 
+    if notify_channel is None:
+        notify_channel = message.channel
+
     unix_seconds = extract_wb_unix_seconds(embed.description)
     boss_name = extract_wb_boss_name(embed.description)
 
@@ -284,6 +287,9 @@ async def centralize_wb_register_handler(
     Centralized handler for registering world boss battle reminders.
     This function can be called from different command handlers or listeners to ensure consistent behavior.
     """
+    if channel is None:
+        channel = message.channel
+
     now = int(time.time())
     seconds_until_fight = unix_seconds - now
 
@@ -369,6 +375,9 @@ async def handle_wb_register_command(
         notify_channel = guild.get_channel(channel_id)
         if not notify_channel:
             notify_channel = public_channel
+
+    if notify_channel is None:
+        notify_channel = message.channel
 
     boss_name, unix_seconds = extract_boss_and_timestamp(embed_description)
     if not boss_name and not unix_seconds:

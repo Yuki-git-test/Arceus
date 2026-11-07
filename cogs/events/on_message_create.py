@@ -472,10 +472,6 @@ class MessageCreateListener(commands.Cog):
             # ⚡ EV Training Listener
             # ————————————————————————————————
             if content and triggers["ev_training"] in content:
-                pretty_log(
-                    "info",
-                    f"Matched EV Training Listener | Message ID: {message.id} | Channel: {message.channel.name}",
-                )
                 try:
                     await handle_pokemeow_battle_message(bot=self.bot, message=message)
                 except Exception as e:

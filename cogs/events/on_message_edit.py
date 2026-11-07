@@ -12,13 +12,14 @@ from utils.listener_func.fish_spawn_listener import fish_spawn_listener
 from utils.listener_func.monthly_stats_listener import monthly_stats_listener
 from utils.listener_func.pin_timer_listener import pin_timer_listener
 from utils.listener_func.pokemon_caught_listener import pokemon_caught_listener
-from utils.listener_func.pokemon_pin_numbers_listener import \
-    pokemon_pin_numbers_listener
+from utils.listener_func.pokemon_pin_numbers_listener import (
+    pokemon_pin_numbers_listener,
+)
 from utils.listener_func.slime_button_listener import slime_button_listener
 from utils.listener_func.wb_reg_listener import handle_wb_register_command
 from utils.listener_func.weekly_stats_listener import weekly_stats_listener
 from utils.logs.pretty_log import pretty_log
-
+from utils.listener_func.lab_pc_unlock_listener import lab_pc_unlock_listener
 # ️────────────────────────────────────────────
 #        ⚔️ Message Triggers
 # ️────────────────────────────────────────────
@@ -32,6 +33,7 @@ triggers = {
 # Guard against duplicate edit dispatches for the same message payload.
 _recent_edit_signatures: dict[tuple[int, str], datetime] = {}
 _EDIT_DEDUP_TTL_SECONDS = 180
+
 
 def _iter_message_buttons(message: discord.Message):
     """Yield all button components, guarding against partial edit payloads
@@ -54,9 +56,11 @@ def has_slime_button(message: discord.Message) -> bool:
             return True
     return False
 
+
 def get_number_after_exclamation(text):
-    match = re.search(r'!\s*(\d+)', text)
+    match = re.search(r"!\s*(\d+)", text)
     return match.group(1) if match else None
+
 
 def _build_component_signature(message: discord.Message) -> str:
     """Build a signature from message components so component-only edits are detected."""
@@ -85,6 +89,7 @@ def _build_edit_signature(message: discord.Message) -> str:
     footer = first_embed.footer.text if first_embed.footer else ""
     return "|".join([content, author, title, description, footer, components])
 
+
 def get_number_after_exclamation_sz(text, embed=None):
     texts = [text] if isinstance(text, str) else []
 
@@ -92,17 +97,21 @@ def get_number_after_exclamation_sz(text, embed=None):
         embeds = embed if isinstance(embed, (list, tuple)) else [embed]
 
         for e in embeds:
-            texts.extend([
-                getattr(e, "title", "") or "",
-                getattr(e, "description", "") or "",
-            ])
+            texts.extend(
+                [
+                    getattr(e, "title", "") or "",
+                    getattr(e, "description", "") or "",
+                ]
+            )
 
     for candidate in texts:
-        match = re.search(r'!(?!\s*-)\s*(\d+)\b', candidate)
+        match = re.search(r"!(?!\s*-)\s*(\d+)\b", candidate)
         if match:
             return match.group(1)
 
     return None
+
+
 # 🍭──────────────────────────────
 #   🎀 Event: On Message Edit
 # 🍭──────────────────────────────
@@ -152,19 +161,23 @@ class OnMessageEditCog(commands.Cog):
         first_embed_author_text = (
             first_embed.author.name if first_embed and first_embed.author else ""
         )
-        first_embed_description = first_embed.description if first_embed else ""
+        first_embed_description = (first_embed.description or "") if first_embed else ""
         first_embed_footer_text = (
             first_embed.footer.text if first_embed and first_embed.footer else ""
         )
-        first_embed_title = first_embed.title if first_embed else ""
+        first_embed_title = (first_embed.title or "") if first_embed else ""
 
         # After embed parts
         first_embed_after_author_text = (
-            first_embed_after.author.name if first_embed_after and first_embed_after.author else ""
+            first_embed_after.author.name
+            if first_embed_after and first_embed_after.author
+            else ""
         )
 
         first_embed_after_footer_text = (
-            first_embed_after.footer.text if first_embed_after and first_embed_after.footer else ""
+            first_embed_after.footer.text
+            if first_embed_after and first_embed_after.footer
+            else ""
         )
 
         # ————————————————————————————————
@@ -218,15 +231,18 @@ class OnMessageEditCog(commands.Cog):
         # ⚡ Fish Pin Alert
         # ————————————————————————————————
         if after.embeds:
-           if first_embed_author_text and "a wild pokemon appeared" in first_embed_author_text.lower():
-               pin_number = get_number_after_exclamation(first_embed_author_text)
-               if pin_number:
-                   await pokemon_pin_numbers_listener(
-                       bot=self.bot,
-                       message=after,
-                       pin_number=pin_number,
-                       source="fish",
-                   )
+            if (
+                first_embed_author_text
+                and "a wild pokemon appeared" in first_embed_author_text.lower()
+            ):
+                pin_number = get_number_after_exclamation(first_embed_author_text)
+                if pin_number:
+                    await pokemon_pin_numbers_listener(
+                        bot=self.bot,
+                        message=after,
+                        pin_number=pin_number,
+                        source="fish",
+                    )
 
         # ————————————————————————————————
         # 🩵 Pokemon Caught Listener (Weekly/Monthly Goal Tracker + Slime Button)
@@ -244,7 +260,6 @@ class OnMessageEditCog(commands.Cog):
                     # needed for member resolution, so use the cached before message.
                     slime_message = after if after.embeds else before
                     await slime_button_listener(self.bot, slime_message)
-
 
         # ————————————————————————————————
         # 🩵 VNA Weekly Stats Listener
@@ -302,7 +317,11 @@ class OnMessageEditCog(commands.Cog):
         # ⚡ Safari Zone Pin Alert Listener
         # ————————————————————————————————
         if first_embed_after:
-            if first_embed_after_footer_text and "use a safari ball to catch it" in first_embed_after_footer_text.lower():
+            if (
+                first_embed_after_footer_text
+                and "use a safari ball to catch it"
+                in first_embed_after_footer_text.lower()
+            ):
                 pretty_log(
                     "info",
                     f"Detected Safari Zone Pin Alert in {after.channel.name}",
@@ -324,12 +343,24 @@ class OnMessageEditCog(commands.Cog):
         # ————————————————————————————————
         if first_embed:
             if first_embed_title and "the missing numbers" in first_embed_title.lower():
-                if first_embed_description and "you can submit another pin" in first_embed_description.lower():
-                    pretty_log(tag="info", message=f"Missing Number Quest Timer triggered in {after.channel.name}")
+                if (
+                    first_embed_description
+                    and "you can submit another pin" in first_embed_description.lower()
+                ):
+                    pretty_log(
+                        tag="info",
+                        message=f"Missing Number Quest Timer triggered in {after.channel.name}",
+                    )
                     await pin_timer_listener(
                         bot=self.bot,
                         message=after,
                     )
+        # ————————————————————————————————
+        # ⚡ Lab PC Unlock Listener
+        # ————————————————————————————————
+        if first_embed:
+            if first_embed_title and "lab pc unlocked" in first_embed_title.lower():
+                await lab_pc_unlock_listener(bot=self.bot, message=after)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(OnMessageEditCog(bot))

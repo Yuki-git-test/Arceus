@@ -7,7 +7,9 @@ from discord.ext import commands
 from .get_pokemon_gif import get_pokemon_gif
 from utils.functions.pokemon_func import get_display_name
 from utils.logs.pretty_log import pretty_log
+from utils.logs.debug_log import debug_log, enable_debug
 
+#enable_debug(f"{__name__}.build_ev_tracker_embed")
 async def build_ev_tracker_embed(
     bot: commands.Bot,
     tracked_data: dict,
@@ -26,13 +28,23 @@ async def build_ev_tracker_embed(
     Build a flexible EV tracker embed with spacing and line separators.
     The title prefix is now included in the author name instead of the embed title.
     """
+    debug_log(
+        f"Building EV tracker embed for {tracked_data.get('pokemon', 'unknown Pokemon')}"
+    )
     is_completed = False  # Track if all goals are completed
     if goals is None:
         goals = tracked_data.get("goals", {})
+        debug_log(f"Using goals from tracked data: {goals}")
+    else:
+        debug_log(f"Using provided goals: {goals}")
 
     stats_order = ["hp", "atk", "spa", "def", "spd", "spe"]
     total_current = sum(evs.get(s, 0) for s in stats_order)
     display_total_current = min(total_current, max_total_evs)
+    debug_log(
+        f"Current EV total: {total_current}; displayed total: "
+        f"{display_total_current}/{max_total_evs}"
+    )
 
     # Mini progress bar helper
     def ev_bar(current, max_val=252, length=5):
@@ -74,6 +86,7 @@ async def build_ev_tracker_embed(
     stats_str = f"\n\n".join(stats_lines)
     display_pokemon_name = get_display_name(tracked_data["pokemon"], dex=True)
     pokemon = f"{display_pokemon_name}"
+    debug_log(f"Formatted EV stat lines: {len(stats_lines)}")
     # Build description with spacing
     description = (
         f"{pokemon}\n\n"
@@ -92,7 +105,9 @@ async def build_ev_tracker_embed(
 
     if gif_url:
         embed.set_thumbnail(url=gif_url)
+        debug_log(f"Added Pokemon GIF thumbnail for {pokemon_name}")
     else:
+        debug_log(f"No Pokemon GIF found for {pokemon_name}")
         pretty_log(
             tag="error",
             message=f"Cannot find Pokemon GIF for '{pokemon_name}'",
@@ -101,6 +116,7 @@ async def build_ev_tracker_embed(
     # Set author with title prefix next to username
     member = guild.get_member(user_id) if guild else None
     avatar_url = member.display_avatar.url if member else None
+    debug_log(f"Resolved guild member for embed author: {member is not None}")
     embed.set_author(
         name=f"{winner_name or tracked_data['user_name']}'s {title_prefix}",
         icon_url=avatar_url,
@@ -117,6 +133,7 @@ async def build_ev_tracker_embed(
             name="🔄 Updated Stats", value="\n".join(summary_lines), inline=False
         )
 
+    debug_log(f"Finished building EV tracker embed; completed={is_completed}")
     return embed, is_completed
 
 

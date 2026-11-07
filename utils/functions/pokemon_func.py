@@ -15,6 +15,17 @@ from utils.logs.debug_log import debug_enabled, debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 
 # ✨───────────────────────────────────────────────
+#            📦 Precomputed Lookup Sets
+# ✨───────────────────────────────────────────────
+7
+legendary_set = {mon.lower() for mon in legendary_mons}
+superrare_set = {mon.lower() for mon in superrare_mons}
+rare_set = {mon.lower() for mon in rare_mons}
+uncommon_set = {mon.lower() for mon in uncommon_mons}
+common_set = {mon.lower() for mon in common_mons}
+exclusive_set = {mon.lower() for mon in exclusive_mons}
+
+# ✨───────────────────────────────────────────────
 #            🧹 Name Formatting
 # ✨───────────────────────────────────────────────
 
@@ -124,15 +135,30 @@ def format_price_w_coin(n: int) -> str:
     pokecoin = VN_ALLSTARS_EMOJIS.vna_pokecoin
     return f"{pokecoin} {n:,}"
 
+RARITY_W_LONG_NAME = ["shiny gigantamax", "gigantamax"]
 
-def get_display_name(pokemon_name: str, dex: bool = False) -> str:
+def get_display_name(
+    pokemon_name: str, dex: bool = False, is_long_name: bool = False
+) -> str:
     """Returns the display name of a Pokémon, optionally including the dex number."""
 
     rarity = get_rarity(pokemon_name)
     rarity_emoji = rarity_meta.get(rarity, {}).get("emoji", "") if rarity else ""
+
     # Strip prefixes for display name to avoid clutter (e.g., "Shiny", "Mega", etc.)
-    pokemon_name = strip_prefixes(pokemon_name)
-    display_name = f"{rarity_emoji} {pokemon_name}".strip()
+    stripped_name = strip_prefixes(pokemon_name)
+
+    if rarity in RARITY_W_LONG_NAME or is_long_name:
+        is_long_name = True
+    else:
+        is_long_name = False
+
+    if is_long_name:
+        formatted_name = pokemon_name.title()
+    else:
+        formatted_name = stripped_name.title()
+
+    display_name = f"{rarity_emoji} {formatted_name}".strip()
 
     if dex:
         dex_number = get_dex_number_by_name(pokemon_name)
@@ -162,35 +188,44 @@ def is_mon_exclusive(pokemon: str) -> bool:
 
 
 def get_rarity(pokemon: str):
-    """Determines the rarity of a given Pokemon based on the name"""
+    """Determines Pokémon rarity from its name."""
 
     name = pokemon.lower()
+
     if "golden" in name:
         return "golden"
-    elif "shiny" in name and "gigantamax" in name:
-        return "sgmax"
-    elif "shiny" in name and "mega" in name:
-        return "smega"
-    elif "shiny" in name:
+
+    if "shiny" in name and "gigantamax" in name:
+        return "shiny gigantamax"
+
+    if "shiny" in name and "mega" in name:
+        return "shiny mega"
+
+    if "shiny" in name:
         return "shiny"
-    elif "gigantamax" in name:
-        return "gmax"
-    elif "mega" in name and not "yanmega" in name and not "meganium" in name:
+
+    if "gigantamax" in name:
+        return "gigantamax"
+
+    if "mega" in name and "yanmega" not in name and "meganium" not in name:
         return "mega"
 
-    # Fallback to the list (case-insensitive)
-    elif name in (mon.lower() for mon in legendary_mons):
+    if name in legendary_set:
         return "legendary"
-    elif name in (mon.lower() for mon in superrare_mons):
-        return "super rare"
-    elif name in (mon.lower() for mon in rare_mons):
+
+    if name in superrare_set:
+        return "superrare"
+
+    if name in rare_set:
         return "rare"
-    elif name in (mon.lower() for mon in uncommon_mons):
+
+    if name in uncommon_set:
         return "uncommon"
-    elif name in (mon.lower() for mon in common_mons):
+
+    if name in common_set:
         return "common"
-    else:
-        return None
+
+    return None
 
 
 def format_names_for_market_value_lookup(pokemon_name: str):

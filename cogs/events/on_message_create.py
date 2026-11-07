@@ -616,6 +616,73 @@ class MessageCreateListener(commands.Cog):
                             f"Failed processing missing number claim from message ID {getattr(message, 'id', 'unknown')}: {e}",
                         )
 
+            # 🔧───────────────────────────────────────────────🔧
+            # 🔧    🩵 World Boss Spawn Listener
+            # 🔧───────────────────────────────────────────────🔧
+            if message.content:
+                if triggers["wb_spawn"] in message.content.lower():
+                    pretty_log(
+                        "info",
+                        f"Detected world boss spawn message from PokéMeow bot: Message ID {message.id}",
+                        label="World Boss Spawn Listener",
+                    )
+                    await extract_boss_from_wb_spawn_command(
+                        bot=self.bot, message=message
+                    )
+
+            # 🔧───────────────────────────────────────────────🔧
+            # 🔧    🩵 World Boss Command Embed Listener
+            # 🔧───────────────────────────────────────────────🔧
+            if message.embeds:
+                embed_title = (
+                    message.embeds[0].title if message.embeds[0].title else ""
+                )
+                if triggers["wb_command"] in embed_title.lower():
+                    pretty_log(
+                        "info",
+                        f"Detected world boss command embed from PokéMeow bot: Message ID {message.id}",
+                        label="World Boss Command Embed Listener",
+                    )
+                    await extract_boss_from_wb_command_embed(
+                        bot=self.bot, message=message
+                    )
+
+            # 🔧───────────────────────────────────────────────🔧
+            # 🔧    🩵 EE Near Spawn Alert Checker
+            # 🔧───────────────────────────────────────────────🔧
+            if message.embeds:
+                embed_title = (
+                    message.embeds[0].title if message.embeds[0].title else ""
+                )
+                if triggers["ee_vote_checker"] in embed_title.lower():
+                    pretty_log(
+                        "info",
+                        f"Detected EE vote checker embed from PokéMeow bot: Message ID {message.id}",
+                        label="EE Near Spawn Alert Checker",
+                    )
+                    await check_ee_near_spawn_alert(bot=self.bot, message=message)
+
+            # ————————————————————————————————
+            # 🩵 Secret Santa Listeners
+            # ————————————————————————————————
+            if message.content:
+                # Check if all ss phrases are in the message content
+                if all(
+                    phrase in message.content for phrase in secret_santa_phrases
+                ):
+                    pretty_log(
+                        "info",
+                        f"🎅 Matched Secret Santa Listener | Message ID: {message.id} | Channel: {message.channel.name}",
+                    )
+                    await secret_santa_listener(bot=self.bot, message=message)
+            # Secret Santa Timer Listener
+            if message.content:
+                if "❌ You may send out another gift on" in message.content:
+                    pretty_log(
+                        "info",
+                        f"🎅 Matched Secret Santa Timer Listener | Message ID: {message.id} | Channel: {message.channel.name}",
+                    )
+                    await secret_santa_timer_listener(bot=self.bot, message=message)
 
             # ————————————————————————————————
             # 🩵 VNA-only Listeners
@@ -652,73 +719,6 @@ class MessageCreateListener(commands.Cog):
                     )
                     await incense_depleted_handler(bot=self.bot, message=message)
 
-                # 🔧───────────────────────────────────────────────🔧
-                # 🔧    🩵 World Boss Spawn Listener
-                # 🔧───────────────────────────────────────────────🔧
-                if message.content:
-                    if triggers["wb_spawn"] in message.content.lower():
-                        pretty_log(
-                            "info",
-                            f"Detected world boss spawn message from PokéMeow bot: Message ID {message.id}",
-                            label="World Boss Spawn Listener",
-                        )
-                        await extract_boss_from_wb_spawn_command(
-                            bot=self.bot, message=message
-                        )
-
-                # 🔧───────────────────────────────────────────────🔧
-                # 🔧    🩵 World Boss Command Embed Listener
-                # 🔧───────────────────────────────────────────────🔧
-                if message.embeds:
-                    embed_title = (
-                        message.embeds[0].title if message.embeds[0].title else ""
-                    )
-                    if triggers["wb_command"] in embed_title.lower():
-                        pretty_log(
-                            "info",
-                            f"Detected world boss command embed from PokéMeow bot: Message ID {message.id}",
-                            label="World Boss Command Embed Listener",
-                        )
-                        await extract_boss_from_wb_command_embed(
-                            bot=self.bot, message=message
-                        )
-
-                # 🔧───────────────────────────────────────────────🔧
-                # 🔧    🩵 EE Near Spawn Alert Checker
-                # 🔧───────────────────────────────────────────────🔧
-                if message.embeds:
-                    embed_title = (
-                        message.embeds[0].title if message.embeds[0].title else ""
-                    )
-                    if triggers["ee_vote_checker"] in embed_title.lower():
-                        pretty_log(
-                            "info",
-                            f"Detected EE vote checker embed from PokéMeow bot: Message ID {message.id}",
-                            label="EE Near Spawn Alert Checker",
-                        )
-                        await check_ee_near_spawn_alert(bot=self.bot, message=message)
-
-                # ————————————————————————————————
-                # 🩵 Secret Santa Listeners
-                # ————————————————————————————————
-                if message.content:
-                    # Check if all ss phrases are in the message content
-                    if all(
-                        phrase in message.content for phrase in secret_santa_phrases
-                    ):
-                        pretty_log(
-                            "info",
-                            f"🎅 Matched Secret Santa Listener | Message ID: {message.id} | Channel: {message.channel.name}",
-                        )
-                        await secret_santa_listener(bot=self.bot, message=message)
-                # Secret Santa Timer Listener
-                if message.content:
-                    if "❌ You may send out another gift on" in message.content:
-                        pretty_log(
-                            "info",
-                            f"🎅 Matched Secret Santa Timer Listener | Message ID: {message.id} | Channel: {message.channel.name}",
-                        )
-                        await secret_santa_timer_listener(bot=self.bot, message=message)
                 # ————————————————————————————————
                 # 🩵 Shiny Bonus Listener
                 # ————————————————————————————————

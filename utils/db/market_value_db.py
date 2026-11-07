@@ -3,7 +3,6 @@
 # 🟣────────────────────────────────────────────
 
 from datetime import datetime
-from dis import disco
 
 import discord
 

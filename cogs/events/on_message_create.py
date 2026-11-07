@@ -4,52 +4,76 @@ from datetime import datetime, timezone
 import discord
 from discord.ext import commands
 
-from Constants.clan_wars_constants import (CLAN_WARS_SERVER_ID,
-                                           CLAN_WARS_TEXT_CHANNELS)
-from Constants.variables import (CC_BUMP_CHANNEL_ID, CC_GUILD_ID,
-                                 CC_PROMO_CHANNEL_ID, POKEMEOW_APPLICATION_ID,
-                                 PublicChannels, Server)
+from Constants.clan_wars_constants import CLAN_WARS_SERVER_ID, CLAN_WARS_TEXT_CHANNELS
+from Constants.variables import (
+    CC_BUMP_CHANNEL_ID,
+    CC_GUILD_ID,
+    CC_PROMO_CHANNEL_ID,
+    POKEMEOW_APPLICATION_ID,
+    PublicChannels,
+    Server,
+)
 from Constants.vn_allstars_constants import VN_ALLSTARS_TEXT_CHANNELS
 from utils.AR.promo import promo_team
 from utils.clan_wars.stats_listener import stats_command_listener
+
 # ————————————————————————————————
 # 🩵 Import Listener Functions
 # ————————————————————————————————
+from utils.listener_func import promo_claim_listener
 from utils.listener_func.battle_timer import battle_timer_handler
 from utils.listener_func.berry_listener import berry_listener
 from utils.listener_func.berry_water_listener import (
-    handle_berry_water_message, handle_mulch_message)
+    handle_berry_water_message,
+    handle_mulch_message,
+)
 from utils.listener_func.bud_ev_listener import handle_pokemeow_embed_sync
 from utils.listener_func.cc_promo_team_listener import promo_team_listener
 from utils.listener_func.ee_spawn_listener import (
-    check_cc_bump_reminder, check_ee_near_spawn_alert,
-    extract_boss_from_wb_command_embed, extract_boss_from_wb_spawn_command)
-from utils.listener_func.ev_tracker_listener import \
-    handle_pokemeow_battle_message
-from utils.listener_func.faction_ball_listener import \
-    extract_faction_ball_from_fa
+    check_cc_bump_reminder,
+    check_ee_near_spawn_alert,
+    extract_boss_from_wb_command_embed,
+    extract_boss_from_wb_spawn_command,
+)
+from utils.listener_func.ev_tracker_listener import handle_pokemeow_battle_message
+from utils.listener_func.faction_ball_listener import extract_faction_ball_from_fa
 from utils.listener_func.fish_timer import fish_timer_handler
-from utils.listener_func.incense_listener import (incense_command_handler,
-                                                  incense_depleted_handler,
-                                                  incense_use_handler,
-                                                  server_has_incense_handler)
+from utils.listener_func.golden_stone_listener import golden_stone_listener
+from utils.listener_func.incense_listener import (
+    incense_command_handler,
+    incense_depleted_handler,
+    incense_use_handler,
+    server_has_incense_handler,
+)
 from utils.listener_func.market_view_listener import market_view_listener
+from utils.listener_func.missing_numbers_rs import send_missing_number_claim_to_rs
 from utils.listener_func.monthly_stats_listener import monthly_stats_listener
 from utils.listener_func.pin_command_listener import pin_command_listener
-from utils.listener_func.pokemon_pin_numbers_listener import \
-    pokemon_pin_numbers_listener
+from utils.listener_func.pokemon_pin_numbers_listener import (
+    pokemon_pin_numbers_listener,
+)
 from utils.listener_func.pokemon_spawn_listener import pokemon_spawn_listener
 from utils.listener_func.pokemon_timer import pokemon_timer_handler
 from utils.listener_func.pokespawn_listener import as_spawn_ping
+from utils.listener_func.res_egg_listener import handle_res_egg_hatch
 from utils.listener_func.secret_santa_listener import (
-    secret_santa_listener, secret_santa_timer_listener)
+    secret_santa_listener,
+    secret_santa_timer_listener,
+)
 from utils.listener_func.shiny_bonus_listener import (
-    handle_pokemeow_global_bonus, read_shiny_bonus_timestamp_from_cc_channel)
+    handle_pokemeow_global_bonus,
+    read_shiny_bonus_timestamp_from_cc_channel,
+)
 from utils.listener_func.special_battle_npc_listener import (
-    challenge_unavailable_listener, special_battle_npc_listener,
-    special_battle_npc_timer_listener)
+    challenge_unavailable_listener,
+    special_battle_npc_listener,
+    special_battle_npc_timer_listener,
+)
+from utils.listener_func.unown_unlocks import process_unown_unlock
 from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
 from utils.listener_func.weekly_stats_listener import weekly_stats_listener
+from utils.listener_func.icon_unlock_listener import icon_unlock_listener
+from utils.listener_func.code_use_listener import send_code_claim_to_rs
 # ————————————————————————————————
 # 🩵 Import DB Functions
 #  ———————————————————————————————
@@ -82,6 +106,9 @@ triggers = {
     "global_bonus": "Global bonuses",
     "weekly_stats_command": "**Clan Weekly Stats — VN Allstar**",
     "monthly_stats_command": "**Clan Monthly Stats — VN Allstar**",
+    "golden_stone": "to claim your <:golden_",
+    "battle_frontier_ach": "🎖️ you may continue your",
+    "icon_unlock": "as your icon with `/battle set-icon",
 }
 secret_santa_phrases = [
     "You sent <:PokeCoin:666879070650236928>",
@@ -89,6 +116,7 @@ secret_santa_phrases = [
     "Your odds to receive items was boosted by",
     "You received",
 ]
+CODE_USE_PATTERN = re.compile(r"\byou used a code to claim\b", re.IGNORECASE)
 
 CC_SHINY_BONUS_CHANNEL_ID = 1457171231445876746
 UNOWN_NPC_NA_LINE = ":x: You can only challenge the **Alph Scientist** once every"
@@ -98,11 +126,10 @@ _recent_processed_message_ids: dict[int, datetime] = {}
 _MESSAGE_DEDUP_TTL_SECONDS = 180
 
 
-
-
 def get_number_after_exclamation(text):
-    match = re.search(r'!\s*(\d+)', text)
+    match = re.search(r"!\s*(\d+)", text)
     return match.group(1) if match else None
+
 
 # 🐾────────────────────────────────────────────
 #        🌸 Message Create Listener Cog
@@ -209,7 +236,7 @@ class MessageCreateListener(commands.Cog):
             first_embed_title = (
                 first_embed.title if first_embed and first_embed.title else ""
             )
-
+            lowered_content = content.lower() if content else ""
             # ————————————————————————————————
             # 🩵 Special Battle NPC Listeners (Lusamine)
             # ————————————————————————————————
@@ -223,9 +250,14 @@ class MessageCreateListener(commands.Cog):
                         "info",
                         f"🔹 Matched Special Battle NPC Listener | message_id={message.id}",
                     )
-                    await special_battle_npc_listener(bot=self.bot, message=message, npc_name="lusamine")
+                    await special_battle_npc_listener(
+                        bot=self.bot, message=message, npc_name="lusamine"
+                    )
             if first_embed:
-                if first_embed.title and "Lusamine challenge unavailable" in first_embed.title:
+                if (
+                    first_embed.title
+                    and "Lusamine challenge unavailable" in first_embed.title
+                ):
                     if (
                         first_embed.description
                         and "You can challenge Lusamine again"
@@ -314,7 +346,7 @@ class MessageCreateListener(commands.Cog):
                 if pin_number:
                     pretty_log(
                         "info",
-                        f"Detected pin number: {pin_number} for message ID: {message.id}"
+                        f"Detected pin number: {pin_number} for message ID: {message.id}",
                     )
                     await pokemon_pin_numbers_listener(
                         bot=self.bot,
@@ -322,7 +354,6 @@ class MessageCreateListener(commands.Cog):
                         pin_number=pin_number,
                         source="pokemon",
                     )
-
 
             # ————————————————————————————————
             # 🩵 Fish Timer
@@ -381,9 +412,7 @@ class MessageCreateListener(commands.Cog):
                 if first_embed.author and any(
                     f in first_embed.author.name.lower() for f in FACTIONS
                 ):
-                    await extract_faction_ball_from_fa(
-                        bot=self.bot, message=message
-                    )
+                    await extract_faction_ball_from_fa(bot=self.bot, message=message)
             # 🔧───────────────────────────────────────────────🔧
             # 🔧    🩵 WB Battle Reminder Registration Listener
             # 🔧───────────────────────────────────────────────🔧
@@ -394,9 +423,7 @@ class MessageCreateListener(commands.Cog):
                         in first_embed_description
                         and ";wb fight" in first_embed_description
                     ):
-                        await register_wb_battle_reminder(
-                            bot=self.bot, message=message
-                        )
+                        await register_wb_battle_reminder(bot=self.bot, message=message)
             # ————————————————————————————————
             # 🩵 Special Battle NPC Listeners (ALph Scientist)
             # ————————————————————————————————
@@ -410,7 +437,9 @@ class MessageCreateListener(commands.Cog):
                         "info",
                         f"🔹 Matched Special Battle NPC Listener | message_id={message.id}",
                     )
-                    await special_battle_npc_listener(bot=self.bot, message=message, npc_name="alph_scientist")
+                    await special_battle_npc_listener(
+                        bot=self.bot, message=message, npc_name="alph_scientist"
+                    )
             if content and UNOWN_NPC_NA_LINE in content:
                 pretty_log(
                     "info",
@@ -448,9 +477,7 @@ class MessageCreateListener(commands.Cog):
                     f"Matched EV Training Listener | Message ID: {message.id} | Channel: {message.channel.name}",
                 )
                 try:
-                    await handle_pokemeow_battle_message(
-                        bot=self.bot, message=message
-                    )
+                    await handle_pokemeow_battle_message(bot=self.bot, message=message)
                 except Exception as e:
                     pretty_log(
                         "error",
@@ -471,6 +498,128 @@ class MessageCreateListener(commands.Cog):
                     message=f"Processing market view message with embed author: {first_embed_author}",
                 )
                 await market_view_listener(self.bot, message)
+
+            # 💙───────────────────────────────────────────────💙
+            # 🫧 Research Lab Egg Hatch Processing
+            # 💙───────────────────────────────────────────────💙
+            if first_embed and "research lab hatch" in first_embed_author.lower():
+                try:
+                    pretty_log(
+                        "ready",
+                        f"Processing Research Lab egg hatch from message ID {getattr(message, 'id', 'unknown')}",
+                    )
+                    await handle_res_egg_hatch(bot=self.bot, message=message)
+                    pretty_log(
+                        "ready",
+                        f"Successfully processed Research Lab egg hatch from message ID {getattr(message, 'id', 'unknown')}",
+                    )
+                except Exception as e:
+                    pretty_log(
+                        "critical",
+                        f"Failed processing Research Lab egg hatch from message ID {getattr(message, 'id', 'unknown')}: {e}",
+                    )
+            # ————————————————————————————————
+            # 🩵 Golden Stone Listener
+            # ————————————————————————————————
+            if content and triggers["golden_stone"] in content.lower():
+                try:
+                    await golden_stone_listener(bot=self.bot, message=message)
+                    pretty_log(
+                        "ready",
+                        f"Successfully processed golden stone claim from message ID {getattr(message, 'id', 'unknown')}",
+                    )
+                except Exception as e:
+                    pretty_log(
+                        "critical",
+                        f"Failed processing golden stone claim from message ID {getattr(message, 'id', 'unknown')}: {e}",
+                    )
+
+            # ————————————————————————————————
+            # 🩵 Icon Unlock Handler
+            # ————————————————————————————————
+            if triggers["icon_unlock"].lower() in first_embed_description.lower():
+                pretty_log(
+                    tag="info",
+                    message=f"Detected icon unlock message in {message.channel.name}",
+                )
+                await icon_unlock_listener(self.bot, message)
+
+            # 💙───────────────────────────────────────────────💙
+            # 🫧 Promo Claim Processing
+            # 💙───────────────────────────────────────────────💙
+            if first_embed and first_embed_author and first_embed_description:
+                if (
+                    "spent" in first_embed_description.lower()
+                    and "claimed a" in first_embed_description.lower()
+                    and "PokeMeow Special Golden Promotionals" in first_embed_author
+                ):
+                    try:
+                        pretty_log(
+                            "ready",
+                            f"Processing promo claim from message ID {getattr(message, 'id', 'unknown')}",
+                        )
+                        await promo_claim_listener(bot=self.bot, message=message)
+                        pretty_log(
+                            "ready",
+                            f"Successfully processed promo claim from message ID {getattr(message, 'id', 'unknown')}",
+                        )
+                    except Exception as e:
+                        pretty_log(
+                            "❌ ERROR",
+                            f"Failed processing promo claim from message ID {getattr(message, 'id', 'unknown')}: {e}",
+                        )
+            # ————————————————————————————————
+            # 🩵 Code Claim Listener
+            # ————————————————————————————————
+            if content and CODE_USE_PATTERN.search(content):
+                try:
+                    await send_code_claim_to_rs(bot=self.bot, message=message)
+                    pretty_log(
+                        "ready",
+                        f"Successfully processed code claim from message ID {getattr(message, 'id', 'unknown')}",
+                    )
+                except Exception as e:
+                    pretty_log(
+                        "critical",
+                        f"Failed processing code claim from message ID {getattr(message, 'id', 'unknown')}: {e}",
+                    )
+            # 🌟────────────────────────────────────────────
+            #   💠 Unown Unlock Handler
+            # 🌟────────────────────────────────────────────
+            if (
+                content
+                and "unown ruins reward:" in lowered_content
+                and ("<:superrare:" in lowered_content or "<:shiny:" in lowered_content)
+            ):
+                try:
+                    await process_unown_unlock(bot=self.bot, message=message)
+                    pretty_log(
+                        "ready",
+                        f"Successfully processed Unown unlock from message ID {getattr(message, 'id', 'unknown')}",
+                    )
+                except Exception as e:
+                    pretty_log(
+                        "critical",
+                        f"Failed processing Unown unlock from message ID {getattr(message, 'id', 'unknown')}: {e}",
+                    )
+
+            # ————————————————————————————————
+            # 🩵 Missing Number Claim Handler
+            # ————————————————————————————————
+            if first_embed and first_embed_title:
+                if "the missing numbers completed" in first_embed_title.lower():
+                    try:
+                        await send_missing_number_claim_to_rs(bot=self.bot, message=message)
+                        pretty_log(
+                            "ready",
+                            f"Successfully processed missing number claim from message ID {getattr(message, 'id', 'unknown')}",
+                        )
+                    except Exception as e:
+                        pretty_log(
+                            "critical",
+                            f"Failed processing missing number claim from message ID {getattr(message, 'id', 'unknown')}: {e}",
+                        )
+
 
             # ————————————————————————————————
             # 🩵 VNA-only Listeners

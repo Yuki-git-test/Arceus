@@ -1,3 +1,8 @@
+import re
+
+import discord
+
+from Constants.aesthetic import Emojis
 from Constants.paldea_galar_dict import dex, rarity_meta
 from Constants.pokemons import *
 from Constants.vn_allstars_constants import VN_ALLSTARS_EMOJIS
@@ -234,3 +239,51 @@ def is_mon_in_game(pokemon_name: str) -> bool:
     if market_value is not None:
         return True
     return False
+
+
+def format_discord_timestamp(value):
+    if value is None:
+        return "N/A"
+    if isinstance(value, (int, float)):
+        return f"<t:{int(value)}:R>"
+    if isinstance(value, str):
+        if re.match(r"<t:\d+:R>", value):
+            return value
+        try:
+            num = float(value)
+            return f"<t:{int(num)}:R>"
+        except ValueError:
+            return "N/A"
+    return "N/A"
+
+
+# ✨───────────────────────────────────────────────
+#            📝 Get Mon Value
+# ✨───────────────────────────────────────────────
+async def get_mon_value(bot: discord.Client, pokemon_name: str):
+    """Fetch the in-game value of a Pokémon."""
+    from utils.db.market_value_db import fetch_market_value_cache
+
+    pokemon_name_formatted = format_name_for_pokemons_db_lookup(pokemon_name)
+    pokemon_info = fetch_market_value_cache(pokemon_name_formatted)
+
+    if not isinstance(pokemon_info, dict):
+        debug_log(f"No usable market value info for {pokemon_name!r}")
+        return None
+
+    raw_price = pokemon_info.get("current_listing")
+    has_market_value = bool(raw_price)
+    current_listing_price = (
+        format_price_w_coin(raw_price) if has_market_value else f"{VN_ALLSTARS_EMOJIS.vna_pokecoin} ?"
+    )
+    last_seen = format_discord_timestamp(pokemon_info.get("listing_seen"))
+
+    debug_log(
+        f"Market value parsed: current_listing={current_listing_price}, "
+        f"last_seen={last_seen}, has_market_value={has_market_value}"
+    )
+    return {
+        "current_listing": current_listing_price,
+        "last_seen": last_seen,
+        "has_market_value": has_market_value,
+    }

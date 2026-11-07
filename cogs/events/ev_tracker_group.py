@@ -6,7 +6,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from utils.essentials.command_safe import run_command_safe
-from utils.essentials.pokemon_autocomplete import *
+from utils.db.market_value_db import pokemon_autocomplete
 from utils.group_command_func.ev_tracker import *
 
 

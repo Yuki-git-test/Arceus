@@ -131,12 +131,6 @@ class OnMessageEditCog(commands.Cog):
 
         dedup_key = (after.id, after_sig)
         if dedup_key in _recent_edit_signatures:
-            pretty_log(
-                "debug",
-                f"Skipped duplicate on_message_edit processing for message_id={after.id}",
-                label="MESSAGE",
-                bot=self.bot,
-            )
             return
         _recent_edit_signatures[dedup_key] = now_utc
 

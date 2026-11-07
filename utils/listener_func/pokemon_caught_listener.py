@@ -264,10 +264,6 @@ async def pokemon_caught_listener(
     vna_member_info = vna_members_cache.get(member_id)
     debug_log(f"vna_member_info={vna_member_info}")
     if not vna_member_info:
-        pretty_log(
-            "info",
-            f"⚠️ VNA member info not found in cache for member ID {member_id} ({member_name}).",
-        )
         return
 
     personal_channel_id = vna_member_info.get("channel_id") if vna_member_info else None

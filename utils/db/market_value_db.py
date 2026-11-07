@@ -76,6 +76,10 @@ async def pokemon_autocomplete(
     debug_log(f"Autocomplete input: '{current}'")
 
     # Recover gracefully if autocomplete gets called before cache load.
+    # Try to build from market_value_cache if pokemon_list_cache is empty
+    if not pokemon_list_cache and market_value_cache:
+        build_pokemon_list_from_cache()
+    
     if not POKEMON_AUTOCOMPLETE_INDEX and pokemon_list_cache:
         rebuild_pokemon_autocomplete_index()
 

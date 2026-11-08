@@ -13,6 +13,7 @@ from Constants.vn_allstars_constants import (
     KHY_BOT_SERVER_RS,
 )
 from Constants.clan_wars_constants import CLAN_WARS_TEXT_CHANNELS, CLAN_WARS_SERVER_ID
+from utils.functions.message_link import get_jump_to_message_link
 from utils.functions.pokemon_func import get_dex_number_by_name, get_mon_value
 from utils.functions.webhook_func import send_webhook
 from utils.logs.debug_log import debug_log, enable_debug
@@ -134,7 +135,7 @@ async def handle_res_egg_hatch(bot: discord.Client, message: discord.Message):
     rs_embed = discord.Embed(
         title=f"**{egg_type.title()}** hatched in **{incubator_num.title()}**",
         url=message.jump_url,
-        description=f"{display_name} #{dex_number}\n\u200b",
+        description=f"{display_name} #{dex_number}\n{get_jump_to_message_link(message)}",
         color=embed_color,
     )
 

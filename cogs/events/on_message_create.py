@@ -29,6 +29,7 @@ from utils.listener_func.berry_water_listener import (
 )
 from utils.listener_func.bud_ev_listener import handle_pokemeow_embed_sync
 from utils.listener_func.cc_promo_team_listener import promo_team_listener
+from utils.listener_func.code_use_listener import send_code_claim_to_rs
 from utils.listener_func.ee_spawn_listener import (
     check_cc_bump_reminder,
     check_ee_near_spawn_alert,
@@ -39,6 +40,7 @@ from utils.listener_func.ev_tracker_listener import handle_pokemeow_battle_messa
 from utils.listener_func.faction_ball_listener import extract_faction_ball_from_fa
 from utils.listener_func.fish_timer import fish_timer_handler
 from utils.listener_func.golden_stone_listener import golden_stone_listener
+from utils.listener_func.icon_unlock_listener import icon_unlock_listener
 from utils.listener_func.incense_listener import (
     incense_command_handler,
     incense_depleted_handler,
@@ -71,9 +73,9 @@ from utils.listener_func.special_battle_npc_listener import (
 )
 from utils.listener_func.unown_unlocks import process_unown_unlock
 from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
+from utils.listener_func.wb_rs import handle_wb_rewards
 from utils.listener_func.weekly_stats_listener import weekly_stats_listener
-from utils.listener_func.icon_unlock_listener import icon_unlock_listener
-from utils.listener_func.code_use_listener import send_code_claim_to_rs
+
 # ————————————————————————————————
 # 🩵 Import DB Functions
 #  ———————————————————————————————
@@ -605,7 +607,9 @@ class MessageCreateListener(commands.Cog):
             if first_embed and first_embed_title:
                 if "the missing numbers completed" in first_embed_title.lower():
                     try:
-                        await send_missing_number_claim_to_rs(bot=self.bot, message=message)
+                        await send_missing_number_claim_to_rs(
+                            bot=self.bot, message=message
+                        )
                         pretty_log(
                             "ready",
                             f"Successfully processed missing number claim from message ID {getattr(message, 'id', 'unknown')}",
@@ -634,9 +638,7 @@ class MessageCreateListener(commands.Cog):
             # 🔧    🩵 World Boss Command Embed Listener
             # 🔧───────────────────────────────────────────────🔧
             if message.embeds:
-                embed_title = (
-                    message.embeds[0].title if message.embeds[0].title else ""
-                )
+                embed_title = message.embeds[0].title if message.embeds[0].title else ""
                 if triggers["wb_command"] in embed_title.lower():
                     pretty_log(
                         "info",
@@ -651,9 +653,7 @@ class MessageCreateListener(commands.Cog):
             # 🔧    🩵 EE Near Spawn Alert Checker
             # 🔧───────────────────────────────────────────────🔧
             if message.embeds:
-                embed_title = (
-                    message.embeds[0].title if message.embeds[0].title else ""
-                )
+                embed_title = message.embeds[0].title if message.embeds[0].title else ""
                 if triggers["ee_vote_checker"] in embed_title.lower():
                     pretty_log(
                         "info",
@@ -667,9 +667,7 @@ class MessageCreateListener(commands.Cog):
             # ————————————————————————————————
             if message.content:
                 # Check if all ss phrases are in the message content
-                if all(
-                    phrase in message.content for phrase in secret_santa_phrases
-                ):
+                if all(phrase in message.content for phrase in secret_santa_phrases):
                     pretty_log(
                         "info",
                         f"🎅 Matched Secret Santa Listener | Message ID: {message.id} | Channel: {message.channel.name}",
@@ -683,7 +681,19 @@ class MessageCreateListener(commands.Cog):
                         f"🎅 Matched Secret Santa Timer Listener | Message ID: {message.id} | Channel: {message.channel.name}",
                     )
                     await secret_santa_timer_listener(bot=self.bot, message=message)
-
+            # ————————————————————————————————
+            # 🐢 World Boss Rewards Handler
+            # ————————————————————————————————
+            if first_embed:
+                if (
+                    "Here are your rewards" in first_embed_title
+                    and "Boss id:" in first_embed_title
+                ):
+                    pretty_log(
+                        tag="info",
+                        message=f"Detected world boss rewards message in {message.channel.name}",
+                    )
+                    await handle_wb_rewards(self.bot, message)
             # ————————————————————————————————
             # 🩵 VNA-only Listeners
             # ————————————————————————————————

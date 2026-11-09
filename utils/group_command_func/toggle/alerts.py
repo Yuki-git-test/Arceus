@@ -4,9 +4,11 @@ from discord.ext import commands
 
 from Constants.vn_allstars_constants import VN_ALLSTARS_ROLES
 from utils.cache.cache_list import vna_members_cache
-from utils.db.faction_members import (fetch_faction_member,
-                                      update_faction_member_notify,
-                                      upsert_faction_member)
+from utils.db.faction_members import (
+    fetch_faction_member,
+    update_faction_member_notify,
+    upsert_faction_member,
+)
 from utils.db.user_alerts_db import fetch_user_alert_notify, upsert_user_alert
 from utils.logs.pretty_log import pretty_log
 
@@ -101,6 +103,16 @@ async def alert_settings_func(
         elif not slime_alert:
             slime_alert = {"notify": "off"}
 
+        catchlist_alert = await fetch_user_alert_notify(
+            bot=bot,
+            user_id=user_id,
+            alert_type="catchlist",
+        )
+        if isinstance(catchlist_alert, str):
+            catchlist_alert = {"notify": catchlist_alert}
+        elif not catchlist_alert:
+            catchlist_alert = {"notify": "off"}
+
         view = Alert_Settings_View(
             bot=bot,
             user=user,
@@ -108,6 +120,7 @@ async def alert_settings_func(
             wb_battle_alert=wb_battle_alert,
             pin_numbers_alert=pin_numbers,
             slime_button_alert=slime_alert,
+            catchlist_alert=catchlist_alert,
             show_faction_ball_button=has_member_role,
         )
         view.message = await interaction.followup.send(
@@ -146,6 +159,7 @@ class Alert_Settings_View(discord.ui.View):
         wb_battle_alert,
         pin_numbers_alert,
         slime_button_alert,
+        catchlist_alert,
         show_faction_ball_button: bool = True,
     ):
         super().__init__(timeout=180)
@@ -155,6 +169,7 @@ class Alert_Settings_View(discord.ui.View):
         self.wb_battle_alert = wb_battle_alert
         self.pin_numbers_alert = pin_numbers_alert
         self.slime_button_alert = slime_button_alert
+        self.catchlist_alert = catchlist_alert
         self.message = None  # set later
         if not show_faction_ball_button:
             self.remove_item(self.faction_ball_alert_button)
@@ -304,6 +319,7 @@ class Alert_Settings_View(discord.ui.View):
                 ephemeral=True,
             )
             return
+
     # 💫────────────────────────────────────
     # [#️⃣ BUTTON] Pin Numbers Alert (3 -State Cycle)
     # 💫────────────────────────────────────
@@ -368,7 +384,6 @@ class Alert_Settings_View(discord.ui.View):
                 bot=self.bot,
             )
 
-
         except Exception as e:
             pretty_log(
                 tag="error",
@@ -389,7 +404,6 @@ class Alert_Settings_View(discord.ui.View):
         style=ButtonStyle.secondary,
         emoji="🪣",
     )
-
     async def slime_button_alert_button(
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
@@ -446,7 +460,6 @@ class Alert_Settings_View(discord.ui.View):
                 bot=self.bot,
             )
 
-
         except Exception as e:
             pretty_log(
                 tag="error",
@@ -455,6 +468,81 @@ class Alert_Settings_View(discord.ui.View):
             )
             await interaction.followup.send(
                 "❌ An error occurred while toggling your Slime Button alert. Please try again later.",
+                ephemeral=True,
+            )
+            return
+    # 💫────────────────────────────────────
+    # [🥅 BUTTON] Catchlist Alert (3 -State Cycle)
+    # 💫────────────────────────────────────
+    @discord.ui.button(
+        label="Catchlist Alert: OFF",
+        style=ButtonStyle.secondary,
+        emoji="#️⃣",
+    )
+    async def pin_numbers_alert_button(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        if interaction.user != self.user:
+            await interaction.response.send_message(
+                "You cannot interact with this button.", ephemeral=True
+            )
+            return
+        await interaction.response.defer()
+
+        try:
+            current_state = (
+                str(self.pin_numbers_alert.get("notify", "off")).lower()
+                if self.pin_numbers_alert
+                else "off"
+            )
+
+            # 🔹 3-State Cycle: off → on → on_no_pings → off
+            if current_state == "off":
+                new_state = "on"
+            elif current_state == "on":
+                new_state = "on_no_pings"
+            else:  # on_no_pings or any other state
+                new_state = "off"
+
+            await upsert_user_alert(
+                bot=self.bot,
+                user_id=self.user.id,
+                user_name=self.user.name,
+                alert_type="catchlist",
+                notify=new_state,
+            )
+
+            self.pin_numbers_alert["notify"] = new_state
+
+            # 🔹 Refresh buttons
+            self.update_button_styles()
+
+            # 🔹 Display friendly text
+            display_text = {
+                "off": "Off",
+                "on": "On",
+                "on_no_pings": "On (No Pings)",
+            }.get(new_state, "OFF")
+
+            await interaction.edit_original_response(
+                content=f"Modify your Alert Settings:\n🥅 Catchlist Alert set to **{display_text}**",
+                view=self,
+            )
+
+            pretty_log(
+                tag="ui",
+                message=f"{self.user.display_name} set Catchlist Alert to {display_text}",
+                bot=self.bot,
+            )
+
+        except Exception as e:
+            pretty_log(
+                tag="error",
+                message=f"Error toggling Catchlist alert for {self.user.name} ({self.user.id}): {e}",
+                bot=self.bot,
+            )
+            await interaction.followup.send(
+                "❌ An error occurred while toggling your Catchlist alert. Please try again later.",
                 ephemeral=True,
             )
             return
@@ -543,6 +631,26 @@ class Alert_Settings_View(discord.ui.View):
             self.slime_button_alert_button.style = ButtonStyle.secondary
             self.slime_button_alert_button.label = "Slime Button Alert: OFF"
 
+        #  [🥅 BUTTON] Catchlist Alert (3 -State Cycle)
+        catchlist_alert_state = (
+            str(self.catchlist_alert.get("notify", "off")).lower()
+            if self.catchlist_alert
+            else "off"
+        )
+
+        if catchlist_alert_state == "off":
+            self.catchlist_alert_button.style = ButtonStyle.secondary
+            self.catchlist_alert_button.label = "Catchlist Alert: OFF"
+        elif catchlist_alert_state == "on":
+            self.catchlist_alert_button.style = ButtonStyle.success
+            self.catchlist_alert_button.label = "Catchlist Alert: ON"
+        elif catchlist_alert_state == "on_no_pings":
+            self.catchlist_alert_button.style = ButtonStyle.primary
+            self.catchlist_alert_button.label = "Catchlist Alert: ON (No Pings)"
+        else:
+            self.catchlist_alert_button.style = ButtonStyle.secondary
+            self.catchlist_alert_button.label = "Catchlist Alert: OFF"
+            
     # 💫────────────────────────────────────
     # [⏰ TIMEOUT HANDLER]
     # 💫────────────────────────────────────

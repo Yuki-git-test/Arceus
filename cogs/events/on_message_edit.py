@@ -9,6 +9,7 @@ from utils.listener_func.berry_listener import berry_listener
 from utils.listener_func.berry_pouch_listener import handle_berry_pouch_message
 from utils.listener_func.explore_caught_listener import explore_caught_listener
 from utils.listener_func.fish_spawn_listener import fish_spawn_listener
+from utils.listener_func.lab_pc_unlock_listener import lab_pc_unlock_listener
 from utils.listener_func.monthly_stats_listener import monthly_stats_listener
 from utils.listener_func.pin_timer_listener import pin_timer_listener
 from utils.listener_func.pokemon_caught_listener import pokemon_caught_listener
@@ -19,7 +20,7 @@ from utils.listener_func.slime_button_listener import slime_button_listener
 from utils.listener_func.wb_reg_listener import handle_wb_register_command
 from utils.listener_func.weekly_stats_listener import weekly_stats_listener
 from utils.logs.pretty_log import pretty_log
-from utils.listener_func.lab_pc_unlock_listener import lab_pc_unlock_listener
+
 # ️────────────────────────────────────────────
 #        ⚔️ Message Triggers
 # ️────────────────────────────────────────────
@@ -361,6 +362,7 @@ class OnMessageEditCog(commands.Cog):
         if first_embed:
             if first_embed_title and "lab pc unlocked" in first_embed_title.lower():
                 await lab_pc_unlock_listener(bot=self.bot, message=after)
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(OnMessageEditCog(bot))

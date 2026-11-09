@@ -333,7 +333,7 @@ async def handle_wb_rewards(
             image_url = None
 
         new_embed = discord.Embed(
-            title=f"{Emojis.World_boss_Spawn} Special world boss rewards!",
+            title=f"Special world boss rewards!",
             url=message.jump_url,
             color=embed_color,
         )

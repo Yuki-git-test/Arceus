@@ -17,6 +17,12 @@ from utils.pokemeow.get_pokemeow_reply import (
     get_pokemeow_reply_member,
 )
 
+enable_debug(f"{__name__}.handle_wb_register_command")
+enable_debug(f"{__name__}.register_wb_battle_reminder")
+enable_debug(f"{__name__}.register_wb_battle_reminder")
+enable_debug(f"{__name__}.centralize_wb_register_handler")
+enable_debug(f"{__name__}.start_world_boss_task")
+enable_debug(f"{__name__}.world_boss_waiter")
 # Structure: {boss_name: {"time": unix_seconds, "users": set(user_ids), "task": asyncio.Task, "channels": {user_id: channel}}}
 wb_tasks = {}
 
@@ -94,12 +100,21 @@ async def world_boss_waiter(
 ):
     now = int(time.time())
     seconds_until_fight = unix_seconds - now
+    debug_log(
+        f"World boss waiter started for {wb_name}: scheduled_at={unix_seconds}, "
+        f"now={now}, delay={max(seconds_until_fight, 0)} seconds."
+    )
     if seconds_until_fight > 0:
         await asyncio.sleep(seconds_until_fight)
+        debug_log(f"World boss waiter woke for {wb_name}.")
         task_info = wb_tasks.get(wb_name)
         if not task_info:
+            debug_log(f"No active task info found for {wb_name}; skipping reminders.")
             return
 
+        debug_log(
+            f"Sending {len(task_info['users'])} World Boss reminders for {wb_name}."
+        )
         embed = discord.Embed(
             description=";wb f",
             color=DEFAULT_EMBED_COLOR,
@@ -109,12 +124,20 @@ async def world_boss_waiter(
             channel = task_info["channels"].get(user_id)
             user = bot.get_user(user_id)
             if not channel or not user:
+                debug_log(
+                    f"Skipping World Boss reminder for user {user_id}: "
+                    f"channel_available={channel is not None}, user_available={user is not None}."
+                )
                 continue
 
             wb_display_name = format_display_boss_name(wb_name)
             content = f"{user.mention}, You can now join the World Boss Battle for **{wb_display_name}**!"
             try:
                 await channel.send(content=content, embed=embed)
+                debug_log(
+                    f"Delivered World Boss reminder for {wb_name} to user {user_id} "
+                    f"in channel {channel.id}."
+                )
                 pretty_log(
                     "info",
                     f"Sent World Boss Battle reminder to user {user_id} in channel {channel.id}",
@@ -127,6 +150,9 @@ async def world_boss_waiter(
 
         # Clean up the task info
         wb_tasks.pop(wb_name, None)
+        debug_log(f"Cleaned up World Boss reminder task for {wb_name}.")
+    else:
+        debug_log(f"Fight time for {wb_name} has passed; no wait or reminder needed.")
 
 
 async def start_world_boss_task(
@@ -141,13 +167,22 @@ async def start_world_boss_task(
 
     # Subtract 5 seconds for early ping
     ping_time = unix_seconds - 5
+    debug_log(
+        f"Scheduling World Boss reminder: boss={wb_name}, user_id={user_id}, "
+        f"channel_id={channel.id}, fight_at={unix_seconds}, ping_at={ping_time}."
+    )
 
     # Check if there's an existing task for this boss
     if wb_name in wb_tasks:
         task_info = wb_tasks[wb_name]
+        debug_log(
+            f"Found existing World Boss task for {wb_name}: "
+            f"scheduled_at={task_info['time']}, registered_users={len(task_info['users'])}."
+        )
 
         # Check if user is already registered
         if user_id in task_info["users"]:
+            debug_log(f"User {user_id} is already registered for {wb_name}; no changes made.")
             pretty_log(
                 "info",
                 f"User {user_id} already registered for World Boss {wb_name} reminder.",
@@ -156,8 +191,12 @@ async def start_world_boss_task(
         # If the time is different, update it, else ignore
         if ping_time > task_info["time"]:
             task_info["time"] = ping_time
+            debug_log(f"Updated World Boss task time for {wb_name} to {ping_time}.")
         task_info["users"].add(user_id)
         task_info["channels"][user_id] = channel
+        debug_log(
+            f"Added user {user_id} to {wb_name}; registered_users={len(task_info['users'])}."
+        )
         pretty_log(
             "info",
             f"Added user {user_id} to existing World Boss {wb_name} reminder task.",
@@ -176,6 +215,7 @@ async def start_world_boss_task(
                 ),
             }
             await message.add_reaction("📅")
+            debug_log(f"Added calendar reaction to message {message.id} for {wb_name}.")
             pretty_log(
                 "info",
                 f"Created new World Boss {wb_name} reminder task for user {user_id}.",
@@ -198,18 +238,25 @@ async def register_wb_battle_reminder(
     Stores the reminder in the database.
     """
 
+    debug_log(
+        f"Processing World Boss reminder registration: message_id={message.id}, "
+        f"channel_id={message.channel.id}, embed_count={len(message.embeds)}."
+    )
     embed = message.embeds[0] if message.embeds else None
     if not embed or not embed.description:
+        debug_log("Missing embed or embed description; registration cannot continue.")
         pretty_log("info", "No embed description found in the message.")
         return
 
     member = await get_pokemeow_reply_member(message)
+    debug_log(f"Reply member lookup returned: {member!r}.")
     if not member:
         pretty_log(
             "info",
             "No replied member found for the message. Falling back to interaction.",
         )
         member = get_message_interaction_member(message)
+        debug_log(f"Interaction member lookup returned: {member!r}.")
         if not member:
             pretty_log("info", "No interaction member found. Cannot register reminder.")
             return
@@ -221,7 +268,9 @@ async def register_wb_battle_reminder(
         user_id=member.id,
         alert_type="wb_battle",
     )
+    debug_log(f"World Boss alert setting for user {member.id}: {user_alert_setting!r}.")
     if not user_alert_setting or user_alert_setting.lower() != "on":
+        debug_log(f"Skipping registration because World Boss alerts are not enabled for {member.id}.")
         pretty_log(
             "info",
             f"User {member.id} has wb_battle alert off or not set. Skipping reminder registration.",
@@ -231,6 +280,10 @@ async def register_wb_battle_reminder(
     user_info = vna_members_cache.get(member.id)
     channel_id = user_info.get("channel_id") if user_info else None
     public_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.all_bots)
+    debug_log(
+        f"Resolving notification channel for user {member.id}: "
+        f"saved_channel_id={channel_id}, public_channel_available={public_channel is not None}."
+    )
     notify_channel = None
     if not channel_id:
         # Fallback to public channel
@@ -245,9 +298,14 @@ async def register_wb_battle_reminder(
 
     unix_seconds = extract_wb_unix_seconds(embed.description)
     boss_name = extract_wb_boss_name(embed.description)
+    debug_log(
+        f"Parsed World Boss details from message {message.id}: "
+        f"boss={boss_name!r}, fight_at={unix_seconds!r}."
+    )
 
     now = int(time.time())
     if unix_seconds is None:
+        debug_log(f"No fight timestamp found in message {message.id}; registration skipped.")
         pretty_log(
             "info",
             f"Failed to extract unix_seconds from embed description for message {message.id}. Skipping reminder registration.",
@@ -256,6 +314,10 @@ async def register_wb_battle_reminder(
     seconds_until_fight = unix_seconds - now
 
     if boss_name and seconds_until_fight > 0:
+        debug_log(
+            f"World Boss {boss_name} starts in {seconds_until_fight} seconds; "
+            f"registering reminder for user {member.id}."
+        )
         try:
             await centralize_wb_register_handler(
                 bot=bot,
@@ -273,6 +335,11 @@ async def register_wb_battle_reminder(
                 f"Failed to register world boss reminder for member {member.name}: {e}"
             )
             pretty_log("error", f"Failed to register world boss reminder: {e}")
+    else:
+        debug_log(
+            f"Skipping registration for message {message.id}: "
+            f"boss_found={bool(boss_name)}, seconds_until_fight={seconds_until_fight}."
+        )
 
 
 async def centralize_wb_register_handler(
@@ -292,6 +359,11 @@ async def centralize_wb_register_handler(
 
     now = int(time.time())
     seconds_until_fight = unix_seconds - now
+    debug_log(
+        f"Handling World Boss registration: boss={boss_name!r}, user_id={user.id}, "
+        f"channel_id={channel.id}, message_id={message.id}, "
+        f"fight_at={unix_seconds}, seconds_until_fight={seconds_until_fight}."
+    )
 
     if seconds_until_fight <= 0:
         debug_log(
@@ -333,6 +405,11 @@ async def handle_wb_register_command(
     The command should be used in reply to the world boss announcement embed.
     """
     embed = message.embeds[0] if message.embeds else None
+    debug_log(
+        f"Handling ;wb register command: before_message_id={before_message.id}, "
+        f"message_id={message.id}, channel_id={message.channel.id}, "
+        f"embed_count={len(message.embeds)}."
+    )
     if not embed:
         debug_log("No embed found in the message. Cannot register world boss reminder.")
         pretty_log("info", "No embed found in the message.")
@@ -343,6 +420,7 @@ async def handle_wb_register_command(
         return
     embed_description = embed.description
     member = await get_pokemeow_reply_member(before_message)
+    debug_log(f"Reply member lookup returned: {member!r}.")
     if not member:
         debug_log(
             "No replied member found for the message. Cannot determine user to notify."
@@ -357,7 +435,9 @@ async def handle_wb_register_command(
         user_id=member.id,
         alert_type="wb_battle",
     )
+    debug_log(f"World Boss alert setting for user {member.id}: {user_alert_setting!r}.")
     if not user_alert_setting or user_alert_setting.lower() != "on":
+        debug_log(f"Skipping registration because World Boss alerts are not enabled for {member.id}.")
         pretty_log(
             "info",
             f"User {member.id} has wb_battle alert off or not set. Skipping reminder registration.",
@@ -367,6 +447,10 @@ async def handle_wb_register_command(
     user_info = vna_members_cache.get(member.id)
     channel_id = user_info.get("channel_id") if user_info else None
     public_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.all_bots)
+    debug_log(
+        f"Resolving notification channel for user {member.id}: "
+        f"saved_channel_id={channel_id}, public_channel_available={public_channel is not None}."
+    )
     notify_channel = None
     if not channel_id:
         # Fallback to public channel
@@ -380,17 +464,26 @@ async def handle_wb_register_command(
         notify_channel = message.channel
 
     boss_name, unix_seconds = extract_boss_and_timestamp(embed_description)
-    if not boss_name and not unix_seconds:
+    debug_log(
+        f"Parsed World Boss details from command embed {message.id}: "
+        f"boss={boss_name!r}, fight_at={unix_seconds!r}."
+    )
+    if boss_name is None or unix_seconds is None:
         debug_log(
-            f"Failed to extract both boss name and unix seconds from embed description. Description: {embed_description}"
+            f"World Boss details are incomplete for message {message.id}; "
+            f"boss_found={boss_name is not None}, timestamp_found={unix_seconds is not None}."
         )
         pretty_log(
             "info",
-            "Failed to extract both boss name and unix seconds from embed description. Cannot register reminder.",
+            "Failed to extract boss name or unix seconds from embed description. Cannot register reminder.",
         )
         return
 
     try:
+        debug_log(
+            f"Registering World Boss {boss_name} for user {member.id} "
+            f"in channel {notify_channel.id}."
+        )
         await centralize_wb_register_handler(
             bot=bot,
             unix_seconds=unix_seconds,

@@ -6,7 +6,7 @@ import discord
 
 from utils.db.catchlist_db import upsert_catchlist, upsert_catchlist_rank
 from utils.essentials.ball_names import normalize_ball_type
-from utils.logs import debug_log
+from utils.logs.debug_log import debug_log
 from utils.logs.pretty_log import pretty_log
 from utils.pokemeow.get_pokemeow_reply import get_pokemeow_reply_or_interaction_member
 
@@ -247,7 +247,7 @@ async def parse_catchlist_cl_compact(
     if not catchlist_alert_type:
         debug_log(f"No catchlist alert info for member {member.id}")
         return
-    
+
     now = time.monotonic()
     for message_id, state in list(_catchlist_pages.items()):
         if now - state.updated_at >= CATCHLIST_CACHE_TTL:

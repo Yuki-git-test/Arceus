@@ -4,6 +4,7 @@ from discord.ext import commands
 
 from Constants.vn_allstars_constants import VN_ALLSTARS_ROLES
 from utils.cache.cache_list import vna_members_cache
+from utils.cache.catchlist_cache import is_catchlist_mons_missing
 from utils.db.faction_members import (
     fetch_faction_member,
     update_faction_member_notify,
@@ -477,9 +478,9 @@ class Alert_Settings_View(discord.ui.View):
     @discord.ui.button(
         label="Catchlist Alert: OFF",
         style=ButtonStyle.secondary,
-        emoji="#️⃣",
+        emoji="🥅",
     )
-    async def pin_numbers_alert_button(
+    async def catchlist_alert_button(
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         if interaction.user != self.user:
@@ -491,8 +492,8 @@ class Alert_Settings_View(discord.ui.View):
 
         try:
             current_state = (
-                str(self.pin_numbers_alert.get("notify", "off")).lower()
-                if self.pin_numbers_alert
+                str(self.catchlist_alert.get("notify", "off")).lower()
+                if self.catchlist_alert
                 else "off"
             )
 
@@ -512,7 +513,7 @@ class Alert_Settings_View(discord.ui.View):
                 notify=new_state,
             )
 
-            self.pin_numbers_alert["notify"] = new_state
+            self.catchlist_alert["notify"] = new_state
 
             # 🔹 Refresh buttons
             self.update_button_styles()
@@ -534,6 +535,13 @@ class Alert_Settings_View(discord.ui.View):
                 message=f"{self.user.display_name} set Catchlist Alert to {display_text}",
                 bot=self.bot,
             )
+
+            # Only when turning the alert on from off, so it is sent once per enable
+            if current_state == "off" and is_catchlist_mons_missing(self.user.id):
+                await interaction.followup.send(
+                    f"{self.user.mention} your catchlist is missing Pokémon entries. "
+                    "Please check `;catchlist` and scroll thru the pages."
+                )
 
         except Exception as e:
             pretty_log(

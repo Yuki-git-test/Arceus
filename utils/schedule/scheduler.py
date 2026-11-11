@@ -20,7 +20,7 @@ from utils.schedule.goal_track_reset import (
     weekly_goal_track_reset,
 )
 from utils.schedule.os_lotto_ping import send_lotto_reminder
-
+from utils.schedule.monthly_catchlist_reset import monthly_catchlist_reset
 
 def format_next_run_manila(next_run_time):
     """
@@ -147,7 +147,28 @@ async def setup_scheduler(bot):
             message=f"Failed to schedule monthly goal tracker reset job: {e}",
             bot=bot,
         )
-
+    # ✨─────────────────────────────────────────────────────────
+    # 🎯 Monthly Catchlist Reset — 1st of the Month at Midnight EST
+    # ✨─────────────────────────────────────────────────────────
+    try:
+        monthly_catchlist_reset_job = scheduler_manager.add_cron_job(
+            monthly_catchlist_reset,
+            "monthly_catchlist_reset",
+            day_of_month=1,
+            hour=0,
+            minute=0,
+            args=[bot],
+            timezone=NYC,
+        )
+        readable_next_run = format_next_run_manila(monthly_catchlist_reset_job.next_run_time)
+        schedules.append(f"Monthly catchlist reset scheduled at {readable_next_run}")
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Failed to schedule monthly catchlist reset job: {e}",
+            bot=bot,
+        )
+        
     # ✨─────────────────────────────────────────────────────────
     # 🎯 Clan Wars Sub Reset Ping — Everyday at 12:00 AM Est
     # ✨─────────────────────────────────────────────────────────

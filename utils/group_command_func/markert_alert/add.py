@@ -30,7 +30,7 @@ from utils.visuals.design_embed import design_embed
 from utils.visuals.pretty_defer import pretty_defer
 
 
-enable_debug(f"{__name__}.resolve_pokemon_input_func")
+#enable_debug(f"{__name__}.resolve_pokemon_input_func")
 
 
 def determine_max_alerts(user: discord.Member) -> int:

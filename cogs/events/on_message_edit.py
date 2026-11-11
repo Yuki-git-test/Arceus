@@ -7,6 +7,14 @@ from discord.ext import commands
 from Constants.variables import POKEMEOW_APPLICATION_ID
 from utils.listener_func.berry_listener import berry_listener
 from utils.listener_func.berry_pouch_listener import handle_berry_pouch_message
+from utils.listener_func.catchlist_cl_compact_listener import (
+    is_catchlist_compact_embed,
+    parse_catchlist_cl_compact,
+)
+from utils.listener_func.catchlist_cl_listener import (
+    is_catchlist_noncompact_embed,
+    parse_catchlist_cl_noncompact,
+)
 from utils.listener_func.explore_caught_listener import explore_caught_listener
 from utils.listener_func.fish_spawn_listener import fish_spawn_listener
 from utils.listener_func.lab_pc_unlock_listener import lab_pc_unlock_listener
@@ -20,6 +28,9 @@ from utils.listener_func.slime_button_listener import slime_button_listener
 from utils.listener_func.wb_reg_listener import handle_wb_register_command
 from utils.listener_func.weekly_stats_listener import weekly_stats_listener
 from utils.logs.pretty_log import pretty_log
+from utils.listener_func.cl_pokemon_spawn_listener import catchlist_spawn_listener
+from utils.listener_func.cl_caught import catchlist_caught_listener
+from utils.listener_func.cl_caught_sz import catchlist_sz_caught_listener
 
 # ️────────────────────────────────────────────
 #        ⚔️ Message Triggers
@@ -167,7 +178,7 @@ class OnMessageEditCog(commands.Cog):
             first_embed.footer.text if first_embed and first_embed.footer else ""
         )
         first_embed_title = (first_embed.title or "") if first_embed else ""
-
+        message_content = after.content if after.content else ""
         # After embed parts
         first_embed_after_author_text = (
             first_embed_after.author.name
@@ -228,6 +239,7 @@ class OnMessageEditCog(commands.Cog):
             and "fished a wild" in first_embed_description.lower()
         ):
             await fish_spawn_listener(self.bot, before, after)
+            await catchlist_spawn_listener(self.bot, before, after, ";fish")
         # ————————————————————————————————
         # ⚡ Fish Pin Alert
         # ————————————————————————————————
@@ -261,7 +273,7 @@ class OnMessageEditCog(commands.Cog):
                     # needed for member resolution, so use the cached before message.
                     slime_message = after if after.embeds else before
                     await slime_button_listener(self.bot, slime_message)
-
+                await catchlist_caught_listener(self.bot, before, after)
         # ————————————————————————————————
         # 🩵 VNA Weekly Stats Listener
         # ————————————————————————————————
@@ -323,10 +335,15 @@ class OnMessageEditCog(commands.Cog):
                 and "use a safari ball to catch it"
                 in first_embed_after_footer_text.lower()
             ):
-                pretty_log(
-                    "info",
-                    f"Detected Safari Zone Pin Alert in {after.channel.name}",
-                )
+                if first_embed_description and "A wild" in first_embed_description:
+                    pretty_log(
+                        "debug",
+                        f"Catchlist Safari Zone spawn detected for message ID {after.id}",
+                        label="CatchlistSpawnListener",
+                    )
+                    await catchlist_spawn_listener(
+                        self.bot, before, after, ";safarizone"
+                    )
                 pin_number = get_number_after_exclamation(first_embed_after_author_text)
                 if pin_number:
                     pretty_log(
@@ -363,6 +380,49 @@ class OnMessageEditCog(commands.Cog):
             if first_embed_title and "lab pc unlocked" in first_embed_title.lower():
                 await lab_pc_unlock_listener(bot=self.bot, message=after)
 
+        # ————————————————————————————————
+        #   🎣 Catchlist Parser (Compact)
+        # ————————————————————————————————
+        if (
+            after.author.id == POKEMEOW_APPLICATION_ID
+            and is_catchlist_compact_embed(first_embed)
+        ):
+            pretty_log(
+                "debug",
+                f"Parsing catchlist embed for message ID {after.id}",
+                label="CatchlistListener",
+            )
+            await parse_catchlist_cl_compact(self.bot, after, before)
+        # ————————————————————————————————
+        #   🎣 Catchlist Parser (Non-Compact)
+        # ————————————————————————————————
+        elif (
+            after.author.id == POKEMEOW_APPLICATION_ID
+            and is_catchlist_noncompact_embed(first_embed)
+        ):
+            pretty_log(
+                "debug",
+                f"Parsing non-compact catchlist embed for message ID {after.id}",
+                label="CatchlistListener",
+            )
+            await parse_catchlist_cl_noncompact(self.bot, after, before)
 
+        # ╭───────────────────────────────╮
+        #   🦋 Catchlist Safari Zone Caught
+        # Listener
+        # ╰───────────────────────────────╯
+
+        # Safari catch messages are plain text with no embed.
+        if (
+            after.author.id == POKEMEOW_APPLICATION_ID
+            and "Caught" in message_content
+            and "Safari Ball" in message_content
+        ):
+            pretty_log(
+                "debug",
+                f"Catchlist Safari Zone caught detected for message ID {after.id}",
+                label="CatchlistCaughtListener",
+            )
+            await catchlist_sz_caught_listener(self.bot, before, after)
 async def setup(bot: commands.Bot):
     await bot.add_cog(OnMessageEditCog(bot))

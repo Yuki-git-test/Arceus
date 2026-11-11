@@ -11,7 +11,9 @@ processed_weekly_stats_messages = set()
 processed_monthly_stats_messages = set()
 processed_pin_numbers_messages = set()
 processed_slime_button_messages = set()
-
+processed_spawn_messages = set()
+processed_caught_catchlist_messages = set()
+processed_catchlist_sz_catches: set[tuple[int, int | None, str]] = set()
 
 def clear_processed_messages_cache():
     """Clears all processed message ID caches."""
@@ -22,10 +24,13 @@ def clear_processed_messages_cache():
     processed_market_feed_ids.clear()
     processed_explore_messages.clear()
     processed_caught_messages.clear()
+    processed_caught_catchlist_messages.clear()
+    processed_catchlist_sz_catches.clear()
     processed_weekly_stats_messages.clear()
     processed_monthly_stats_messages.clear()
     processed_pin_numbers_messages.clear()
     processed_slime_button_messages.clear()
+    processed_spawn_messages.clear()
 
     pretty_log(message="✅ Cleared all processed message ID caches", tag="cache")
 
@@ -215,3 +220,16 @@ ev_tracker_cache: dict[int, dict] = {}
 timer_users: dict[str, int] = {}
 # user_name : user_id
 
+# 💫━━━━━━━━━━━━━━━━━━━━━━━━━
+#       🌸 Catchlist Cache 🌸
+# 💫━━━━━━━━━━━━━━━━━━━━━━━━━
+catchlist_cache: dict[int, dict] = {}
+# Structure:
+# user_id -> {
+#   "user_name": str,
+#   "catchlist_date": str,
+#   "catchlist_mons": list[dict],
+#   "rank_name": str | None,
+#   "total_exp": int | None,
+#   "exp_needed": int | None
+# }

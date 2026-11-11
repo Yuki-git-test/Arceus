@@ -75,6 +75,15 @@ from utils.listener_func.unown_unlocks import process_unown_unlock
 from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
 from utils.listener_func.wb_rs import handle_wb_rewards
 from utils.listener_func.weekly_stats_listener import weekly_stats_listener
+from utils.listener_func.cl_pokemon_spawn_listener import catchlist_spawn_listener
+from utils.listener_func.catchlist_cl_listener import (
+    is_catchlist_noncompact_embed,
+    parse_catchlist_cl_noncompact,
+)
+from utils.listener_func.catchlist_cl_compact_listener import (
+    is_catchlist_compact_embed,
+    parse_catchlist_cl_compact,
+)
 
 # ————————————————————————————————
 # 🩵 Import DB Functions
@@ -340,6 +349,7 @@ class MessageCreateListener(commands.Cog):
             if content and "found a wild" in content.lower():
                 await pokemon_timer_handler(message)
                 await pokemon_spawn_listener(self.bot, message)
+                await catchlist_spawn_listener(self.bot, message, message, ";p")
 
                 # ————————————————————————————————
                 # ⚡ Pin Number Alerts
@@ -619,7 +629,33 @@ class MessageCreateListener(commands.Cog):
                             "critical",
                             f"Failed processing missing number claim from message ID {getattr(message, 'id', 'unknown')}: {e}",
                         )
+            # ————————————————————————————————
+            #   🎣 Catchlist Parser (Compact)
+            # ————————————————————————————————
+            if (
+                message.author.id == POKEMEOW_APPLICATION_ID
+                and is_catchlist_compact_embed(first_embed)
+            ):
+                pretty_log(
+                    "debug",
+                    f"Parsing catchlist embed for message ID {message.id}",
+                    label="CatchlistListener",
+                )
+                await parse_catchlist_cl_compact(self.bot, message, message)
 
+            # ————————————————————————————————
+            #   🎣 Catchlist Parser (Non-Compact)
+            # ————————————————————————————————
+            elif (
+                message.author.id == POKEMEOW_APPLICATION_ID
+                and is_catchlist_noncompact_embed(first_embed)
+            ):
+                pretty_log(
+                    "debug",
+                    f"Parsing non-compact catchlist embed for message ID {message.id}",
+                    label="CatchlistListener",
+                )
+                await parse_catchlist_cl_noncompact(self.bot, message, message)
             # 🔧───────────────────────────────────────────────🔧
             # 🔧    🩵 World Boss Spawn Listener
             # 🔧───────────────────────────────────────────────🔧

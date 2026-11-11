@@ -1,4 +1,7 @@
+import unicodedata
+
 from Constants.aesthetic import Emojis_Balls
+
 BALL_EMOJIS = {
     "pokeball": Emojis_Balls.pokeball,
     "greatball": Emojis_Balls.greatball,
@@ -22,6 +25,9 @@ BALL_EMOJIS = {
 }
 
 def normalize_ball_type(ball_type: str) -> str:
+    # Strip accents so "Poké Ball" resolves to "pokeball".
+    ball_type = unicodedata.normalize("NFD", ball_type)
+    ball_type = "".join(c for c in ball_type if not unicodedata.combining(c))
     return ball_type.strip().lower().replace(" ", "")
 
 

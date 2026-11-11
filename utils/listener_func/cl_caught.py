@@ -8,11 +8,11 @@ from utils.cache.cache_list import (
     processed_spawn_messages,
 )
 from utils.db.catchlist_db import apply_catchlist_catch
-from utils.essentials.ball_names import normalize_ball_type
+from utils.essentials.ball_names import format_ball, normalize_ball_type
 from utils.logs.debug_log import debug_log, debug_message_content, enable_debug
 from utils.logs.pretty_log import pretty_log
 from utils.pokemeow.get_pokemeow_reply import get_pokemeow_reply_or_interaction_member
-
+DEFAULT_BALLS = ["pokeball", "greatball", "ultraball", "masterball", "premierball"]
 FISHING_COLOR = 0x87CEFA
 #enable_debug(f"{__name__}.catchlist_caught_listener")
 _caught_messages_in_flight: set[int] = set()
@@ -119,6 +119,16 @@ async def catchlist_caught_listener(
         if result.rank_up:
             content = f"{member.mention} you have ranked up! Please check ;catchlist for your new rank!"
             await after_message.channel.send(content)
+        from utils.cache.catchlist_cache import is_ball_still_needed
+
+        if ball_used not in DEFAULT_BALLS and not is_ball_still_needed(
+            member.id, catch_type, ball_used
+        ):
+            command = ";f" if catch_type == ";fish" else ";p"
+            await after_message.channel.send(
+                f"{member.mention} you no longer need {format_ball(ball_used)}! "
+                f"You can remove it from your `{command}` ball order."
+            )
         """elif result.exp_needed is not None:
             await after_message.channel.send(
                 f"{member.mention} you need **{result.exp_needed:,} EXP** to rank up!"

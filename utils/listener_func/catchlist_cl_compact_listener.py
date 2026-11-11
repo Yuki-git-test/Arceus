@@ -6,6 +6,7 @@ import discord
 
 from utils.db.catchlist_db import upsert_catchlist, upsert_catchlist_rank
 from utils.essentials.ball_names import normalize_ball_type
+from utils.essentials.balls_to_bring import build_balls_to_bring_embed
 from utils.logs.debug_log import debug_log
 from utils.logs.pretty_log import pretty_log
 from utils.pokemeow.get_pokemeow_reply import get_pokemeow_reply_or_interaction_member
@@ -399,9 +400,11 @@ async def parse_catchlist_cl_compact(
         return None
     state.last_result = data
     try:
-        # for response in _format_catchlist_embeds(data):
-        #     await message.channel.send(embed=response)
-        await message.channel.send("Catchlist successfully saved!")
+        balls_embed = build_balls_to_bring_embed(data["catch_list_mons"])
+        await message.channel.send(
+            "Catchlist successfully saved!",
+            **({"embed": balls_embed} if balls_embed else {}),
+        )
     except discord.HTTPException:
         state.last_result = None
         raise

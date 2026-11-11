@@ -114,6 +114,22 @@ def get_user_data_in_catchlist(user_id: int) -> dict | None:
     return catchlist_cache.get(user_id)
 
 
+def is_ball_still_needed(user_id: int, catch_type: str, ball_type: str) -> bool:
+    """True if any incomplete catchlist Pokémon for this catch type needs the ball."""
+    from utils.essentials.ball_names import normalize_ball_type
+
+    catchlist = catchlist_cache.get(user_id)
+    if not catchlist:
+        return True
+    ball = normalize_ball_type(ball_type)
+    return any(
+        not mon["completion"]
+        and mon["catch_type"].lower() == catch_type.lower()
+        and normalize_ball_type(mon["ball_type"]) == ball
+        for mon in catchlist["catchlist_mons"]
+    )
+
+
 def update_user_exp_in_catchlist(user_id: int, new_exp_needed: int, new_total_exp: int):
     catchlist = catchlist_cache.get(user_id)
     if not catchlist:

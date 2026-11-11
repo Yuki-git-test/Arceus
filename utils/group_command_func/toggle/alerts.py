@@ -3,7 +3,6 @@ from discord import ButtonStyle
 from discord.ext import commands
 
 from Constants.vn_allstars_constants import VN_ALLSTARS_ROLES
-from utils.cache.cache_list import vna_members_cache
 from utils.cache.catchlist_cache import is_catchlist_mons_missing
 from utils.db.faction_members import (
     fetch_faction_member,
@@ -21,7 +20,7 @@ async def alert_settings_func(
     bot: commands.Bot,
     interaction: discord.Interaction,
 ):
-    """Toggle alert settings for faction members."""
+    """Toggle alert settings."""
     # Defer immediately — DB lookups below can exceed the 3s interaction token limit
     await interaction.response.defer()
     user = interaction.user
@@ -33,35 +32,18 @@ async def alert_settings_func(
     vna_member_role = guild.get_role(VN_ALLSTARS_ROLES.vna_member)
     wsg_member_role = guild.get_role(VN_ALLSTARS_ROLES.wsg_members)
     seafoam_role = guild.get_role(VN_ALLSTARS_ROLES.seafoam)
-    clan_name = None
-
-    # Users with any of these roles also get the Faction Ball Alert button
-    has_member_role = any(
-        role is not None and role in user.roles
-        for role in (vna_member_role, wsg_member_role, seafoam_role)
-    )
-
-    faction_name = None
-    if vna_member_role in user.roles:
+    clan_name = "Other"
+    if vna_member_role is not None and vna_member_role in user.roles:
         clan_name = "VNA"
-
-        # Check if they are in cache
-        vna_member = vna_members_cache.get(user_id)
-        if vna_member:
-            faction_name = vna_member.get("faction")
-            if faction_name:
-                faction_name = faction_name.lower()
-            else:
-                faction_name = None
-    elif wsg_member_role in user.roles:
+    elif wsg_member_role is not None and wsg_member_role in user.roles:
         clan_name = "WSG"
-    elif seafoam_role in user.roles:
+    elif seafoam_role is not None and seafoam_role in user.roles:
         clan_name = "Straymons"
 
     # Fetch faction member from DB
     try:
         faction_member = await fetch_faction_member(bot, user_id)
-        if not faction_member and has_member_role:
+        if not faction_member:
             # Upsert to db
             await upsert_faction_member(
                 bot=bot,
@@ -72,6 +54,8 @@ async def alert_settings_func(
                 notify="off",
             )
             faction_member = await fetch_faction_member(bot, user_id)
+            if not faction_member:
+                raise RuntimeError("Faction member was not saved")
         # Get WB Battle Alert Setting
         wb_battle_alert = await fetch_user_alert_notify(
             bot=bot,
@@ -122,7 +106,6 @@ async def alert_settings_func(
             pin_numbers_alert=pin_numbers,
             slime_button_alert=slime_alert,
             catchlist_alert=catchlist_alert,
-            show_faction_ball_button=has_member_role,
         )
         view.message = await interaction.followup.send(
             content="Modify your Alert Settings:",
@@ -161,7 +144,6 @@ class Alert_Settings_View(discord.ui.View):
         pin_numbers_alert,
         slime_button_alert,
         catchlist_alert,
-        show_faction_ball_button: bool = True,
     ):
         super().__init__(timeout=180)
         self.bot = bot
@@ -172,8 +154,6 @@ class Alert_Settings_View(discord.ui.View):
         self.slime_button_alert = slime_button_alert
         self.catchlist_alert = catchlist_alert
         self.message = None  # set later
-        if not show_faction_ball_button:
-            self.remove_item(self.faction_ball_alert_button)
         self.update_button_styles()
 
     # 💫────────────────────────────────────

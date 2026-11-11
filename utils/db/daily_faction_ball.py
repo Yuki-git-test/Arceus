@@ -36,7 +36,7 @@ async def fetch_all_faction_balls(bot) -> dict:
             message=f"Failed to fetch daily faction ball values: {e}",
             bot=bot,
         )
-        return {f: None for f in FACTIONS}
+        raise
 
 
 # 🍥──────────────────────────────────────────────

@@ -88,5 +88,5 @@ async def fish_spawn_listener(
             debug_log(
                 f" Notifying via faction_ball_alert for member {getattr(member, 'id', None)}."
             )
-            await faction_ball_alert(member, before_message, after_message)
+            await faction_ball_alert(bot, member, before_message, after_message)
     return

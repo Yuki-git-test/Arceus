@@ -1,5 +1,5 @@
 from utils.cache.cache_list import daily_faction_ball_cache
-from utils.db.daily_faction_ball import fetch_all_faction_balls
+from utils.db.daily_faction_ball import FACTIONS, fetch_all_faction_balls
 from utils.logs.pretty_log import pretty_log
 
 # 🌸──────────────────────────────────────────────
@@ -30,7 +30,7 @@ async def load_daily_faction_ball_cache(bot):
 # 🍥──────────────────────────────────────────────
 def update_daily_faction_ball_cache(faction: str, ball_type: str | None):
     """Update a specific faction ball in the cache."""
-    if faction in daily_faction_ball_cache:
+    if faction in FACTIONS:
         daily_faction_ball_cache[faction] = ball_type
         pretty_log(
             tag="cache",
@@ -59,6 +59,19 @@ def get_daily_faction_ball_cache() -> dict[str, str | None]:
 def get_faction_ball(faction: str) -> str | None:
     """Get the ball type for a specific faction from the cache."""
     return daily_faction_ball_cache.get(faction)
+
+
+async def get_faction_ball_with_refresh(bot, faction: str) -> str | None:
+    """Refresh a missing ball from the database before reporting it unknown."""
+    ball = get_faction_ball(faction)
+    if ball:
+        return ball
+
+    balls = await fetch_all_faction_balls(bot)
+    ball = get_faction_ball(faction) or balls.get(faction)
+    if ball:
+        update_daily_faction_ball_cache(faction, ball)
+    return ball
 
 
 # 🍭──────────────────────────────────────────────

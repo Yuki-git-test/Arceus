@@ -60,6 +60,7 @@ async def upsert_faction_member(
             message=f"Failed to upsert faction member {user_name} ({user_id}) in clan {clan_name}: {e}",
             bot=bot,
         )
+        raise
 
 async def fetch_faction_member(bot, user_id: int) -> dict | None:
     """Fetch a single faction member by user ID."""
@@ -89,7 +90,7 @@ async def fetch_faction_member(bot, user_id: int) -> dict | None:
             message=f"Failed to fetch faction member with user ID {user_id}: {e}",
             bot=bot,
         )
-        return None
+        raise
 
 
 async def fetch_faction_members(bot) -> list[dict]:
@@ -120,7 +121,7 @@ async def update_faction_member_notify(
     """Update the notify preference for a faction member."""
     try:
         async with bot.pg_pool.acquire() as conn:
-            await conn.execute(
+            result = await conn.execute(
                 """
                 UPDATE faction_members
                 SET notify = $1
@@ -129,6 +130,8 @@ async def update_faction_member_notify(
                 notify,
                 user_id,
             )
+            if result == "UPDATE 0":
+                raise ValueError(f"No faction member found with user ID {user_id}")
         pretty_log(
             tag="db",
             message=f"Updated notify preference for faction member with user ID {user_id} to {notify}",
@@ -147,6 +150,7 @@ async def update_faction_member_notify(
             message=f"Failed to update notify preference for faction member with user ID {user_id}: {e}",
             bot=bot,
         )
+        raise
 
 
 async def update_faction_member_faction(

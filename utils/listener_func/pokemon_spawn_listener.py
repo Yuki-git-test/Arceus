@@ -7,11 +7,11 @@ from Constants.aesthetic import Emojis_Balls, Emojis_Factions
 from Constants.faction_data import FACTION_LOGO_EMOJIS, get_faction_by_emoji
 from Constants.vn_allstars_constants import VN_ALLSTARS_ROLES
 from utils.cache.cache_list import (
-    daily_faction_ball_cache,
     faction_members_cache,
     processed_faction_ball_alerts,
     processed_pokemon_spawn_msgs,
 )
+from utils.cache.daily_fa_ball_cache import get_faction_ball_with_refresh
 from utils.db.daily_faction_ball import update_faction_ball
 from utils.db.faction_members import update_faction_member_faction
 from utils.logs.debug_log import debug_log, enable_debug
@@ -109,7 +109,7 @@ async def _react_with_retry(
 #      🛡️ Faction Ball Alert Listener
 # 🛡️────────────────────────────────────────────
 async def faction_ball_alert(
-    member: discord.Member, before: discord.Message, after: discord.Message
+    bot, member: discord.Member, before: discord.Message, after: discord.Message
 ):
     """Listener for faction ball alerts in spawn messages."""
 
@@ -180,7 +180,7 @@ async def faction_ball_alert(
     )
     debug_log(f" Display faction: {display_embed_faction}")
 
-    faction_ball = daily_faction_ball_cache.get(user_faction)
+    faction_ball = await get_faction_ball_with_refresh(bot, user_faction)
     debug_log(f" Faction ball for {user_faction}: {faction_ball}")
     if not faction_ball:
         debug_log(f" No daily ball for faction {user_faction}.")
@@ -267,4 +267,4 @@ async def pokemon_spawn_listener(bot, message: discord.Message):
             debug_log(
                 f" Notifying via faction_ball_alert for member {getattr(member, 'id', None)}."
             )
-            await faction_ball_alert(member, message, message)
+            await faction_ball_alert(bot, member, message, message)

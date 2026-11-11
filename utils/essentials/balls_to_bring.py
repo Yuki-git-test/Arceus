@@ -26,9 +26,11 @@ def _sort_key(label: str, ball: str) -> tuple[int, str]:
 
 
 def format_balls_to_bring(catch_list_mons: list[dict]) -> dict[str, str]:
-    """Map ';p' / ';f' to the unique balls needed, shown as emojis in ball order."""
+    """Map ';p' / ';f' to the unique balls needed for incomplete Pokémon."""
     balls_by_command: dict[str, set[str]] = {label: set() for label in COMMAND_LABELS.values()}
     for mon in catch_list_mons:
+        if mon["completion"]:
+            continue
         label = COMMAND_LABELS.get(mon["catch_type"])
         if label is not None:
             balls_by_command[label].add(normalize_ball_type(mon["ball_type"]))

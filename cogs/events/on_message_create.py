@@ -656,6 +656,8 @@ class MessageCreateListener(commands.Cog):
                     label="CatchlistListener",
                 )
                 await parse_catchlist_cl_noncompact(self.bot, message, message)
+            
+
             # 🔧───────────────────────────────────────────────🔧
             # 🔧    🩵 World Boss Spawn Listener
             # 🔧───────────────────────────────────────────────🔧

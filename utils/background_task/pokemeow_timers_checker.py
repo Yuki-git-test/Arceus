@@ -2,19 +2,13 @@ import asyncio
 
 import discord
 
-
-from utils.db.pokemeow_timers import (fetch_all_due_timers,
-                                      remove_pokemeow_timer)
+from utils.db.pokemeow_timers import fetch_all_due_timers, remove_pokemeow_timer
 from utils.functions.retry_function import _retry_discord_call
-
 from utils.logs.pretty_log import pretty_log
 
-TIMER_MAP ={
-    "pin_answer": "you can now guess the pin again!"
-}
+TIMER_MAP = {"pin_answer": "you can now guess the pin again!"}
 
 _POKEMEOW_TIMER_CHECKER_LOCK = asyncio.Lock()
-
 
 
 # 🍭 Background task to check pokemeow timers
@@ -22,7 +16,10 @@ async def pokemeow_timer_checker(bot: discord.Client):
     """Background task to check and notify about pokemeow timers."""
 
     if _POKEMEOW_TIMER_CHECKER_LOCK.locked():
-        pretty_log("warn", "Pokemeow timer checker is already running; skipping overlapping run")
+        pretty_log(
+            "warn",
+            "Pokemeow timer checker is already running; skipping overlapping run",
+        )
         return
 
     async with _POKEMEOW_TIMER_CHECKER_LOCK:
@@ -41,8 +38,6 @@ async def _process_due_pokemeow_timers(bot: discord.Client):
         user_id = timer["user_id"]
         timer_type = timer["timer_type"]
         channel_id = timer["channel_id"]
-
-
 
         # Notify the user in the specified channel
         channel = bot.get_channel(channel_id)

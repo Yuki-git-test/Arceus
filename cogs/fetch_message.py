@@ -9,7 +9,7 @@ from discord.ext import commands
 
 from utils.logs.pretty_log import pretty_log
 
-ALLOWED_USER_IDS = {705447976658665552, 952071312124313611}
+ALLOWED_USER_IDS = {705447976658665552, 952071312124313611, 1219913658646401068}
 
 
 # 💠────────────────────────────────────────────

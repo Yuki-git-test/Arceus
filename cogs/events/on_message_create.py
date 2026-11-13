@@ -28,7 +28,16 @@ from utils.listener_func.berry_water_listener import (
     handle_mulch_message,
 )
 from utils.listener_func.bud_ev_listener import handle_pokemeow_embed_sync
+from utils.listener_func.catchlist_cl_compact_listener import (
+    is_catchlist_compact_embed,
+    parse_catchlist_cl_compact,
+)
+from utils.listener_func.catchlist_cl_listener import (
+    is_catchlist_noncompact_embed,
+    parse_catchlist_cl_noncompact,
+)
 from utils.listener_func.cc_promo_team_listener import promo_team_listener
+from utils.listener_func.cl_pokemon_spawn_listener import catchlist_spawn_listener
 from utils.listener_func.code_use_listener import send_code_claim_to_rs
 from utils.listener_func.ee_spawn_listener import (
     check_cc_bump_reminder,
@@ -37,7 +46,10 @@ from utils.listener_func.ee_spawn_listener import (
     extract_boss_from_wb_spawn_command,
 )
 from utils.listener_func.ev_tracker_listener import handle_pokemeow_battle_message
-from utils.listener_func.faction_ball_listener import extract_faction_ball_from_fa
+from utils.listener_func.faction_ball_listener import (
+    extract_faction_ball_from_daily,
+    extract_faction_ball_from_fa,
+)
 from utils.listener_func.fish_timer import fish_timer_handler
 from utils.listener_func.golden_stone_listener import golden_stone_listener
 from utils.listener_func.icon_unlock_listener import icon_unlock_listener
@@ -75,15 +87,6 @@ from utils.listener_func.unown_unlocks import process_unown_unlock
 from utils.listener_func.wb_reg_listener import register_wb_battle_reminder
 from utils.listener_func.wb_rs import handle_wb_rewards
 from utils.listener_func.weekly_stats_listener import weekly_stats_listener
-from utils.listener_func.cl_pokemon_spawn_listener import catchlist_spawn_listener
-from utils.listener_func.catchlist_cl_listener import (
-    is_catchlist_noncompact_embed,
-    parse_catchlist_cl_noncompact,
-)
-from utils.listener_func.catchlist_cl_compact_listener import (
-    is_catchlist_compact_embed,
-    parse_catchlist_cl_compact,
-)
 
 # ————————————————————————————————
 # 🩵 Import DB Functions
@@ -417,6 +420,14 @@ class MessageCreateListener(commands.Cog):
                     await monthly_stats_listener(
                         bot=self.bot, before_message=message, after_message=message
                     )
+
+            # ————————————————————————————————
+            # ⚡ Daily Command Faction Ball Extraction
+            # ————————————————————————————————
+            if first_embed:
+                if first_embed.title and "daily streak" in first_embed.title.lower():
+                    await extract_faction_ball_from_daily(bot=self.bot, message=message)
+
             # 🔧───────────────────────────────────────────────🔧
             # 🔧 🩵 Faction Ball Listener from ;fa
             # 🔧───────────────────────────────────────────────🔧
@@ -656,7 +667,6 @@ class MessageCreateListener(commands.Cog):
                     label="CatchlistListener",
                 )
                 await parse_catchlist_cl_noncompact(self.bot, message, message)
-            
 
             # 🔧───────────────────────────────────────────────🔧
             # 🔧    🩵 World Boss Spawn Listener

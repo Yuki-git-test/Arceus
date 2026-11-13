@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, patch
 import discord
 
 from Constants.vn_allstars_constants import VN_ALLSTARS_ROLES
-from utils.cache.cache_list import faction_members_cache
+from utils.cache.cache_list import daily_faction_ball_cache, faction_members_cache
 from utils.db.faction_members import update_faction_member_notify
 from utils.group_command_func.toggle import alerts
 from utils.listener_func.faction_ball_listener import extract_faction_ball_from_fa
@@ -94,7 +94,9 @@ class FactionAlertSettingsTests(unittest.IsolatedAsyncioTestCase):
             self.addCleanup(faction_members_cache.pop, 1, None)
         else:
             self.addCleanup(faction_members_cache.__setitem__, 1, previous)
-        embed = discord.Embed(description="<:masterball:123> **Today's target Pokemon are**")
+        embed = discord.Embed(
+            description="<:masterball:123> **Today's target Pokemon are**"
+        )
         embed.set_author(name="Team Flare — Headquarters")
         message = SimpleNamespace(embeds=[embed])
         member = SimpleNamespace(id=1)
@@ -109,6 +111,37 @@ class FactionAlertSettingsTests(unittest.IsolatedAsyncioTestCase):
             bot = object()
             await extract_faction_ball_from_fa(bot, message)
         update.assert_awaited_once_with(bot, 1, "flare")
+
+    async def test_fa_updates_changed_cached_ball(self):
+        had_previous_ball = "flare" in daily_faction_ball_cache
+        previous_ball = daily_faction_ball_cache.get("flare")
+        daily_faction_ball_cache["flare"] = "pokeball"
+
+        def restore_ball():
+            if had_previous_ball:
+                daily_faction_ball_cache["flare"] = previous_ball
+            else:
+                daily_faction_ball_cache.pop("flare", None)
+
+        self.addCleanup(restore_ball)
+        embed = discord.Embed(description="<:masterball:123> **Today's target Pokemon are**")
+        embed.set_author(name="Team Flare — Headquarters")
+        message = SimpleNamespace(embeds=[embed])
+        bot = object()
+        with (
+            patch(
+                "utils.listener_func.faction_ball_listener.get_pokemeow_reply_member",
+                new_callable=AsyncMock,
+                return_value=None,
+            ),
+            patch(
+                "utils.listener_func.faction_ball_listener.update_faction_ball",
+                new_callable=AsyncMock,
+            ) as update,
+        ):
+            await extract_faction_ball_from_fa(bot, message)
+
+        update.assert_awaited_once_with(bot, "flare", "masterball")
 
     async def test_missing_database_row_does_not_report_success(self):
         connection = SimpleNamespace(execute=AsyncMock(return_value="UPDATE 0"))

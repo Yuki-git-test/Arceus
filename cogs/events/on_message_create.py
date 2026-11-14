@@ -10,7 +10,7 @@ from Constants.variables import (
     CC_GUILD_ID,
     CC_PROMO_CHANNEL_ID,
     POKEMEOW_APPLICATION_ID,
-
+    
     PublicChannels,
     Server,
 )
@@ -207,7 +207,7 @@ class MessageCreateListener(commands.Cog):
                         label="CC WB Spawn Listener",
                     )
                     await check_cc_other_wb_reminder(bot=self.bot, message=message)
-                    
+
                 if message.channel.id == CC_SHINY_BONUS_CHANNEL_ID:
                     pretty_log(
                         "info",

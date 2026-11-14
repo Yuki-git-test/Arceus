@@ -11,13 +11,14 @@ from discord import Object
 from discord.ext import commands
 
 
-from Constants.variables import CC_BUMP_CHANNEL_ID, CC_GUILD_ID, CC_WB_SPAWN_CHANNEL_ID
+from Constants.variables import CC_BUMP_CHANNEL_ID, CC_GUILD_ID
 from Constants.vn_allstars_constants import (
     DEFAULT_EMBED_COLOR,
     VN_ALLSTARS_EMOJIS,
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
     VNA_SERVER_ID,
+    CC_WB_SPAWN_CHANNEL_ID
 )
 from Constants.world_boss_constants import (
     WB_REGEMOJI,
@@ -528,7 +529,7 @@ async def auto_wb_ping(
     lower_boss = boss.lower()
     key = remap.get(lower_boss, lower_boss)
 
-    footer_text = f"Post made by Wooper"
+    footer_text = f"Post made by {bot.user.name}"
     if wb_command_user:
         footer_text = f"Post made by {wb_command_user.display_name}"
     if spawned_by:

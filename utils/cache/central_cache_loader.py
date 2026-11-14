@@ -16,6 +16,8 @@ from .weekly_goal_tracker_cache import load_weekly_goal_cache
 from utils.db.market_value_db import load_market_cache_from_db
 from .ev_tracker_cache import load_ev_tracker_cache
 from .catchlist_cache import load_catchlist_cache
+from .active_wb_cache import load_active_wb_cache
+
 
 async def load_all_cache(bot: discord.Client):
     """
@@ -62,6 +64,9 @@ async def load_all_cache(bot: discord.Client):
 
         # Load EV Tracker Cache from database
         await load_ev_tracker_cache(bot)
+
+        # Load Active World Boss Cache
+        await load_active_wb_cache(bot)
 
         # Load Catchlist Cache
         await load_catchlist_cache(bot)

@@ -233,3 +233,15 @@ catchlist_cache: dict[int, dict] = {}
 #   "total_exp": int | None,
 #   "exp_needed": int | None
 # }
+
+# 🧩────────────────────────────────────────────
+#        ⚡ Active World Boss Cache
+# 🧩────────────────────────────────────────────
+active_wb_cache: dict[str, dict[str, int | str]] = {}
+# Structure:
+# active_wb_cache = {
+# "wb_timestamp": {
+#     "boss_name": str,
+#     "wb_timestamp": int,
+# },
+# }

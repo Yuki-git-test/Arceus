@@ -10,10 +10,11 @@ from Constants.variables import (
     CC_GUILD_ID,
     CC_PROMO_CHANNEL_ID,
     POKEMEOW_APPLICATION_ID,
+
     PublicChannels,
     Server,
 )
-from Constants.vn_allstars_constants import VN_ALLSTARS_TEXT_CHANNELS
+from Constants.vn_allstars_constants import VN_ALLSTARS_TEXT_CHANNELS, CC_WB_SPAWN_CHANNEL_ID
 from utils.AR.promo import promo_team
 from utils.clan_wars.stats_listener import stats_command_listener
 
@@ -21,6 +22,13 @@ from utils.clan_wars.stats_listener import stats_command_listener
 # 🩵 Import Listener Functions
 # ————————————————————————————————
 from utils.listener_func import promo_claim_listener
+from utils.listener_func.auto_wb_spawn import (
+    check_cc_bump_reminder,
+    check_cc_other_wb_reminder,
+    check_ee_near_spawn_alert,
+    extract_boss_from_wb_command_embed,
+    extract_boss_from_wb_spawn_command,
+)
 from utils.listener_func.battle_timer import battle_timer_handler
 from utils.listener_func.berry_listener import berry_listener
 from utils.listener_func.berry_water_listener import (
@@ -39,12 +47,7 @@ from utils.listener_func.catchlist_cl_listener import (
 from utils.listener_func.cc_promo_team_listener import promo_team_listener
 from utils.listener_func.cl_pokemon_spawn_listener import catchlist_spawn_listener
 from utils.listener_func.code_use_listener import send_code_claim_to_rs
-from utils.listener_func.ee_spawn_listener import (
-    check_cc_bump_reminder,
-    check_ee_near_spawn_alert,
-    extract_boss_from_wb_command_embed,
-    extract_boss_from_wb_spawn_command,
-)
+
 from utils.listener_func.ev_tracker_listener import handle_pokemeow_battle_message
 from utils.listener_func.faction_ball_listener import (
     extract_faction_ball_from_daily,
@@ -197,6 +200,14 @@ class MessageCreateListener(commands.Cog):
                         label="CC Bump Reminder Listener",
                     )
                     await check_cc_bump_reminder(self.bot, message)
+                if message.channel.id == CC_WB_SPAWN_CHANNEL_ID:
+                    pretty_log(
+                        "info",
+                        f"Detected message in CC WB spawn channel: Message ID {message.id}",
+                        label="CC WB Spawn Listener",
+                    )
+                    await check_cc_other_wb_reminder(bot=self.bot, message=message)
+                    
                 if message.channel.id == CC_SHINY_BONUS_CHANNEL_ID:
                     pretty_log(
                         "info",

@@ -55,6 +55,38 @@ def extract_battle_begins_time_from_wb_command(description: str):
     return None
 
 
+async def _cc_wb_reminder_exists(
+    channel: discord.TextChannel, title: str, timestamp: str | None
+) -> bool:
+    timestamp_value = _parse_wb_timestamp(timestamp)
+    if timestamp_value is None:
+        return False
+
+    member = channel.guild.me
+    if member is None or not channel.permissions_for(member).read_message_history:
+        message = (
+            f"Cannot check CC WB reminder history in {channel.name}: missing access."
+        )
+        pretty_log("error", message)
+        raise PermissionError(message)
+
+    try:
+        async for message in channel.history(limit=50):
+            if not message.author.bot:
+                continue
+            for embed in message.embeds:
+                if (
+                    embed.title or ""
+                ).strip().casefold() == title.strip().casefold() and _parse_wb_timestamp(
+                    (embed.description or "").strip()
+                ) == timestamp_value:
+                    return True
+    except discord.HTTPException as e:
+        pretty_log("error", f"Failed to check CC WB reminder history: {e}")
+        raise
+    return False
+
+
 def extract_timestamp_from_wb_spawn_command(description: str):
     match = re.search(r"Challenge starts <t:(\d+):R>", description)
     if match:
@@ -200,6 +232,10 @@ async def send_cc_bump_reminder(
             title = "EE Spawned"
             color = WBColors.eternatus
 
+        if await _cc_wb_reminder_exists(cc_bump_channel, title, timestamp):
+            pretty_log("info", f"CC WB reminder already exists for {title}.")
+            return
+
         # 🕒 Cooldown check
         cooldown_time = 300  # 5 minutes
         now = time.time()
@@ -254,6 +290,11 @@ async def send_cc_other_wb_reminder(
     else:
         color = discord.Color.blue()
 
+    title = formatted_boss_name if formatted_boss_name else "Unknown Boss"
+    if await _cc_wb_reminder_exists(cc_other_wb_channel, title, timestamp):
+        pretty_log("info", f"CC WB reminder already exists for {title}.")
+        return
+
     # 🕒 Cooldown check
     cooldown_time = 300  # 5 minutes
     now = time.time()
@@ -268,7 +309,6 @@ async def send_cc_other_wb_reminder(
         return
     # ✅ Update the shared cooldown
     cc_shared_cooldowns[guild.id] = now
-    title = formatted_boss_name if formatted_boss_name else "Unknown Boss"
     bump_embed = discord.Embed(title=title, description=description, color=color)
 
     await cc_other_wb_channel.send(embed=bump_embed)
